@@ -3,14 +3,16 @@
  * 
  * Formularz do wprowadzania danych o nowej trasie:
  * - Adres początku trasy
- * - Godzina rozpoczęcia
- * - Data
  * - Adres końca trasy
- * - Godzina zakończenia
- * - Opis
+ * - Opis (opcjonalnie)
+ * 
+ * Aplikacja automatycznie:
+ * - Geokoduje adresy (zamienia na współrzędne)
+ * - Oblicza odległość drogową między punktami
+ * - Zapisuje wszystkie dane w Firestore
  */
 
-import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
 import { useRoutes } from '../../hooks/useRoutes';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -23,14 +25,12 @@ import ThemedTextInput from '../../components/ThemedTextInput';
 import ThemedButton from '../../components/ThemedButton';
 
 const Create = () => {
-    // Stany dla wszystkich pól formularza
+    // Stany dla pól formularza
+    const [startAddress, setStartAddress] = useState("");
+    const [endAddress, setEndAddress] = useState("");
     const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(false);
-    const [startAdress, setStartAdress] = useState("");
-    const [startTime, setStartTime] = useState("");
-    const [date, setDate] = useState("");
-    const [endAdress, setEndAdress] = useState("");
-    const [endTime, setEndTime] = useState("");
+    const [error, setError] = useState(null);
 
     // Pobranie funkcji tworzenia trasy z kontekstu
     const { createRoute } = useRoutes();
@@ -38,12 +38,19 @@ const Create = () => {
 
     /**
      * Obsługa submitowania formularza
-     * Sprawdza czy wszystkie pola są wypełnione, tworzy trasę i przekierowuje
+     * 
+     * Proces:
+     * 1. Walidacja pól
+     * 2. Wywołanie createRoute (geokodowanie + obliczanie odległości)
+     * 3. Przekierowanie do historii
      */
     const handleSubmit = async () => {
-        // Walidacja - sprawdzenie czy wszystkie pola są wypełnione
-        if (!startAdress.trim() || !startTime.trim() || !date.trim() || 
-            !endAdress.trim() || !endTime.trim() || !description.trim()) {
+        // Czyszczenie poprzedniego błędu
+        setError(null);
+
+        // Walidacja - sprawdzenie czy adresy są wypełnione
+        if (!startAddress.trim() || !endAddress.trim()) {
+            setError("Musisz podać oba adresy");
             return;
         }
 
@@ -51,28 +58,32 @@ const Create = () => {
         setLoading(true);
 
         try {
-            // Utworzenie nowej trasy w bazie danych
+            // Utworzenie nowej trasy (geokodowanie + routing + zapis)
             await createRoute({
-                startAdress,
-                startTime,
-                date,
-                endAdress,
-                endTime,
-                description
+                startAddress: startAddress.trim(),
+                endAddress: endAddress.trim(),
+                description: description.trim() || "Brak opisu"
             });
 
+            // Pokazanie komunikatu sukcesu
+            Alert.alert(
+                "Sukces!",
+                "Trasa została utworzona pomyślnie",
+                [{ text: "OK" }]
+            );
+
             // Resetowanie formularza
-            setStartAdress("");
-            setStartTime("");
-            setDate("");
-            setEndAdress("");
-            setEndTime("");
+            setStartAddress("");
+            setEndAddress("");
             setDescription("");
 
             // Przekierowanie do historii tras
             router.replace('/history');
+
         } catch (error) {
-            console.log("Błąd tworzenia trasy:", error);
+            console.error("Błąd tworzenia trasy:", error);
+            // Wyświetlenie błędu użytkownikowi
+            setError(error.message || "Wystąpił błąd podczas tworzenia trasy");
         } finally {
             // Resetowanie stanu ładowania
             setLoading(false);
@@ -87,69 +98,76 @@ const Create = () => {
                 <ThemedText title={true} style={styles.heading}>
                     Utwórz nową trasę
                 </ThemedText>
-                <Spacer />
+                
+                <Spacer height={10} />
+                
+                {/* Podtytuł z informacją */}
+                <ThemedText style={styles.subtitle}>
+                    Odległość zostanie obliczona automatycznie
+                </ThemedText>
+                
+                <Spacer height={20} />
                 
                 {/* Pole: Adres początku trasy */}
                 <ThemedTextInput
                     style={styles.input}
-                    placeholder="Adres Początku Trasy"
-                    value={startAdress}
-                    onChangeText={setStartAdress}
+                    placeholder="Adres początku (np. Warszawa, Marszałkowska 1)"
+                    value={startAddress}
+                    onChangeText={setStartAddress}
+                    editable={!loading}
                 />
-                <Spacer />
-
-                {/* Pole: Godzina rozpoczęcia */}
-                <ThemedTextInput
-                    style={styles.input}
-                    placeholder="Godzina Rozpoczęcia"
-                    value={startTime}
-                    onChangeText={setStartTime}
-                />
-                <Spacer />
-
-                {/* Pole: Data */}
-                <ThemedTextInput
-                    style={styles.input}
-                    placeholder="Data"
-                    value={date}
-                    onChangeText={setDate}
-                />
-                <Spacer />
+                
+                <Spacer height={15} />
 
                 {/* Pole: Adres końca trasy */}
                 <ThemedTextInput
                     style={styles.input}
-                    placeholder="Adres końca Trasy"
-                    value={endAdress}
-                    onChangeText={setEndAdress}
+                    placeholder="Adres końca (np. Kraków, Rynek Główny)"
+                    value={endAddress}
+                    onChangeText={setEndAddress}
+                    editable={!loading}
                 />
-                <Spacer />
+                
+                <Spacer height={15} />
 
-                {/* Pole: Godzina zakończenia */}
-                <ThemedTextInput
-                    style={styles.input}
-                    placeholder="Godzina Zakończenia"
-                    value={endTime}
-                    onChangeText={setEndTime}
-                />
-                <Spacer />
-
-                {/* Pole: Opis (wieloliniowe) */}
+                {/* Pole: Opis (opcjonalne) */}
                 <ThemedTextInput
                     style={styles.multiline}
-                    placeholder="Opis"
+                    placeholder="Opis trasy (opcjonalnie)"
                     value={description}
                     onChangeText={setDescription}
                     multiline={true}
+                    editable={!loading}
                 />
-                <Spacer />
+                
+                <Spacer height={20} />
+
+                {/* Wyświetlenie błędu jeśli wystąpił */}
+                {error && (
+                    <>
+                        <ThemedText style={styles.error}>
+                            {error}
+                        </ThemedText>
+                        <Spacer height={10} />
+                    </>
+                )}
 
                 {/* Przycisk tworzenia trasy */}
                 <ThemedButton onPress={handleSubmit} disabled={loading}>
-                    <Text style={{color: "#fff"}}>
-                        {loading ? "Zapisywanie..." : "Tworzenie Trasy"}
+                    <Text style={{color: "#fff", textAlign: 'center'}}>
+                        {loading ? "Obliczanie trasy..." : "Utwórz trasę"}
                     </Text>
                 </ThemedButton>
+
+                {/* Info o czasie oczekiwania */}
+                {loading && (
+                    <>
+                        <Spacer height={10} />
+                        <ThemedText style={styles.loadingInfo}>
+                            Może to potrwać kilka sekund...
+                        </ThemedText>
+                    </>
+                )}
             </ThemedView>
         </TouchableWithoutFeedback>
     );
@@ -162,23 +180,42 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        paddingHorizontal: 20,
     },
     heading: {
         fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 20,
         textAlign: 'center',
+    },
+    subtitle: {
+        fontSize: 14,
+        textAlign: 'center',
+        opacity: 0.7,
     },
     input: {
         padding: 20,
         borderRadius: 6,
         alignSelf: 'stretch',
-        marginHorizontal: 40,
+        marginHorizontal: 20,
+        fontSize: 16,
     },  
     multiline: {
         padding: 20,
         borderRadius: 6,
         minHeight: 100,
         alignSelf: 'stretch',
-        marginHorizontal: 40,
+        marginHorizontal: 20,
+        fontSize: 16,
     },
+    error: {
+        color: '#cc475a',
+        fontSize: 14,
+        textAlign: 'center',
+        paddingHorizontal: 30,
+    },
+    loadingInfo: {
+        fontSize: 12,
+        textAlign: 'center',
+        opacity: 0.6,
+    }
 });

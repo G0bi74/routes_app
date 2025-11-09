@@ -1,7 +1,9 @@
 /**
  * Ekran historii tras (History)
  * 
- * Wyświetla listę wszystkich tras użytkownika
+ * Wyświetla listę wszystkich tras użytkownika z podstawowymi informacjami:
+ * - Adresy (od → do)
+ * - Obliczona odległość w km
  * Każda trasa jest klikalną kartą prowadzącą do szczegółów
  */
 
@@ -9,6 +11,7 @@ import { StyleSheet, FlatList, Pressable } from 'react-native';
 import { useRoutes } from '../../hooks/useRoutes';
 import { Colors } from '../../constants/Colors';
 import { useRouter } from 'expo-router';
+import { formatDistance } from '../../lib/routing';
 
 // Importowanie themed components
 import Spacer from '../../components/Spacer';
@@ -27,34 +30,52 @@ const History = () => {
             
             {/* Nagłówek strony */}
             <ThemedText title={true} style={styles.heading}>
-                Przejechane Trasy:
+                Twoje Trasy ({routes.length})
             </ThemedText>
             
             <Spacer/>
             
             {/* Lista tras */}
-            <FlatList
-                data={routes}
-                keyExtractor={(item) => item.id}  // Unikalny klucz dla każdej trasy
-                contentContainerStyle={styles.list}
-                renderItem={({item}) => (
-                    // Każda trasa jest klikalną kartą
-                    <Pressable onPress={() => router.push(`/routes/${item.id}`)}>
-                        <ThemedCard style={styles.card}>
-                            {/* Wyświetlenie danych trasy */}
-                            <ThemedText style={styles.title}>
-                                {item.startAdress} → {item.endAdress}
-                            </ThemedText>
-                            <ThemedText>
-                                Data: {item.date}
-                            </ThemedText>
-                            <ThemedText>
-                                {item.startTime} - {item.endTime}
-                            </ThemedText>
-                        </ThemedCard>
-                    </Pressable>
-                )}
-            />
+            {routes.length === 0 ? (
+                // Wyświetl gdy brak tras
+                <ThemedView style={styles.emptyContainer}>
+                    <ThemedText style={styles.emptyText}>
+                        Nie masz jeszcze żadnych tras
+                    </ThemedText>
+                    <ThemedText style={styles.emptySubtext}>
+                        Kliknij "Utwórz" aby dodać pierwszą trasę
+                    </ThemedText>
+                </ThemedView>
+            ) : (
+                // Wyświetl listę tras
+                <FlatList
+                    data={routes}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.list}
+                    renderItem={({item}) => (
+                        <Pressable onPress={() => router.push(`/routes/${item.id}`)}>
+                            <ThemedCard style={styles.card}>
+                                {/* Wyświetlenie adresów */}
+                                <ThemedText style={styles.title}>
+                                    {item.startAddress} → {item.endAddress}
+                                </ThemedText>
+                                
+                                {/* Wyświetlenie odległości */}
+                                <ThemedText style={styles.distance}>
+                                    Odległość: {formatDistance(item.distance)}
+                                </ThemedText>
+                                
+                                {/* Wyświetlenie czasu podróży jeśli dostępny */}
+                                {item.duration && (
+                                <ThemedText style={styles.duration}>
+                                    Czas: ~{item.duration} min
+                                </ThemedText>
+                                )}
+                            </ThemedCard>
+                        </Pressable>
+                    )}
+                />
+            )}
         </ThemedView>
     );
 }
@@ -69,24 +90,49 @@ const styles = StyleSheet.create({
     },
     heading: {
         fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 20,
         textAlign: 'center',
     },
     list: {
-        marginTop: 40, 
+        paddingBottom: 20,
     },
     card: {
         width: '90%',
         marginHorizontal: '5%',
         marginVertical: 10,
-        padding: 10,
+        padding: 15,
         paddingLeft: 14,
-        borderLeftColor: Colors.primary,  // Kolorowy pasek z lewej strony karty
+        borderLeftColor: Colors.primary,
         borderLeftWidth: 4,
     },
     title: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
+        marginBottom: 8,
+    },
+    distance: {
+        fontSize: 16,
+        marginTop: 5,
+    },
+    duration: {
+        fontSize: 14,
+        marginTop: 3,
+        opacity: 0.8,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 40,
+    },
+    emptyText: {
+        fontSize: 18,
+        textAlign: 'center',
         marginBottom: 10,
     },
+    emptySubtext: {
+        fontSize: 14,
+        textAlign: 'center',
+        opacity: 0.7,
+    }
 });

@@ -23,6 +23,8 @@ import {
     Timestamp
 } from 'firebase/firestore';
 import { useUser } from "../hooks/useUser";
+import { geocodeBothAddresses } from "../lib/geocoding";
+import { getRouteInfo } from "../lib/routing";
 
 // Nazwa kolekcji w Firestore gdzie przechowywane są trasy
 const COLLECTION_NAME = 'routes';
@@ -70,21 +72,86 @@ export const RoutesProvider = ({ children }) => {
 
     /**
      * Funkcja do tworzenia nowej trasy
-     * @param {Object} data - Dane nowej trasy (startAdress, startTime, date, endAdress, endTime, description)
+     * 
+     * Proces:
+     * 1. Geokodowanie adresów (zamiana na współrzędne)
+     * 2. Obliczenie odległości drogowej między punktami
+     * 3. Zapisanie danych w Firestore
+     * 
+     * @param {Object} data - Dane nowej trasy (startAddress, endAddress, description)
+     * @throws {Error} Jeśli geokodowanie lub obliczenie trasy się nie powiedzie
      */
     async function createRoute(data){
         try {
-            // Dodanie nowego dokumentu do kolekcji
-            await addDoc(collection(db, COLLECTION_NAME), {
-                ...data,                          // Dane trasy
-                userId: user.uid,                 // ID użytkownika (właściciela trasy)
-                createdAt: Timestamp.now()        // Timestamp utworzenia
-            });
+            console.log("Rozpoczęcie tworzenia trasy...");
+
+            // Krok 1: Geokodowanie obu adresów jednocześnie
+            console.log("Geokodowanie adresów...");
+            const coordinates = await geocodeBothAddresses(
+                data.startAddress,
+                data.endAddress
+            );
+
+            // Krok 2: Obliczenie odległości drogowej
+            console.log("Obliczanie odległości...");
+            const routeInfo = await getRouteInfo(
+                coordinates.start,
+                coordinates.end
+            );
+
+            // Krok 3: Przygotowanie danych do zapisu
+            const routeData = {
+                // Adresy
+                startAddress: data.startAddress,
+                endAddress: data.endAddress,
+                
+                // Współrzędne geograficzne
+                startCoordinates: {
+                    lat: coordinates.start.lat,
+                    lon: coordinates.start.lon
+                },
+                endCoordinates: {
+                    lat: coordinates.end.lat,
+                    lon: coordinates.end.lon
+                },
+                
+                // Sformatowane adresy (z geocoding)
+                startAddressFormatted: coordinates.start.displayName,
+                endAddressFormatted: coordinates.end.displayName,
+                
+                // Informacje o trasie
+                distance: routeInfo.distance,              // w kilometrach
+                distanceMeters: routeInfo.distanceMeters,  // w metrach
+                duration: routeInfo.duration,              // w minutach
+                
+                // Opis użytkownika
+                description: data.description,
+                
+                // Metadane
+                userId: user.uid,
+                createdAt: Timestamp.now()
+            };
+
+            // Krok 4: Zapis do Firestore
+            console.log("Zapisywanie do bazy danych...");
+            await addDoc(collection(db, COLLECTION_NAME), routeData);
             
-            console.log("Trasa została utworzona pomyślnie");
+            console.log("Trasa została utworzona pomyślnie!");
+            console.log("Obliczona odległość:", routeInfo.distance, "km");
+            
         } catch (error) {
-            console.log("Błąd tworzenia trasy:", error.message);
-            throw error;
+            console.error("Błąd tworzenia trasy:", error.message);
+            
+            // Rzucenie błędu z przyjazną wiadomością
+            if (error.message.includes('Nie znaleziono lokalizacji')) {
+                throw new Error('Nie można znaleźć podanego adresu. Sprawdź czy jest poprawny.');
+            } else if (error.message.includes('Nie znaleziono trasy')) {
+                throw new Error('Nie można obliczyć trasy między podanymi punktami.');
+            } else if (error.message.includes('Błąd geokodowania') || error.message.includes('Błąd obliczania trasy')) {
+                throw new Error('Problem z połączeniem do serwera. Spróbuj ponownie.');
+            } else {
+                throw new Error('Wystąpił nieoczekiwany błąd. Spróbuj ponownie.');
+            }
         }
     }
 

@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "routes_app",
+    "slug": "routes_app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/img/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/img/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.routes.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/img/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.routes.app"
+    },
+    "web": {
+      "favicon": "./assets/img/favicon.png"
+    }
+  }
+}

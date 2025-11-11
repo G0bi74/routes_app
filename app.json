@@ -3,6 +3,7 @@
     "name": "routes_app",
     "slug": "routes_app",
     "version": "1.0.0",
+    "scheme": "routesapp",
     "orientation": "portrait",
     "icon": "./assets/img/icon.png",
     "userInterfaceStyle": "automatic",
@@ -24,6 +25,14 @@
     },
     "web": {
       "favicon": "./assets/img/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9240e83a-321f-4a76-bc9d-9ff95f8d04af"
+      }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

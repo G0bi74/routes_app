@@ -18,6 +18,7 @@ import Spacer from '../../components/Spacer';
 import ThemedText from '../../components/ThemedText';
 import ThemedView from '../../components/ThemedView';
 import ThemedCard from '../../components/ThemedCard';
+import LiveRouteBadge from '../../components/LiveRouteBadge';
 
 const History = () => {
     // Pobranie listy tras z kontekstu
@@ -55,21 +56,40 @@ const History = () => {
                     renderItem={({item}) => (
                         <Pressable onPress={() => router.push(`/routes/${item.id}`)}>
                             <ThemedCard style={styles.card}>
+                                {/* Badge dla tras w trakcie */}
+                                {item.status === 'in-progress' && (
+                                    <>
+                                        <LiveRouteBadge status={item.status} />
+                                        <Spacer height={10} />
+                                    </>
+                                )}
+                                
                                 {/* Wyświetlenie adresów */}
                                 <ThemedText style={styles.title}>
-                                    {item.startAddress} → {item.endAddress}
+                                    {item.startAddress}
+                                    {item.endAddress && item.endAddress !== "" && ` → ${item.endAddress}`}
+                                    {(!item.endAddress || item.endAddress === "") && ' (w trakcie...)'}
                                 </ThemedText>
                                 
-                                {/* Wyświetlenie odległości */}
-                                <ThemedText style={styles.distance}>
-                                    Odległość: {formatDistance(item.distance)}
-                                </ThemedText>
+                                {/* Wyświetlenie odległości tylko dla zakończonych tras */}
+                                {item.distance && item.distance > 0 && (
+                                    <ThemedText style={styles.distance}>
+                                        Odległość: {formatDistance(item.distance)}
+                                    </ThemedText>
+                                )}
                                 
                                 {/* Wyświetlenie czasu podróży jeśli dostępny */}
-                                {item.duration && (
-                                <ThemedText style={styles.duration}>
-                                    Czas: ~{item.duration} min
-                                </ThemedText>
+                                {item.duration && item.duration > 0 && (
+                                    <ThemedText style={styles.duration}>
+                                        Czas: ~{item.duration} min
+                                    </ThemedText>
+                                )}
+                                
+                                {/* Info dla tras w trakcie */}
+                                {item.status === 'in-progress' && (
+                                    <ThemedText style={styles.inProgressInfo}>
+                                        Kliknij aby zakończyć trasę
+                                    </ThemedText>
                                 )}
                             </ThemedCard>
                         </Pressable>
@@ -118,6 +138,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginTop: 3,
         opacity: 0.8,
+    },
+    inProgressInfo: {
+        fontSize: 12,
+        marginTop: 8,
+        opacity: 0.6,
+        fontStyle: 'italic',
     },
     emptyContainer: {
         flex: 1,

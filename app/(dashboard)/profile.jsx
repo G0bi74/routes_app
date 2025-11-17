@@ -27,7 +27,7 @@ const Profile = () => {
             
             <Spacer/>
             
-            {/* Tekst zachęcający */}
+            
             <ThemedText>
                 Czas na planowanie tras...
             </ThemedText>    

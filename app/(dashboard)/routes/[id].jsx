@@ -6,10 +6,12 @@
  * - Obliczoną odległość w km
  * - Czas podróży
  * - Opis
- * Umożliwia usunięcie trasy
+ * Umożliwia:
+ * - Usunięcie trasy
+ * - Zakończenie trasy w trakcie (GPS)
  */
 
-import { StyleSheet, Text, ScrollView } from 'react-native';
+import { StyleSheet, Text, ScrollView, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useRoutes } from '../../../hooks/useRoutes';
@@ -23,17 +25,19 @@ import ThemedView from '../../../components/ThemedView';
 import ThemedCard from '../../../components/ThemedCard';
 import ThemedButton from '../../../components/ThemedButton';
 import ThemedLoader from '../../../components/ThemedLoader';
+import LiveRouteBadge from '../../../components/LiveRouteBadge';
 import { Colors } from '../../../constants/Colors';
 
 const RouteDetails = () => {
     // Stan dla przechowywania szczegółów trasy
     const [route, setRoute] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     // Pobranie ID trasy z parametrów URL
     const { id } = useLocalSearchParams();
     
     // Pobranie funkcji z kontekstu
-    const { fetchRouteById, deleteRoute } = useRoutes();
+    const { fetchRouteById, deleteRoute, endLiveRoute } = useRoutes();
     const router = useRouter();
 
     /**
@@ -44,6 +48,35 @@ const RouteDetails = () => {
         await deleteRoute(id);
         setRoute(null);
         router.replace('/history');
+    }
+
+    /**
+     * Obsługa zakończenia trasy GPS
+     */
+    const handleEndRoute = async () => {
+        setLoading(true);
+        try {
+            await endLiveRoute(id);
+            
+            Alert.alert(
+                "Trasa zakończona!",
+                "Trasa została pomyślnie zapisana z obliczoną odległością.",
+                [{ text: "OK" }]
+            );
+
+            // Odśwież dane trasy
+            const updatedRoute = await fetchRouteById(id);
+            setRoute(updatedRoute);
+            
+        } catch (error) {
+            Alert.alert(
+                "Błąd",
+                error.message || "Nie można zakończyć trasy",
+                [{ text: "OK" }]
+            );
+        } finally {
+            setLoading(false);
+        }
     }
 
     /**
@@ -71,6 +104,18 @@ const RouteDetails = () => {
         <ThemedView safe={true} style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <ThemedCard style={styles.card}>
+                    {/* Badge dla tras w trakcie */}
+                    {route.status === 'in-progress' && (
+                        <>
+                            <LiveRouteBadge status={route.status} />
+                            <Spacer height={20} />
+                            <ThemedText style={styles.inProgressWarning}>
+                                Ta trasa jest w trakcie. Zakończ ją aby obliczyć odległość.
+                            </ThemedText>
+                            <Spacer height={20} />
+                        </>
+                    )}
+                    
                     {/* Sekcja adresów */}
                     <ThemedText style={styles.sectionTitle}>Trasa</ThemedText>
                     
@@ -83,7 +128,9 @@ const RouteDetails = () => {
                     
                     <ThemedText style={styles.label}>Punkt końcowy:</ThemedText>
                     <ThemedText style={styles.address}>
-                        {route.endAddress}
+                        {route.endAddress && route.endAddress !== "" 
+                            ? route.endAddress 
+                            : "Oczekiwanie na zakończenie..."}
                     </ThemedText>
                     
                     <Spacer height={20} />
@@ -93,32 +140,35 @@ const RouteDetails = () => {
                     
                     <Spacer height={20} />
                     
-                    {/* Sekcja informacji o trasie */}
-                    <ThemedText style={styles.sectionTitle}>Informacje</ThemedText>
-                    
-                    <ThemedView style={styles.infoRow}>
-                        <ThemedText style={styles.infoLabel}>Odległość:</ThemedText>
-                        <ThemedText style={styles.infoValue}>
-                            {formatDistance(route.distance)}
-                        </ThemedText>
-                    </ThemedView>
-                    
-                    {route.duration && (
-                        <ThemedView style={styles.infoRow}>
-                            <ThemedText style={styles.infoLabel}>Czas jazdy:</ThemedText>
-                            <ThemedText style={styles.infoValue}>
-                                {formatDuration(route.duration)}
-                            </ThemedText>
-                        </ThemedView>
-                    )}
-                    
-                    {/* Wyświetlenie sformatowanych adresów jeśli dostępne */}
-                    {route.startAddressFormatted && (
+                    {/* Sekcja informacji o trasie - tylko dla zakończonych tras */}
+                    {route.status !== 'in-progress' && (
                         <>
+                            <ThemedText style={styles.sectionTitle}>Informacje</ThemedText>
+                            
+                            <ThemedView style={styles.infoRow}>
+                                <ThemedText style={styles.infoLabel}>Odległość:</ThemedText>
+                                <ThemedText style={styles.infoValue}>
+                                    {formatDistance(route.distance)}
+                                </ThemedText>
+                            </ThemedView>
+                            
+                            {route.duration && (
+                                <ThemedView style={styles.infoRow}>
+                                    <ThemedText style={styles.infoLabel}>Czas jazdy:</ThemedText>
+                                    <ThemedText style={styles.infoValue}>
+                                        {formatDuration(route.duration)}
+                                    </ThemedText>
+                                </ThemedView>
+                            )}
+                            
                             <Spacer height={20} />
                             <ThemedView style={styles.separator} />
                             <Spacer height={20} />
-                            
+                        </>
+                    )}
+                    {/* Wyświetlenie sformatowanych adresów jeśli dostępne */}
+                    {route.startAddressFormatted && route.status !== 'in-progress' && (
+                        <>
                             <ThemedText style={styles.sectionTitle}>Szczegóły lokalizacji</ThemedText>
                             
                             <ThemedText style={styles.label}>Start:</ThemedText>
@@ -132,16 +182,16 @@ const RouteDetails = () => {
                             <ThemedText style={styles.formattedAddress}>
                                 {route.endAddressFormatted}
                             </ThemedText>
+                            
+                            <Spacer height={20} />
+                            <ThemedView style={styles.separator} />
+                            <Spacer height={20} />
                         </>
                     )}
                     
                     {/* Sekcja opisu */}
                     {route.description && route.description !== "Brak opisu" && (
                         <>
-                            <Spacer height={20} />
-                            <ThemedView style={styles.separator} />
-                            <Spacer height={20} />
-                            
                             <ThemedText style={styles.sectionTitle}>Opis</ThemedText>
                             <ThemedText style={styles.description}>
                                 {route.description}
@@ -149,6 +199,22 @@ const RouteDetails = () => {
                         </>
                     )}
                 </ThemedCard>
+                
+                {/* Przycisk zakończenia trasy GPS */}
+                {route.status === 'in-progress' && (
+                    <>
+                        <ThemedButton 
+                            style={styles.endButton} 
+                            onPress={handleEndRoute}
+                            disabled={loading}
+                        >
+                            <Text style={{color: "#fff", textAlign: 'center', fontSize: 16}}>
+                                {loading ? "Kończenie trasy..." : "✓ Zakończ trasę GPS"}
+                            </Text>
+                        </ThemedButton>
+                        <Spacer height={10} />
+                    </>
+                )}
                 
                 {/* Przycisk usuwania trasy */}
                 <ThemedButton style={styles.delete} onPress={handleDelete}>
@@ -219,6 +285,21 @@ const styles = StyleSheet.create({
         fontSize: 15,
         lineHeight: 22,
         opacity: 0.9,
+    },
+    inProgressWarning: {
+        fontSize: 14,
+        textAlign: 'center',
+        opacity: 0.9,
+        fontStyle: 'italic',
+        padding: 10,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#ffc107',
+    },
+    endButton: {
+        marginTop: 20,
+        marginHorizontal: 40,
+        backgroundColor: '#2196F3',
     },
     delete: {
         marginTop: 20,

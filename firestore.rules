@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Funkcja pomocnicza - sprawdza czy użytkownik jest zalogowany
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Funkcja pomocnicza - sprawdza czy użytkownik jest właścicielem dokumentu
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Reguły dla kolekcji 'routes'
+    match /routes/{routeId} {
+      
+      // Odczyt (read) - użytkownik może czytać tylko swoje trasy
+      allow read: if isSignedIn() && isOwner(resource.data.userId);
+      
+      // Tworzenie (create) - użytkownik może tworzyć trasy tylko dla siebie
+      allow create: if isSignedIn() 
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.userId is string;
+      
+      // Aktualizacja (update) - użytkownik może aktualizować tylko swoje trasy
+      allow update: if isSignedIn() 
+                    && isOwner(resource.data.userId)
+                    && request.resource.data.userId == resource.data.userId; // userId nie może się zmienić
+      
+      // Usuwanie (delete) - użytkownik może usuwać tylko swoje trasy
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+    }
+    
+    // Domyślnie blokuj dostęp do wszystkich innych kolekcji
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

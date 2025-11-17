@@ -14,14 +14,23 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.routes.app"
+      "bundleIdentifier": "com.routes.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Aplikacja potrzebuje dostępu do lokalizacji aby automatycznie zapisywać trasę z GPS.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Aplikacja potrzebuje dostępu do lokalizacji aby śledzić Twoje trasy."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/img/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.routes.app"
+      "package": "com.routes.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "FOREGROUND_SERVICE"
+      ]
     },
     "web": {
       "favicon": "./assets/img/favicon.png"
@@ -32,7 +41,17 @@
       }
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Zezwól aplikacji Routes App na dostęp do Twojej lokalizacji podczas zapisywania tras.",
+          "locationAlwaysPermission": "Zezwól aplikacji Routes App na dostęp do Twojej lokalizacji w tle (opcjonalne).",
+          "locationWhenInUsePermission": "Zezwól aplikacji Routes App na dostęp do Twojej lokalizacji podczas korzystania z aplikacji.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isIosBackgroundLocationEnabled": false
+        }
+      ]
     ]
   }
 }

@@ -17,14 +17,16 @@ import {
     deleteDoc, 
     doc, 
     getDoc,
+    updateDoc,
     query,
     where,
     onSnapshot,
     Timestamp
 } from 'firebase/firestore';
 import { useUser } from "../hooks/useUser";
-import { geocodeBothAddresses } from "../lib/geocoding";
+import { geocodeBothAddresses, reverseGeocode } from "../lib/geocoding";
 import { getRouteInfo } from "../lib/routing";
+import { getCurrentLocation } from "../lib/location";
 
 // Nazwa kolekcji w Firestore gdzie przechowywane są trasy
 const COLLECTION_NAME = 'routes';
@@ -174,6 +176,187 @@ export const RoutesProvider = ({ children }) => {
     }
 
     /**
+     * Funkcja do rozpoczęcia trasy na żywo z GPS
+     * 
+     * Proces:
+     * 1. Pobranie aktualnej lokalizacji GPS
+     * 2. Zamiana współrzędnych na adres (reverse geocoding)
+     * 3. Utworzenie trasy w bazie ze statusem "in-progress"
+     * 4. Zwrócenie ID utworzonej trasy
+     * 
+     * @param {string} description - Opis trasy
+     * @returns {Promise<string>} ID utworzonej trasy
+     * @throws {Error} Jeśli nie można pobrać lokalizacji lub utworzyć trasy
+     */
+    async function startLiveRoute(description = "Trasa na żywo") {
+        try {
+            console.log("Rozpoczynanie trasy na żywo...");
+
+            // Krok 1: Pobranie aktualnej lokalizacji GPS
+            console.log("Pobieranie lokalizacji GPS...");
+            const location = await getCurrentLocation();
+
+            // Krok 2: Zamiana współrzędnych na adres
+            console.log("Geokodowanie lokalizacji...");
+            const addressData = await reverseGeocode(location.lat, location.lon);
+
+            // Krok 3: Przygotowanie danych trasy "w trakcie"
+            const routeData = {
+                // Adresy (tylko start - koniec będzie dodany później)
+                startAddress: addressData.displayName,
+                endAddress: "",  // Pusty string zamiast null
+                
+                // Współrzędne startu
+                startCoordinates: {
+                    lat: location.lat,
+                    lon: location.lon
+                },
+                
+                // Sformatowane adresy
+                startAddressFormatted: addressData.displayName,
+                endAddressFormatted: "",  // Pusty string zamiast null
+                
+                // Współrzędne końca (puste obiekty zamiast null)
+                endCoordinates: {
+                    lat: 0,
+                    lon: 0
+                },
+                
+                // Informacje o trasie (0 zamiast null)
+                distance: 0,
+                distanceMeters: 0,
+                duration: 0,
+                
+                // Opis użytkownika
+                description: description,
+                
+                // Metadane - WAŻNE: zachowujemy tę samą strukturę co trasa manualna
+                userId: user.uid,
+                createdAt: Timestamp.now(),
+                
+                // Dodatkowe pola dla tras GPS
+                status: "in-progress",
+                startedAt: Timestamp.now(),
+            };
+
+            // Krok 4: Zapis do Firestore
+            console.log("Zapisywanie trasy do bazy...");
+            const docRef = await addDoc(collection(db, COLLECTION_NAME), routeData);
+            
+            console.log("Trasa na żywo rozpoczęta! ID:", docRef.id);
+            console.log("Lokalizacja startu:", addressData.displayName);
+            
+            return docRef.id; // Zwracamy ID trasy do dalszego użycia
+
+        } catch (error) {
+            console.error("Błąd rozpoczynania trasy na żywo:", error);
+            console.error("Szczegóły błędu:", error.message, error.code);
+            
+            // Rzucenie błędu z przyjazną wiadomością
+            if (error.code === 'permission-denied' || error.message.includes('insufficient permissions')) {
+                throw new Error('Brak uprawnień do zapisu w bazie. Sprawdź reguły Firebase.');
+            } else if (error.message.includes('uprawnienia') || error.message.includes('GPS')) {
+                throw new Error(error.message);
+            } else if (error.message.includes('lokalizacji')) {
+                throw new Error('Nie można pobrać lokalizacji. Sprawdź czy GPS jest włączony.');
+            } else {
+                throw new Error('Wystąpił błąd podczas rozpoczynania trasy. Spróbuj ponownie.');
+            }
+        }
+    }
+
+    /**
+     * Funkcja do zakończenia trasy na żywo
+     * 
+     * Proces:
+     * 1. Pobranie aktualnej lokalizacji GPS
+     * 2. Zamiana współrzędnych na adres
+     * 3. Obliczenie odległości między startem a końcem
+     * 4. Aktualizacja trasy w bazie ze statusem "completed"
+     * 
+     * @param {string} routeId - ID trasy do zakończenia
+     * @throws {Error} Jeśli nie można zakończyć trasy
+     */
+    async function endLiveRoute(routeId) {
+        try {
+            console.log("Kończenie trasy na żywo...");
+
+            // Krok 1: Pobranie danych aktualnej trasy
+            const routeData = await fetchRouteById(routeId);
+            
+            if (!routeData) {
+                throw new Error('Nie znaleziono trasy');
+            }
+
+            if (routeData.status !== "in-progress") {
+                throw new Error('Trasa nie jest w trakcie');
+            }
+
+            // Krok 2: Pobranie aktualnej lokalizacji GPS (koniec trasy)
+            console.log("Pobieranie lokalizacji końcowej...");
+            const location = await getCurrentLocation();
+
+            // Krok 3: Zamiana współrzędnych na adres
+            console.log("Geokodowanie lokalizacji końcowej...");
+            const endAddressData = await reverseGeocode(location.lat, location.lon);
+
+            // Krok 4: Obliczenie odległości i czasu
+            console.log("Obliczanie odległości...");
+            const routeInfo = await getRouteInfo(
+                routeData.startCoordinates,
+                { lat: location.lat, lon: location.lon }
+            );
+
+            // Krok 5: Przygotowanie danych do aktualizacji
+            const updateData = {
+                // Dane końca trasy
+                endAddress: endAddressData.displayName,
+                endAddressFormatted: endAddressData.displayName,
+                endCoordinates: {
+                    lat: location.lat,
+                    lon: location.lon
+                },
+                
+                // Informacje o trasie
+                distance: routeInfo.distance,
+                distanceMeters: routeInfo.distanceMeters,
+                duration: routeInfo.duration,
+                
+                // Status i czas zakończenia
+                status: "completed",
+                completedAt: Timestamp.now(),
+            };
+
+            // Krok 6: Aktualizacja dokumentu w Firestore
+            console.log("Aktualizacja trasy w bazie...");
+            const routeRef = doc(db, COLLECTION_NAME, routeId);
+            await updateDoc(routeRef, updateData);
+            
+            console.log("Trasa zakończona pomyślnie!");
+            console.log("Przebyta odległość:", routeInfo.distance, "km");
+
+        } catch (error) {
+            console.error("Błąd kończenia trasy na żywo:", error);
+            console.error("Szczegóły błędu:", error.message, error.code);
+            
+            // Rzucenie błędu z przyjazną wiadomością
+            if (error.code === 'permission-denied' || error.message.includes('insufficient permissions')) {
+                throw new Error('Brak uprawnień do aktualizacji w bazie. Sprawdź reguły Firebase.');
+            } else if (error.message.includes('Nie znaleziono trasy')) {
+                throw new Error('Nie znaleziono trasy do zakończenia.');
+            } else if (error.message.includes('nie jest w trakcie')) {
+                throw new Error('Ta trasa została już zakończona.');
+            } else if (error.message.includes('lokalizacji') || error.message.includes('GPS')) {
+                throw new Error('Nie można pobrać lokalizacji końcowej. Sprawdź czy GPS jest włączony.');
+            } else if (error.message.includes('Nie znaleziono trasy między')) {
+                throw new Error('Nie można obliczyć trasy. Sprawdź połączenie internetowe.');
+            } else {
+                throw new Error('Wystąpił błąd podczas kończenia trasy. Spróbuj ponownie.');
+            }
+        }
+    }
+
+    /**
      * Effect hook - nasłuchuje zmian w trasach użytkownika w czasie rzeczywistym
      * Automatycznie aktualizuje listę tras gdy:
      * - Dodana zostanie nowa trasa
@@ -227,7 +410,9 @@ export const RoutesProvider = ({ children }) => {
                 routes,           // Lista tras
                 setRoutes,        // Funkcja do ręcznej aktualizacji tras (rzadko używana)
                 fetchRouteById,   // Funkcja do pobierania szczegółów trasy
-                createRoute,      // Funkcja do tworzenia trasy
+                createRoute,      // Funkcja do tworzenia trasy (z adresami)
+                startLiveRoute,   // Funkcja do rozpoczęcia trasy na żywo (z GPS)
+                endLiveRoute,     // Funkcja do zakończenia trasy na żywo
                 deleteRoute       // Funkcja do usuwania trasy
             }}
         >

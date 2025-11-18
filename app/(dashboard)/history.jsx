@@ -20,6 +20,54 @@ import ThemedView from '../../components/ThemedView';
 import ThemedCard from '../../components/ThemedCard';
 import LiveRouteBadge from '../../components/LiveRouteBadge';
 
+/**
+ * Funkcja pomocnicza - skraca adres do pierwszych dwóch części
+ * Np. "Rudnik 19d, Wólka, LU, Poland" -> "Rudnik 19d, Wólka"
+ * 
+ * @param {string} address - Pełny adres
+ * @returns {string} Skrócony adres
+ */
+const shortenAddress = (address) => {
+    if (!address) return '';
+    
+    // Rozdziel adres po przecinkach
+    const parts = address.split(',').map(part => part.trim());
+    
+    // Weź pierwsze dwie części
+    const shortened = parts.slice(0, 2).join(', ');
+    
+    return shortened || address;
+};
+
+/**
+ * Funkcja pomocnicza - formatuje datę do czytelnej formy
+ * 
+ * @param {Object} timestamp - Timestamp Firebase
+ * @returns {string} Sformatowana data (np. "18 lis 2025, 10:30")
+ */
+const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    
+    try {
+        // Konwersja Firebase Timestamp na Date
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        
+        // Opcje formatowania
+        const options = {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        
+        return date.toLocaleDateString('pl-PL', options);
+    } catch (error) {
+        console.error('Błąd formatowania daty:', error);
+        return '';
+    }
+};
+
 const History = () => {
     // Pobranie listy tras z kontekstu
     const { routes } = useRoutes();
@@ -66,10 +114,17 @@ const History = () => {
                                 
                                 {/* Wyświetlenie adresów */}
                                 <ThemedText style={styles.title}>
-                                    {item.startAddress}
-                                    {item.endAddress && item.endAddress !== "" && ` → ${item.endAddress}`}
+                                    {shortenAddress(item.startAddress)}
+                                    {item.endAddress && item.endAddress !== "" && ` → ${shortenAddress(item.endAddress)}`}
                                     {(!item.endAddress || item.endAddress === "") && ' (w trakcie...)'}
                                 </ThemedText>
+                                
+                                {/* Wyświetlenie daty */}
+                                {item.createdAt && (
+                                    <ThemedText style={styles.date}>
+                                        {formatDate(item.createdAt)}
+                                    </ThemedText>
+                                )}
                                 
                                 {/* Wyświetlenie odległości tylko dla zakończonych tras */}
                                 {item.distance && item.distance > 0 && (
@@ -129,6 +184,11 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 8,
+    },
+    date: {
+        fontSize: 13,
+        marginBottom: 8,
+        opacity: 0.6,
     },
     distance: {
         fontSize: 16,

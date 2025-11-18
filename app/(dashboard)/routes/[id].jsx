@@ -121,7 +121,7 @@ const RouteDetails = () => {
                     
                     <ThemedText style={styles.label}>Punkt początkowy:</ThemedText>
                     <ThemedText style={styles.address}>
-                        {route.startAddress}
+                        {route.startAddressFormatted || route.startAddress}
                     </ThemedText>
                     
                     <Spacer height={15} />
@@ -129,7 +129,7 @@ const RouteDetails = () => {
                     <ThemedText style={styles.label}>Punkt końcowy:</ThemedText>
                     <ThemedText style={styles.address}>
                         {route.endAddress && route.endAddress !== "" 
-                            ? route.endAddress 
+                            ? (route.endAddressFormatted || route.endAddress)
                             : "Oczekiwanie na zakończenie..."}
                     </ThemedText>
                     
@@ -146,7 +146,10 @@ const RouteDetails = () => {
                             <ThemedText style={styles.sectionTitle}>Informacje</ThemedText>
                             
                             <ThemedView style={styles.infoRow}>
-                                <ThemedText style={styles.infoLabel}>Odległość:</ThemedText>
+                                <ThemedView style={styles.infoLabelContainer}>
+                                    
+                                    <ThemedText style={styles.infoLabel}>Odległość</ThemedText>
+                                </ThemedView>
                                 <ThemedText style={styles.infoValue}>
                                     {formatDistance(route.distance)}
                                 </ThemedText>
@@ -154,34 +157,62 @@ const RouteDetails = () => {
                             
                             {route.duration && (
                                 <ThemedView style={styles.infoRow}>
-                                    <ThemedText style={styles.infoLabel}>Czas jazdy:</ThemedText>
+                                    <ThemedView style={styles.infoLabelContainer}>
+                                        
+                                        <ThemedText style={styles.infoLabel}>Przewidywany czas jazdy</ThemedText>
+                                    </ThemedView>
                                     <ThemedText style={styles.infoValue}>
                                         {formatDuration(route.duration)}
                                     </ThemedText>
                                 </ThemedView>
                             )}
                             
-                            <Spacer height={20} />
-                            <ThemedView style={styles.separator} />
-                            <Spacer height={20} />
-                        </>
-                    )}
-                    {/* Wyświetlenie sformatowanych adresów jeśli dostępne */}
-                    {route.startAddressFormatted && route.status !== 'in-progress' && (
-                        <>
-                            <ThemedText style={styles.sectionTitle}>Szczegóły lokalizacji</ThemedText>
+                            {route.createdAt && (
+                                <ThemedView style={styles.infoRow}>
+                                    <ThemedView style={styles.infoLabelContainer}>
+                                        
+                                        <ThemedText style={styles.infoLabel}>Data</ThemedText>
+                                    </ThemedView>
+                                    <ThemedText style={styles.infoValue}>
+                                        {route.createdAt.toDate().toLocaleDateString('pl-PL', { 
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric'
+                                        })}
+                                    </ThemedText>
+                                </ThemedView>
+                            )}
                             
-                            <ThemedText style={styles.label}>Start:</ThemedText>
-                            <ThemedText style={styles.formattedAddress}>
-                                {route.startAddressFormatted}
-                            </ThemedText>
+                            {route.startedAt && (
+                                <ThemedView style={styles.infoRow}>
+                                    <ThemedView style={styles.infoLabelContainer}>
+                                        
+                                        <ThemedText style={styles.infoLabel}>Rozpoczęto</ThemedText>
+                                    </ThemedView>
+                                    <ThemedText style={styles.infoValue}>
+                                        {route.startedAt.toDate().toLocaleTimeString('pl-PL', { 
+                                            hour: '2-digit', 
+                                            minute: '2-digit' 
+                                        })}
+                                    </ThemedText>
+                                </ThemedView>
+                            )}
                             
-                            <Spacer height={10} />
-                            
-                            <ThemedText style={styles.label}>Koniec:</ThemedText>
-                            <ThemedText style={styles.formattedAddress}>
-                                {route.endAddressFormatted}
-                            </ThemedText>
+                            {route.completedAt && (
+                                <ThemedView style={styles.infoRow}>
+                                    <ThemedView style={styles.infoLabelContainer}>
+                                        
+                                        <ThemedText style={styles.infoLabel}>Zakończono</ThemedText>
+                                    </ThemedView>
+                                    <ThemedText style={styles.infoValue}>
+                                        {route.completedAt.toDate().toLocaleTimeString('pl-PL', { 
+                                            hour: '2-digit', 
+                                            minute: '2-digit' 
+                                        })}
+                                        
+                                    </ThemedText>
+                                </ThemedView>
+                            )}
                             
                             <Spacer height={20} />
                             <ThemedView style={styles.separator} />
@@ -272,14 +303,28 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: 15,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        
+    },
+    infoLabelContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        
+    },
+    infoIcon: {
+        fontSize: 18,
     },
     infoLabel: {
-        fontSize: 16,
+        fontSize: 15,
+        opacity: 0.8,
     },
     infoValue: {
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '600',
     },
     description: {
         fontSize: 15,

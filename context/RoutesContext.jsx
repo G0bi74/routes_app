@@ -131,7 +131,12 @@ export const RoutesProvider = ({ children }) => {
                 
                 // Metadane
                 userId: user.uid,
-                createdAt: Timestamp.now()
+                createdAt: data.createdAt || Timestamp.now(),
+                
+                // Opcjonalne daty i godziny (dla tras backupowych)
+                ...(data.startedAt && { startedAt: data.startedAt }),
+                ...(data.completedAt && { completedAt: data.completedAt }),
+                status: data.status || "completed"
             };
 
             // Krok 4: Zapis do Firestore

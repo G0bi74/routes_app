@@ -17,6 +17,7 @@ import { useRoutes } from '../../hooks/useRoutes';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { Timestamp } from 'firebase/firestore';
 
 // Importowanie themed components
 import Spacer from '../../components/Spacer';
@@ -35,6 +36,14 @@ const Create = () => {
 
     // Stan dla trybu GPS
     const [liveRouteId, setLiveRouteId] = useState(null); // ID rozpoczętej trasy GPS
+
+    // Stan dla pokazywania/ukrywania formularza manualnego
+    const [showManualForm, setShowManualForm] = useState(false);
+    
+    // Stany dla daty i godzin (tryb manualny)
+    const [startDate, setStartDate] = useState("");
+    const [startTime, setStartTime] = useState("");
+    const [endTime, setEndTime] = useState("");
 
     // Pobranie funkcji z kontekstu
     const { createRoute, startLiveRoute, endLiveRoute, routes, fetchRouteById } = useRoutes();
@@ -82,8 +91,9 @@ const Create = () => {
      * 
      * Proces:
      * 1. Walidacja pól
-     * 2. Wywołanie createRoute (geokodowanie + obliczanie odległości)
-     * 3. Przekierowanie do historii
+     * 2. Parsowanie daty i godzin jeśli podane
+     * 3. Wywołanie createRoute (geokodowanie + obliczanie odległości)
+     * 4. Przekierowanie do historii
      */
     const handleSubmit = async () => {
         // Czyszczenie poprzedniego błędu
@@ -99,12 +109,51 @@ const Create = () => {
         setLoading(true);
 
         try {
-            // Utworzenie nowej trasy (geokodowanie + routing + zapis)
-            await createRoute({
+            // Przygotowanie danych do zapisu
+            const routeData = {
                 startAddress: startAddress.trim(),
                 endAddress: endAddress.trim(),
                 description: description.trim() || "Brak opisu"
-            });
+            };
+
+            // Jeśli podano datę i godziny, parsuj je
+            if (startDate && startTime && endTime) {
+                try {
+                    // Format daty: DD.MM.YYYY lub DD/MM/YYYY
+                    const [day, month, year] = startDate.split(/[./]/).map(num => parseInt(num));
+                    
+                    // Format godziny: HH:MM
+                    const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num));
+                    const [endHour, endMinute] = endTime.split(':').map(num => parseInt(num));
+
+                    // Utworzenie obiektów Date
+                    const startDateTime = new Date(year, month - 1, day, startHour, startMinute);
+                    const endDateTime = new Date(year, month - 1, day, endHour, endMinute);
+
+                    // Walidacja dat
+                    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+                        throw new Error("Nieprawidłowy format daty lub godziny");
+                    }
+
+                    if (endDateTime <= startDateTime) {
+                        throw new Error("Godzina zakończenia musi być później niż rozpoczęcia");
+                    }
+
+                    // Dodanie do danych trasy
+                    routeData.createdAt = Timestamp.fromDate(startDateTime);
+                    routeData.startedAt = Timestamp.fromDate(startDateTime);
+                    routeData.completedAt = Timestamp.fromDate(endDateTime);
+                    routeData.status = "completed";
+                    
+                } catch (dateError) {
+                    setError(dateError.message || "Błąd parsowania daty/godziny. Użyj formatów: DD.MM.YYYY i HH:MM");
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            // Utworzenie nowej trasy (geokodowanie + routing + zapis)
+            await createRoute(routeData);
 
             // Pokazanie komunikatu sukcesu
             Alert.alert(
@@ -117,6 +166,10 @@ const Create = () => {
             setStartAddress("");
             setEndAddress("");
             setDescription("");
+            setStartDate("");
+            setStartTime("");
+            setEndTime("");
+            setShowManualForm(false);
 
             // Przekierowanie do historii tras
             router.replace('/history');
@@ -222,123 +275,214 @@ const Create = () => {
     return(
         // TouchableWithoutFeedback - ukrywa klawiaturę po kliknięciu poza polem
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <ThemedView style={styles.container}>
+            <ThemedView safe={true} style={styles.container}>
                 <ThemedText title={true} style={styles.heading}>
                     Utwórz nową trasę
                 </ThemedText>
                 
-                <Spacer height={20} />
+                <Spacer height={15} />
 
                 {/* Sekcja GPS - Trasa na żywo */}
+                {!showManualForm && (
+                    <>
+                        <View style={styles.section}>
+                            <ThemedText style={styles.sectionTitle}>
+                                Tryb GPS
+                            </ThemedText>
+                            
+                            <Spacer height={8} />
+                            
+                            <ThemedText style={styles.subtitle}>
+                                {liveRouteId 
+                                    ? "Trasa w trakcie - zakończ ją" 
+                                    : "Automatyczne zapisywanie lokalizacji"}
+                            </ThemedText>
+                            
+                            <Spacer height={12} />
+
+                            {/* Pole opisu dla trasy GPS */}
+                            {!liveRouteId && (
+                                <>
+                                    <ThemedTextInput
+                                        style={styles.input}
+                                        placeholder="Opis trasy (opcjonalnie)"
+                                        value={description}
+                                        onChangeText={setDescription}
+                                        editable={loading !== true}
+                                    />
+                                    <Spacer height={15} />
+                                </>
+                            )}
+
+                            {/* Przyciski GPS */}
+                            {!liveRouteId ? (
+                                <ThemedButton 
+                                    onPress={handleStartLiveRoute} 
+                                    disabled={loading === true}
+                                    style={styles.gpsButton}
+                                >
+                                    <Text style={{color: "#fff", textAlign: 'center', fontSize: 16}}>
+                                        {loading ? "Pobieranie lokalizacji..." : "Rozpocznij trasę GPS"}
+                                    </Text>
+                                </ThemedButton>
+                            ) : (
+                                <ThemedButton 
+                                    onPress={handleEndLiveRoute} 
+                                    disabled={loading === true}
+                                    style={styles.endButton}
+                                >
+                                    <Text style={{color: "#fff", textAlign: 'center', fontSize: 16}}>
+                                        {loading ? "Kończenie trasy..." : "✓ Zakończ trasę GPS"}
+                                    </Text>
+                                </ThemedButton>
+                            )}
+                        </View>
+
+                        <Spacer height={20} />
+
+                        {/* Separator */}
+                        <View style={styles.separator}>
+                            <View style={styles.separatorLine} />
+                            <ThemedText style={styles.separatorText}>LUB</ThemedText>
+                            <View style={styles.separatorLine} />
+                        </View>
+
+                        <Spacer height={20} />
+                    </>
+                )}
+
+                {/* Sekcja Manualna - Wpisywanie adresów */}
                 <View style={styles.section}>
                     <ThemedText style={styles.sectionTitle}>
-                        📍 Tryb GPS - Trasa na żywo
+                        Tryb manualny
                     </ThemedText>
                     
-                    <Spacer height={10} />
+                    <Spacer height={8} />
                     
                     <ThemedText style={styles.subtitle}>
-                        {liveRouteId 
-                            ? "Trasa w trakcie - zakończ ją aby zapisać" 
-                            : "Użyj GPS aby automatycznie zapisać lokalizację"}
+                        Dodaj trasę z przeszłości
                     </ThemedText>
                     
-                    <Spacer height={15} />
+                    <Spacer height={12} />
 
-                    {/* Pole opisu dla trasy GPS */}
-                    {!liveRouteId && (
+                    {/* Przycisk pokazujący/ukrywający formularz */}
+                    {!showManualForm ? (
+                        <ThemedButton 
+                            onPress={() => setShowManualForm(true)}
+                            disabled={loading === true || !!liveRouteId}
+                            style={styles.showFormButton}
+                        >
+                            <Text style={{color: "#fff", textAlign: 'center'}}>
+                                Pokaż formularz
+                            </Text>
+                        </ThemedButton>
+                    ) : (
                         <>
+                            {/* Przycisk do ukrycia formularza */}
+                            <ThemedButton 
+                                onPress={() => {
+                                    setShowManualForm(false);
+                                    setStartAddress("");
+                                    setEndAddress("");
+                                    setDescription("");
+                                    setStartDate("");
+                                    setStartTime("");
+                                    setEndTime("");
+                                }}
+                                disabled={loading === true}
+                                style={styles.hideFormButton}
+                            >
+                                <Text style={{color: "#fff", textAlign: 'center'}}>
+                                    ▲ Ukryj formularz
+                                </Text>
+                            </ThemedButton>
+
+                            <Spacer height={12} />
+
+                            {/* Pole: Adres początku trasy */}
+                            <ThemedTextInput
+                                style={styles.input}
+                                placeholder="Adres początku (np. Warszawa, Marszałkowska 1)"
+                                value={startAddress}
+                                onChangeText={setStartAddress}
+                                editable={loading !== true && !liveRouteId}
+                            />
+                            
+                            <Spacer height={10} />
+
+                            {/* Pole: Adres końca trasy */}
+                            <ThemedTextInput
+                                style={styles.input}
+                                placeholder="Adres końca (np. Kraków, Rynek Główny)"
+                                value={endAddress}
+                                onChangeText={setEndAddress}
+                                editable={loading !== true && !liveRouteId}
+                            />
+                            
+                            <Spacer height={10} />
+
+                            {/* Pole: Opis */}
                             <ThemedTextInput
                                 style={styles.input}
                                 placeholder="Opis trasy (opcjonalnie)"
                                 value={description}
                                 onChangeText={setDescription}
-                                editable={loading !== true}
+                                editable={loading !== true && !liveRouteId}
                             />
+                            
                             <Spacer height={15} />
+
+
+                            <ThemedText style={styles.subsectionTitle}>
+                                Opcjonalnie - Data i godziny
+                            </ThemedText>
+                            
+                            <Spacer height={8} />
+
+                            {/* Pole: Data */}
+                            <ThemedTextInput
+                                style={styles.input}
+                                placeholder="Data (DD.MM.YYYY, np. 18.11.2025)"
+                                value={startDate}
+                                onChangeText={setStartDate}
+                                editable={loading !== true && !liveRouteId}
+                            />
+                            
+                            <Spacer height={10} />
+
+                            {/* Pole: Godzina rozpoczęcia */}
+                            <ThemedTextInput
+                                style={styles.input}
+                                placeholder="Godzina rozpoczęcia (HH:MM, np. 14:30)"
+                                value={startTime}
+                                onChangeText={setStartTime}
+                                editable={loading !== true && !liveRouteId}
+                            />
+                            
+                            <Spacer height={10} />
+
+                            {/* Pole: Godzina zakończenia */}
+                            <ThemedTextInput
+                                style={styles.input}
+                                placeholder="Godzina zakończenia (HH:MM, np. 16:45)"
+                                value={endTime}
+                                onChangeText={setEndTime}
+                                editable={loading !== true && !liveRouteId}
+                            />
+                            
+                            <Spacer height={12} />
+
+                            {/* Przycisk tworzenia trasy manualnej */}
+                            <ThemedButton 
+                                onPress={handleSubmit} 
+                                disabled={loading === true || !!liveRouteId}
+                            >
+                                <Text style={{color: "#fff", textAlign: 'center'}}>
+                                    {loading ? "Obliczanie trasy..." : "Utwórz trasę"}
+                                </Text>
+                            </ThemedButton>
                         </>
                     )}
-
-                    {/* Przyciski GPS */}
-                    {!liveRouteId ? (
-                        <ThemedButton 
-                            onPress={handleStartLiveRoute} 
-                            disabled={loading === true}
-                            style={styles.gpsButton}
-                        >
-                            <Text style={{color: "#fff", textAlign: 'center', fontSize: 16}}>
-                                {loading ? "Pobieranie lokalizacji..." : "📍 Rozpocznij trasę GPS"}
-                            </Text>
-                        </ThemedButton>
-                    ) : (
-                        <ThemedButton 
-                            onPress={handleEndLiveRoute} 
-                            disabled={loading === true}
-                            style={styles.endButton}
-                        >
-                            <Text style={{color: "#fff", textAlign: 'center', fontSize: 16}}>
-                                {loading ? "Kończenie trasy..." : "✓ Zakończ trasę GPS"}
-                            </Text>
-                        </ThemedButton>
-                    )}
-                </View>
-
-                <Spacer height={30} />
-
-                {/* Separator */}
-                <View style={styles.separator}>
-                    <View style={styles.separatorLine} />
-                    <ThemedText style={styles.separatorText}>LUB</ThemedText>
-                    <View style={styles.separatorLine} />
-                </View>
-
-                <Spacer height={30} />
-
-                {/* Sekcja Manualna - Wpisywanie adresów */}
-                <View style={styles.section}>
-                    <ThemedText style={styles.sectionTitle}>
-                        ✏️ Tryb manualny - Wpisz adresy
-                    </ThemedText>
-                    
-                    <Spacer height={10} />
-                    
-                    <ThemedText style={styles.subtitle}>
-                        Odległość zostanie obliczona automatycznie
-                    </ThemedText>
-                    
-                    <Spacer height={15} />
-                    
-                    {/* Pole: Adres początku trasy */}
-                    <ThemedTextInput
-                        style={styles.input}
-                        placeholder="Adres początku (np. Warszawa, Marszałkowska 1)"
-                        value={startAddress}
-                        onChangeText={setStartAddress}
-                        editable={loading !== true && !liveRouteId}
-                    />
-                    
-                    <Spacer height={15} />
-
-                    {/* Pole: Adres końca trasy */}
-                    <ThemedTextInput
-                        style={styles.input}
-                        placeholder="Adres końca (np. Kraków, Rynek Główny)"
-                        value={endAddress}
-                        onChangeText={setEndAddress}
-                        editable={loading !== true && !liveRouteId}
-                    />
-                    
-                    <Spacer height={15} />
-
-                    {/* Przycisk tworzenia trasy manualnej */}
-                    <ThemedButton 
-                        onPress={handleSubmit} 
-                        disabled={loading === true || !!liveRouteId}
-                    >
-                        <Text style={{color: "#fff", textAlign: 'center'}}>
-                            {loading ? "Obliczanie trasy..." : "Utwórz trasę"}
-                        </Text>
-                    </ThemedButton>
                 </View>
 
                 <Spacer height={20} />
@@ -374,11 +518,11 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 20,
+        paddingHorizontal: 15,
     },
     heading: {
         fontWeight: 'bold',
-        fontSize: 24,
+        fontSize: 22,
         textAlign: 'center',
     },
     section: {
@@ -387,20 +531,26 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 16,
         textAlign: 'center',
     },
     subtitle: {
-        fontSize: 13,
+        fontSize: 12,
         textAlign: 'center',
         opacity: 0.7,
     },
+    subsectionTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        textAlign: 'center',
+        opacity: 0.8,
+    },
     input: {
-        padding: 20,
+        padding: 15,
         borderRadius: 6,
         alignSelf: 'stretch',
-        marginHorizontal: 20,
-        fontSize: 16,
+        marginHorizontal: 15,
+        fontSize: 15,
     },  
     multiline: {
         padding: 20,
@@ -415,6 +565,15 @@ const styles = StyleSheet.create({
     },
     endButton: {
         backgroundColor: '#2196F3', // Niebieski dla zakończenia
+    },
+    showFormButton: {
+        backgroundColor: '#9C27B0', // Fioletowy dla pokazania formularza
+    },
+    hideFormButton: {
+        backgroundColor: '#757575', // Szary dla ukrycia formularza
+    },
+    cancelButton: {
+        backgroundColor: '#757575', // Szary dla anulowania
     },
     separator: {
         flexDirection: 'row',

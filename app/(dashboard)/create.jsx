@@ -15,7 +15,8 @@
 import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View } from 'react-native';
 import { useRoutes } from '../../hooks/useRoutes';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Importowanie themed components
 import Spacer from '../../components/Spacer';
@@ -36,8 +37,45 @@ const Create = () => {
     const [liveRouteId, setLiveRouteId] = useState(null); // ID rozpoczętej trasy GPS
 
     // Pobranie funkcji z kontekstu
-    const { createRoute, startLiveRoute, endLiveRoute } = useRoutes();
+    const { createRoute, startLiveRoute, endLiveRoute, routes, fetchRouteById } = useRoutes();
     const router = useRouter();
+
+    /**
+     * Effect - sprawdza czy trasa w trakcie nadal istnieje
+     * Uruchamia się gdy użytkownik wraca na ekran
+     */
+    useFocusEffect(
+        React.useCallback(() => {
+            async function checkLiveRoute() {
+                if (liveRouteId) {
+                    try {
+                        const route = await fetchRouteById(liveRouteId);
+                        // Jeśli trasa została zakończona lub nie istnieje, zresetuj ID
+                        if (!route || route.status !== 'in-progress') {
+                            setLiveRouteId(null);
+                        }
+                    } catch (error) {
+                        // Jeśli nie można pobrać trasy, zresetuj ID
+                        setLiveRouteId(null);
+                    }
+                }
+            }
+            checkLiveRoute();
+        }, [liveRouteId, fetchRouteById])
+    );
+
+    /**
+     * Effect - automatycznie wykrywa trasy w trakcie przy montowaniu
+     */
+    useEffect(() => {
+        // Znajdź trasę w trakcie jeśli istnieje
+        const inProgressRoute = routes.find(r => r.status === 'in-progress');
+        if (inProgressRoute && !liveRouteId) {
+            setLiveRouteId(inProgressRoute.id);
+        } else if (!inProgressRoute && liveRouteId) {
+            setLiveRouteId(null);
+        }
+    }, [routes]);
 
     /**
      * Obsługa submitowania formularza (tryb manualny)

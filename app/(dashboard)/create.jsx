@@ -25,6 +25,7 @@ import ThemedText from '../../components/ThemedText';
 import ThemedView from '../../components/ThemedView';
 import ThemedTextInput from '../../components/ThemedTextInput';
 import ThemedButton from '../../components/ThemedButton';
+import ImagePickerWithCrop from '../../components/ImagePickerWithCrop';
 
 const Create = () => {
     // Stany dla pól formularza (tryb manualny)
@@ -44,6 +45,10 @@ const Create = () => {
     const [startDate, setStartDate] = useState("");
     const [startTime, setStartTime] = useState("");
     const [endTime, setEndTime] = useState("");
+
+    // Stany dla zdjęć
+    const [startPhotoUri, setStartPhotoUri] = useState(null);
+    const [endPhotoUri, setEndPhotoUri] = useState(null);
 
     // Pobranie funkcji z kontekstu
     const { createRoute, startLiveRoute, endLiveRoute, routes, fetchRouteById } = useRoutes();
@@ -197,9 +202,10 @@ const Create = () => {
         setLoading(true);
 
         try {
-            // Rozpoczęcie trasy na żywo
+            // Rozpoczęcie trasy na żywo z opcjonalnym zdjęciem
             const routeId = await startLiveRoute(
-                description.trim() || "Trasa na żywo"
+                description.trim() || "Trasa na żywo",
+                startPhotoUri
             );
 
             // Zapisanie ID trasy
@@ -208,12 +214,13 @@ const Create = () => {
             // Pokazanie komunikatu
             Alert.alert(
                 "Trasa rozpoczęta!",
-                "Lokalizacja początkowa została zapisana. Możesz teraz zakończyć trasę w dowolnym momencie.",
+                `Lokalizacja początkowa${startPhotoUri ? ' i zdjęcie' : ''} zostały zapisane. Możesz teraz zakończyć trasę w dowolnym momencie.`,
                 [{ text: "OK" }]
             );
 
-            // Resetowanie opisu
+            // Resetowanie formularza
             setDescription("");
+            setStartPhotoUri(null);
 
         } catch (error) {
             console.error("Błąd rozpoczynania trasy GPS:", error);
@@ -248,18 +255,19 @@ const Create = () => {
         setLoading(true);
 
         try {
-            // Zakończenie trasy
-            await endLiveRoute(liveRouteId);
+            // Zakończenie trasy z opcjonalnym zdjęciem
+            await endLiveRoute(liveRouteId, endPhotoUri);
 
             // Pokazanie komunikatu sukcesu
             Alert.alert(
                 "Trasa zakończona!",
-                "Trasa została pomyślnie zapisana z obliczoną odległością.",
+                `Trasa została pomyślnie zapisana${endPhotoUri ? ' ze zdjęciem końca' : ''} z obliczoną odległością.`,
                 [{ text: "OK" }]
             );
 
             // Resetowanie stanu
             setLiveRouteId(null);
+            setEndPhotoUri(null);
 
             // Przekierowanie do historii
             router.replace('/history');
@@ -310,6 +318,42 @@ const Create = () => {
                                         onChangeText={setDescription}
                                         editable={loading !== true}
                                     />
+                                    <Spacer height={15} />
+                                    
+                                    {/* Zdjęcie startu */}
+                                    <ThemedText style={styles.label}>
+                                        📷 Zdjęcie startu (opcjonalnie)
+                                    </ThemedText>
+                                    <Spacer height={8} />
+                                    <ImagePickerWithCrop
+                                        onImageCaptured={setStartPhotoUri}
+                                        buttonText="Zrób zdjęcie startu"
+                                    />
+                                    {startPhotoUri && (
+                                        <ThemedText style={styles.photoConfirm}>
+                                            ✓ Zdjęcie dodane
+                                        </ThemedText>
+                                    )}
+                                    <Spacer height={15} />
+                                </>
+                            )}
+                            
+                            {/* Zdjęcie końca - tylko gdy trasa jest w trakcie */}
+                            {liveRouteId && (
+                                <>
+                                    <ThemedText style={styles.label}>
+                                        📷 Zdjęcie końca (opcjonalnie)
+                                    </ThemedText>
+                                    <Spacer height={8} />
+                                    <ImagePickerWithCrop
+                                        onImageCaptured={setEndPhotoUri}
+                                        buttonText="Zrób zdjęcie końca"
+                                    />
+                                    {endPhotoUri && (
+                                        <ThemedText style={styles.photoConfirm}>
+                                            ✓ Zdjęcie dodane
+                                        </ThemedText>
+                                    )}
                                     <Spacer height={15} />
                                 </>
                             )}
@@ -602,5 +646,16 @@ const styles = StyleSheet.create({
         fontSize: 12,
         textAlign: 'center',
         opacity: 0.6,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    photoConfirm: {
+        fontSize: 13,
+        textAlign: 'center',
+        color: '#4CAF50',
+        marginTop: 8,
     }
 });

@@ -193,7 +193,7 @@ export const RoutesProvider = ({ children }) => {
      * @returns {Promise<string>} ID utworzonej trasy
      * @throws {Error} Jeśli nie można pobrać lokalizacji lub utworzyć trasy
      */
-    async function startLiveRoute(description = "Trasa na żywo") {
+    async function startLiveRoute(description = "Trasa na żywo", photoUri = null) {
         try {
             console.log("Rozpoczynanie trasy na żywo...");
 
@@ -234,6 +234,10 @@ export const RoutesProvider = ({ children }) => {
                 
                 // Opis użytkownika
                 description: description,
+                
+                // Zdjęcia
+                startImageUri: photoUri || null,
+                endImageUri: null,
                 
                 // Metadane - WAŻNE: zachowujemy tę samą strukturę co trasa manualna
                 userId: user.uid,
@@ -280,9 +284,10 @@ export const RoutesProvider = ({ children }) => {
      * 4. Aktualizacja trasy w bazie ze statusem "completed"
      * 
      * @param {string} routeId - ID trasy do zakończenia
+     * @param {string} photoUri - URI zdjęcia końca trasy (opcjonalne)
      * @throws {Error} Jeśli nie można zakończyć trasy
      */
-    async function endLiveRoute(routeId) {
+    async function endLiveRoute(routeId, photoUri = null) {
         try {
             console.log("Kończenie trasy na żywo...");
 
@@ -326,6 +331,9 @@ export const RoutesProvider = ({ children }) => {
                 distance: routeInfo.distance,
                 distanceMeters: routeInfo.distanceMeters,
                 duration: routeInfo.duration,
+                
+                // Zdjęcie końca (jeśli jest)
+                endImageUri: photoUri || null,
                 
                 // Status i czas zakończenia
                 status: "completed",

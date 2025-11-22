@@ -6,12 +6,13 @@
  * - Obliczoną odległość w km
  * - Czas podróży
  * - Opis
+ * - Zdjęcia startowe i końcowe (jeśli istnieją)
  * Umożliwia:
  * - Usunięcie trasy
  * - Zakończenie trasy w trakcie (GPS)
  */
 
-import { StyleSheet, Text, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, ScrollView, Alert, Image } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useRoutes } from '../../../hooks/useRoutes';
@@ -227,6 +228,38 @@ const RouteDetails = () => {
                             <ThemedText style={styles.description}>
                                 {route.description}
                             </ThemedText>
+                            <Spacer height={20} />
+                            <ThemedView style={styles.separator} />
+                            <Spacer height={20} />
+                        </>
+                    )}
+                    
+                    {/* Sekcja zdjęć */}
+                    {(route.startImageUri || route.endImageUri) && (
+                        <>
+                            <ThemedText style={styles.sectionTitle}>Zdjęcia trasy</ThemedText>
+                            
+                            {route.startImageUri && (
+                                <ThemedView style={styles.imageContainer}>
+                                    <ThemedText style={styles.imageLabel}>Punkt początkowy:</ThemedText>
+                                    <Image 
+                                        source={{ uri: route.startImageUri }} 
+                                        style={styles.routeImage}
+                                        resizeMode="cover"
+                                    />
+                                </ThemedView>
+                            )}
+                            
+                            {route.endImageUri && (
+                                <ThemedView style={styles.imageContainer}>
+                                    <ThemedText style={styles.imageLabel}>Punkt końcowy:</ThemedText>
+                                    <Image 
+                                        source={{ uri: route.endImageUri }} 
+                                        style={styles.routeImage}
+                                        resizeMode="cover"
+                                    />
+                                </ThemedView>
+                            )}
                         </>
                     )}
                 </ThemedCard>
@@ -350,5 +383,20 @@ const styles = StyleSheet.create({
         marginTop: 20,
         marginHorizontal: 40,
         backgroundColor: Colors.warning,
+    },
+    imageContainer: {
+        marginBottom: 20,
+    },
+    imageLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 8,
+        opacity: 0.7,
+    },
+    routeImage: {
+        width: '100%',
+        height: 200,
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
     }
 });

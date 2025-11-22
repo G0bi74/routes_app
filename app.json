@@ -17,7 +17,10 @@
       "bundleIdentifier": "com.routes.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Aplikacja potrzebuje dostępu do lokalizacji aby automatycznie zapisywać trasę z GPS.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Aplikacja potrzebuje dostępu do lokalizacji aby śledzić Twoje trasy."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Aplikacja potrzebuje dostępu do lokalizacji aby śledzić Twoje trasy.",
+        "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do aparatu aby robić zdjęcia tras.",
+        "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do galerii aby wybierać zdjęcia tras.",
+        "NSPhotoLibraryAddUsageDescription": "Aplikacja potrzebuje dostępu do galerii aby zapisywać zdjęcia tras."
       }
     },
     "android": {
@@ -29,7 +32,11 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "FOREGROUND_SERVICE"
+        "FOREGROUND_SERVICE",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
       ]
     },
     "web": {

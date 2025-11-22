@@ -13,6 +13,7 @@ import Spacer from '../../components/Spacer';
 import ThemedText from '../../components/ThemedText';
 import ThemedView from '../../components/ThemedView';
 import ThemedButton from '../../components/ThemedButton';
+import ImagePickerWithCrop from '../../components/ImagePickerWithCrop';
 
 const Profile = () => {
     // Pobranie danych użytkownika i funkcji wylogowania

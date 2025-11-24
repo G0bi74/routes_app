@@ -193,19 +193,20 @@ const Create = () => {
      * Obsługa rozpoczęcia trasy GPS
      * 
      * Proces:
-     * 1. Pobranie aktualnej lokalizacji GPS
-     * 2. Reverse geocoding (współrzędne -> adres)
-     * 3. Zapis trasy ze statusem "in-progress"
+     * 1. Otwiera aparat do zrobienia zdjęcia
+     * 2. Po zrobieniu zdjęcia pobiera lokalizację GPS
+     * 3. Reverse geocoding (współrzędne -> adres)
+     * 4. Zapis trasy ze statusem "in-progress"
      */
-    const handleStartLiveRoute = async () => {
+    const handleStartLiveRoute = async (photoUri) => {
         setError(null);
         setLoading(true);
 
         try {
-            // Rozpoczęcie trasy na żywo z opcjonalnym zdjęciem
+            // Rozpoczęcie trasy na żywo ze zdjęciem
             const routeId = await startLiveRoute(
                 description.trim() || "Trasa na żywo",
-                startPhotoUri
+                photoUri
             );
 
             // Zapisanie ID trasy
@@ -214,7 +215,7 @@ const Create = () => {
             // Pokazanie komunikatu
             Alert.alert(
                 "Trasa rozpoczęta!",
-                `Lokalizacja początkowa${startPhotoUri ? ' i zdjęcie' : ''} zostały zapisane. Możesz teraz zakończyć trasę w dowolnym momencie.`,
+                "Lokalizacja początkowa i zdjęcie zostały zapisane. Możesz teraz zakończyć trasę w dowolnym momencie.",
                 [{ text: "OK" }]
             );
 
@@ -240,12 +241,13 @@ const Create = () => {
      * Obsługa zakończenia trasy GPS
      * 
      * Proces:
-     * 1. Pobranie aktualnej lokalizacji GPS
-     * 2. Reverse geocoding
-     * 3. Obliczenie odległości
-     * 4. Aktualizacja trasy ze statusem "completed"
+     * 1. Otwiera aparat do zrobienia zdjęcia końca
+     * 2. Po zrobieniu zdjęcia pobiera lokalizację GPS
+     * 3. Reverse geocoding
+     * 4. Obliczenie odległości
+     * 5. Aktualizacja trasy ze statusem "completed"
      */
-    const handleEndLiveRoute = async () => {
+    const handleEndLiveRoute = async (photoUri) => {
         if (!liveRouteId) {
             setError("Nie ma rozpoczętej trasy do zakończenia");
             return;
@@ -255,13 +257,13 @@ const Create = () => {
         setLoading(true);
 
         try {
-            // Zakończenie trasy z opcjonalnym zdjęciem
-            await endLiveRoute(liveRouteId, endPhotoUri);
+            // Zakończenie trasy ze zdjęciem
+            await endLiveRoute(liveRouteId, photoUri);
 
             // Pokazanie komunikatu sukcesu
             Alert.alert(
                 "Trasa zakończona!",
-                `Trasa została pomyślnie zapisana${endPhotoUri ? ' ze zdjęciem końca' : ''} z obliczoną odległością.`,
+                "Trasa została pomyślnie zapisana ze zdjęciem końca i obliczoną odległością.",
                 [{ text: "OK" }]
             );
 
@@ -320,65 +322,35 @@ const Create = () => {
                                     />
                                     <Spacer height={15} />
                                     
-                                    {/* Zdjęcie startu */}
-                                    <ThemedText style={styles.label}>
-                                        📷 Zdjęcie startu (opcjonalnie)
+                                    {/* Informacja o przycisku */}
+                                    <ThemedText style={styles.subtitle}>
+                                        Przycisk otworzy aparat do zrobienia zdjęcia i rozpocznie trasę z lokalizacją GPS
                                     </ThemedText>
-                                    <Spacer height={8} />
-                                    <ImagePickerWithCrop
-                                        onImageCaptured={setStartPhotoUri}
-                                        buttonText="Zrób zdjęcie startu"
-                                    />
-                                    {startPhotoUri && (
-                                        <ThemedText style={styles.photoConfirm}>
-                                            ✓ Zdjęcie dodane
-                                        </ThemedText>
-                                    )}
                                     <Spacer height={15} />
                                 </>
                             )}
                             
-                            {/* Zdjęcie końca - tylko gdy trasa jest w trakcie */}
+                            {/* Informacja dla zakończenia trasy */}
                             {liveRouteId && (
                                 <>
-                                    <ThemedText style={styles.label}>
-                                        📷 Zdjęcie końca (opcjonalnie)
+                                    <ThemedText style={styles.subtitle}>
+                                        Przycisk otworzy aparat do zrobienia zdjęcia i zakończy trasę z lokalizacją GPS
                                     </ThemedText>
-                                    <Spacer height={8} />
-                                    <ImagePickerWithCrop
-                                        onImageCaptured={setEndPhotoUri}
-                                        buttonText="Zrób zdjęcie końca"
-                                    />
-                                    {endPhotoUri && (
-                                        <ThemedText style={styles.photoConfirm}>
-                                            ✓ Zdjęcie dodane
-                                        </ThemedText>
-                                    )}
                                     <Spacer height={15} />
                                 </>
                             )}
 
-                            {/* Przyciski GPS */}
+                            {/* Przyciski GPS z aparatem */}
                             {!liveRouteId ? (
-                                <ThemedButton 
-                                    onPress={handleStartLiveRoute} 
-                                    disabled={loading === true}
-                                    style={styles.gpsButton}
-                                >
-                                    <Text style={{color: "#fff", textAlign: 'center', fontSize: 16}}>
-                                        {loading ? "Pobieranie lokalizacji..." : "Rozpocznij trasę GPS"}
-                                    </Text>
-                                </ThemedButton>
+                                <ImagePickerWithCrop
+                                    onImageCaptured={handleStartLiveRoute}
+                                    buttonText="Rozpocznij trasę"
+                                />
                             ) : (
-                                <ThemedButton 
-                                    onPress={handleEndLiveRoute} 
-                                    disabled={loading === true}
-                                    style={styles.endButton}
-                                >
-                                    <Text style={{color: "#fff", textAlign: 'center', fontSize: 16}}>
-                                        {loading ? "Kończenie trasy..." : "✓ Zakończ trasę GPS"}
-                                    </Text>
-                                </ThemedButton>
+                                <ImagePickerWithCrop
+                                    onImageCaptured={handleEndLiveRoute}
+                                    buttonText="Zakończ trasę"
+                                />
                             )}
                         </View>
 

@@ -190,7 +190,7 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" })
                 style={styles.mainButton}
             >
                 <ThemedText style={styles.buttonText}>
-                    {isProcessing ? '⏳ Przetwarzanie...' : `📷 ${buttonText}`}
+                    {isProcessing ? 'Przetwarzanie...' : `${buttonText}`}
                 </ThemedText>
             </ThemedButton>
 
@@ -225,7 +225,12 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" })
                                 onPress={openGalleryFromCamera}
                                 disabled={isProcessing}
                             >
-                                <ThemedText style={styles.galleryButtonText}>🖼️</ThemedText>
+                                <View style={styles.galleryIcon}>
+                                    <View style={styles.galleryIconSquare} />
+                                    <View style={styles.galleryIconSquare} />
+                                    <View style={styles.galleryIconSquare} />
+                                    <View style={styles.galleryIconSquare} />
+                                </View>
                             </TouchableOpacity>
 
                             {/* Przycisk zrobienia zdjęcia (środek) */}
@@ -236,9 +241,6 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" })
                             >
                                 <View style={styles.captureButtonInner} />
                             </TouchableOpacity>
-
-                            {/* Placeholder dla symetrii */}
-                            <View style={styles.galleryButton} />
                         </View>
                     </CameraView>
                 </View>
@@ -479,8 +481,8 @@ const ManualCropModal = ({ visible, imageUri, imageSize, onCrop, onCancel, isPro
                 <Spacer height={20} />
 
                 <ThemedText style={styles.instruction}>
-                    💡 Dotknij prostokąt i przesuń{'\n'}
-                    🔧 Prawy dolny róg - zmiana rozmiaru
+                    Dotknij prostokąt i przesuń{'\n'}
+                    Prawy dolny róg - zmiana rozmiaru
                 </ThemedText>
 
                 <Spacer height={20} />
@@ -488,7 +490,7 @@ const ManualCropModal = ({ visible, imageUri, imageSize, onCrop, onCancel, isPro
                 <View style={styles.actionButtons}>
                     <ThemedButton onPress={handleConfirm} disabled={isProcessing} style={styles.confirmButton}>
                         <ThemedText style={styles.buttonText}>
-                            {isProcessing ? '⏳ Przycinam...' : '✓ Zatwierdź'}
+                            {isProcessing ? 'Przycinam...' : 'Zatwierdź'}
                         </ThemedText>
                     </ThemedButton>
 
@@ -669,24 +671,37 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 30,
         paddingBottom: 40,
         backgroundColor: 'transparent',
     },
     galleryButton: {
+        position: 'absolute',
+        left: 30,
         width: 60,
         height: 60,
-        borderRadius: 10,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        borderRadius: 12,
+        backgroundColor: 'rgba(30, 30, 30, 0.8)',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#fff',
+        borderColor: 'rgba(255, 255, 255, 0.9)',
     },
-    galleryButtonText: {
-        fontSize: 30,
+    galleryIcon: {
+        width: 32,
+        height: 32,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 3,
+        padding: 2,
+    },
+    galleryIconSquare: {
+        width: 12,
+        height: 12,
+        backgroundColor: '#fff',
+        borderRadius: 2,
     },
     captureButton: {
         width: 80,

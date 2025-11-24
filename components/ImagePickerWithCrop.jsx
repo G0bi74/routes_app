@@ -3,7 +3,7 @@
  * 
  * Workflow:
  * 1. Użytkownik klika przycisk
- * 2. Otwiera się natywny aparat (z przyciskiem do galerii)
+ * 2. Otwiera się custom aparat z przyciskiem galerii w rogu
  * 3. Po zrobieniu zdjęcia otwiera się ekran kadrowania
  * 4. Użytkownik przesuwa i zmienia rozmiar prostokąta
  * 5. Po zatwierdzeniu otrzymuje URI przyciętego zdjęcia
@@ -18,7 +18,9 @@ import {
     Modal,
     Dimensions,
     PanResponder,
+    TouchableOpacity,
 } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import ThemedButton from './ThemedButton';
@@ -30,26 +32,79 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" }) => {
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showCameraModal, setShowCameraModal] = useState(false);
     const [showCropModal, setShowCropModal] = useState(false);
     const [imageToProcess, setImageToProcess] = useState(null);
     const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+    const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+    const cameraRef = useRef(null);
 
     /**
-     * Otwiera natywny aparat (automatycznie ma przycisk do galerii)
+     * Otwiera custom aparat
      */
     const openCamera = async () => {
         try {
-            const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-            if (cameraPermission.status !== 'granted') {
-                Alert.alert('Brak uprawnień', 'Potrzebujemy dostępu do aparatu');
+            const mediaPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            
+            if (!cameraPermission) {
+                Alert.alert('Błąd', 'Nie można sprawdzić uprawnień aparatu');
                 return;
             }
 
-            await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!cameraPermission.granted) {
+                const result = await requestCameraPermission();
+                if (!result.granted) {
+                    Alert.alert('Brak uprawnień', 'Potrzebujemy dostępu do aparatu');
+                    return;
+                }
+            }
 
+            if (mediaPermission.status !== 'granted') {
+                Alert.alert('Brak uprawnień', 'Potrzebujemy dostępu do galerii');
+                return;
+            }
+
+            setShowCameraModal(true);
+        } catch (error) {
+            console.error('Błąd uprawnień:', error);
+            Alert.alert('Błąd', 'Nie można otworzyć aparatu');
+        }
+    };
+
+    /**
+     * Robi zdjęcie aparatem
+     */
+    const takePicture = async () => {
+        if (!cameraRef.current) return;
+
+        try {
+            setIsProcessing(true);
+            const photo = await cameraRef.current.takePictureAsync({
+                quality: 1,
+                exif: false,
+            });
+
+            setShowCameraModal(false);
+            setImageToProcess(photo.uri);
+            setImageSize({ width: photo.width, height: photo.height });
+            setShowCropModal(true);
+            setIsProcessing(false);
+        } catch (error) {
+            console.error('Błąd robienia zdjęcia:', error);
+            Alert.alert('Błąd', 'Nie można zrobić zdjęcia');
+            setIsProcessing(false);
+        }
+    };
+
+    /**
+     * Otwiera galerię z custom aparatu
+     */
+    const openGalleryFromCamera = async () => {
+        try {
+            setShowCameraModal(false);
             setIsProcessing(true);
 
-            const result = await ImagePicker.launchCameraAsync({
+            const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],
                 allowsEditing: false,
                 quality: 1,
@@ -65,8 +120,8 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" })
 
             setIsProcessing(false);
         } catch (error) {
-            console.error('Błąd aparatu:', error);
-            Alert.alert('Błąd', 'Nie można uruchomić aparatu');
+            console.error('Błąd galerii:', error);
+            Alert.alert('Błąd', 'Nie można otworzyć galerii');
             setIsProcessing(false);
         }
     };
@@ -138,6 +193,56 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" })
                     {isProcessing ? '⏳ Przetwarzanie...' : `📷 ${buttonText}`}
                 </ThemedText>
             </ThemedButton>
+
+            {/* Modal z custom aparatem */}
+            <Modal
+                visible={showCameraModal}
+                animationType="slide"
+                onRequestClose={() => setShowCameraModal(false)}
+            >
+                <View style={styles.cameraContainer}>
+                    <CameraView
+                        ref={cameraRef}
+                        style={styles.camera}
+                        facing="back"
+                    >
+                        {/* Przyciski aparatu */}
+                        <View style={styles.cameraControls}>
+                            {/* Przycisk zamknij (góra lewo) */}
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={() => setShowCameraModal(false)}
+                            >
+                                <ThemedText style={styles.closeButtonText}>✕</ThemedText>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Dolna belka z przyciskami */}
+                        <View style={styles.bottomControls}>
+                            {/* Przycisk galerii (lewy dolny róg) */}
+                            <TouchableOpacity
+                                style={styles.galleryButton}
+                                onPress={openGalleryFromCamera}
+                                disabled={isProcessing}
+                            >
+                                <ThemedText style={styles.galleryButtonText}>🖼️</ThemedText>
+                            </TouchableOpacity>
+
+                            {/* Przycisk zrobienia zdjęcia (środek) */}
+                            <TouchableOpacity
+                                style={styles.captureButton}
+                                onPress={takePicture}
+                                disabled={isProcessing}
+                            >
+                                <View style={styles.captureButtonInner} />
+                            </TouchableOpacity>
+
+                            {/* Placeholder dla symetrii */}
+                            <View style={styles.galleryButton} />
+                        </View>
+                    </CameraView>
+                </View>
+            </Modal>
 
             <ManualCropModal
                 visible={showCropModal}
@@ -528,6 +633,76 @@ const styles = StyleSheet.create({
         backgroundColor: '#757575',
         paddingHorizontal: 50,
         width: '80%',
+    },
+    // Style dla custom aparatu
+    cameraContainer: {
+        flex: 1,
+        backgroundColor: '#000',
+    },
+    camera: {
+        flex: 1,
+    },
+    cameraControls: {
+        flex: 1,
+        backgroundColor: 'transparent',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 50,
+        left: 20,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10,
+    },
+    closeButtonText: {
+        fontSize: 28,
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    bottomControls: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 30,
+        paddingBottom: 40,
+        backgroundColor: 'transparent',
+    },
+    galleryButton: {
+        width: 60,
+        height: 60,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
+    galleryButtonText: {
+        fontSize: 30,
+    },
+    captureButton: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 5,
+        borderColor: '#fff',
+    },
+    captureButtonInner: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#fff',
     },
 });
 

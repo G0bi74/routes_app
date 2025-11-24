@@ -19,6 +19,7 @@ import ThemedText from '../../components/ThemedText';
 import ThemedView from '../../components/ThemedView';
 import ThemedButton from '../../components/ThemedButton';
 import ThemedCard from '../../components/ThemedCard';
+import ThemedTextInput from '../../components/ThemedTextInput';
 
 /**
  * Funkcja pomocnicza - formatuje datę
@@ -112,8 +113,14 @@ const imageToBase64 = async (uri) => {
 /**
  * Generuje HTML dla raportu
  */
-const generateReportHTML = async (routes, title, dateRange) => {
+const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fuelPrice) => {
     const totalKm = routes.reduce((sum, route) => sum + (route.distance || 0), 0);
+    
+    // Obliczenia paliwowe
+    const consumption = parseFloat(fuelConsumption) || 0;
+    const price = parseFloat(fuelPrice) || 0;
+    const totalFuelLiters = consumption > 0 ? (totalKm / 100) * consumption : 0;
+    const totalFuelCost = price > 0 ? totalFuelLiters * price : 0;
     
     // Konwertuj wszystkie zdjęcia na Base64
     const routesWithImages = await Promise.all(
@@ -190,6 +197,14 @@ const generateReportHTML = async (routes, title, dateRange) => {
                     border-radius: 5px;
                     font-size: 18px;
                 }
+                .fuel-summary {
+                    margin-top: 20px;
+                    padding: 20px;
+                    background-color: #e8f5e9;
+                    border-radius: 5px;
+                    font-size: 16px;
+                    border-left: 4px solid #4CAF50;
+                }
                 .footer {
                     margin-top: 50px;
                     text-align: center;
@@ -228,6 +243,19 @@ const generateReportHTML = async (routes, title, dateRange) => {
                 Łączna odległość: ${totalKm.toFixed(2)} km
             </div>
 
+            ${consumption > 0 && price > 0 ? `
+            <div class="fuel-summary">
+                <strong>⛽ Statystyki paliwowe:</strong><br/>
+                <div style="margin-top: 10px;">
+                    <span style="color: #666;">Średnie spalanie:</span> <strong>${consumption.toFixed(2)} l/100km</strong><br/>
+                    <span style="color: #666;">Cena paliwa:</span> <strong>${price.toFixed(2)} zł/litr</strong><br/>
+                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #ccc;"/>
+                    <span style="color: #666;">Zużycie paliwa:</span> <strong style="color: #4CAF50;">${totalFuelLiters.toFixed(2)} litrów</strong><br/>
+                    <span style="color: #666;">Koszt paliwa:</span> <strong style="color: #4CAF50;">${totalFuelCost.toFixed(2)} zł</strong>
+                </div>
+            </div>
+            ` : ''}
+
             <div class="footer">
                 <p>Raport wygenerowany automatycznie przez Routes App</p>
             </div>
@@ -241,6 +269,10 @@ const Profile = () => {
     const { logout, user } = useUser();
     const { routes } = useRoutes();
     const [loading, setLoading] = useState(false);
+    
+    // Stany dla spalania i ceny paliwa
+    const [fuelConsumption, setFuelConsumption] = useState(''); // litry/100km
+    const [fuelPrice, setFuelPrice] = useState(''); // zł/litr
 
     /**
      * Generuje raport PDF
@@ -262,7 +294,13 @@ const Profile = () => {
             }
 
             const title = type === 'week' ? 'Raport Tygodniowy' : 'Raport Miesięczny';
-            const html = await generateReportHTML(filteredRoutes, title, { start, end });
+            const html = await generateReportHTML(
+                filteredRoutes, 
+                title, 
+                { start, end },
+                fuelConsumption,
+                fuelPrice
+            );
 
             // Generowanie PDF
             const { uri } = await Print.printToFileAsync({ html });
@@ -290,6 +328,12 @@ const Profile = () => {
     // Statystyki
     const completedRoutes = routes.filter(r => r.status === 'completed');
     const totalKm = completedRoutes.reduce((sum, r) => sum + (r.distance || 0), 0);
+    
+    // Obliczenia paliwowe
+    const consumption = parseFloat(fuelConsumption) || 0;
+    const price = parseFloat(fuelPrice) || 0;
+    const totalFuelLiters = (totalKm / 100) * consumption; // litry
+    const totalFuelCost = totalFuelLiters * price; // zł
 
     return(
         <ThemedView style={styles.container} safe={true}>
@@ -315,6 +359,50 @@ const Profile = () => {
                         <ThemedText style={styles.statsLabel}>Łączna odległość:</ThemedText>
                         <ThemedText style={styles.statsValue}>{totalKm.toFixed(2)} km</ThemedText>
                     </View>
+                    
+                    <Spacer height={20} />
+                    <ThemedText style={styles.statsSubtitle}>⛽ Parametry paliwa</ThemedText>
+                    <Spacer height={10} />
+                    
+                    <ThemedText style={styles.inputLabel}>Średnie spalanie (l/100km):</ThemedText>
+                    <ThemedTextInput
+                        placeholder="np. 7.5"
+                        value={fuelConsumption}
+                        onChangeText={setFuelConsumption}
+                        keyboardType="decimal-pad"
+                        style={styles.input}
+                    />
+                    
+                    <Spacer height={10} />
+                    
+                    <ThemedText style={styles.inputLabel}>Cena paliwa (zł/litr):</ThemedText>
+                    <ThemedTextInput
+                        placeholder="np. 6.50"
+                        value={fuelPrice}
+                        onChangeText={setFuelPrice}
+                        keyboardType="decimal-pad"
+                        style={styles.input}
+                    />
+                    
+                    {consumption > 0 && price > 0 && (
+                        <>
+                            <Spacer height={20} />
+                            <View style={styles.fuelStatsContainer}>
+                                <View style={styles.statsRow}>
+                                    <ThemedText style={styles.statsLabel}>Zużycie paliwa:</ThemedText>
+                                    <ThemedText style={styles.statsValueHighlight}>
+                                        {totalFuelLiters.toFixed(2)} l
+                                    </ThemedText>
+                                </View>
+                                <View style={styles.statsRow}>
+                                    <ThemedText style={styles.statsLabel}>Koszt paliwa:</ThemedText>
+                                    <ThemedText style={styles.statsValueHighlight}>
+                                        {totalFuelCost.toFixed(2)} zł
+                                    </ThemedText>
+                                </View>
+                            </View>
+                        </>
+                    )}
                 </ThemedCard>
 
                 <Spacer height={30} />
@@ -400,6 +488,11 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
+    statsSubtitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginTop: 5,
+    },
     statsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -411,6 +504,26 @@ const styles = StyleSheet.create({
     statsValue: {
         fontSize: 15,
         fontWeight: 'bold',
+    },
+    statsValueHighlight: {
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: '#4CAF50',
+    },
+    inputLabel: {
+        fontSize: 14,
+        marginBottom: 5,
+        opacity: 0.8,
+    },
+    input: {
+        fontSize: 15,
+    },
+    fuelStatsContainer: {
+        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+        padding: 15,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#4CAF50',
     },
     reportCard: {
         padding: 15,

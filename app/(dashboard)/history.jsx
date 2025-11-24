@@ -73,6 +73,13 @@ const History = () => {
     const { routes } = useRoutes();
     const router = useRouter();
 
+    // Sortowanie tras chronologicznie (najnowsze na górze)
+    const sortedRoutes = [...routes].sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
+        return dateB - dateA; // Odwrotna kolejność (najnowsze pierwsze)
+    });
+
     return(
         <ThemedView style={styles.container} safe={true}>
             <Spacer/>
@@ -98,7 +105,7 @@ const History = () => {
             ) : (
                 // Wyświetl listę tras
                 <FlatList
-                    data={routes}
+                    data={sortedRoutes}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.list}
                     renderItem={({item}) => (

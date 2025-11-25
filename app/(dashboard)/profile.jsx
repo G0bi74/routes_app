@@ -349,7 +349,7 @@ const Profile = () => {
 
                 {/* Statystyki ogólne */}
                 <ThemedCard style={styles.statsCard}>
-                    <ThemedText style={styles.statsTitle}>📊 Statystyki</ThemedText>
+                    <ThemedText style={styles.statsTitle}>Statystyki</ThemedText>
                     <Spacer height={15} />
                     <View style={styles.statsRow}>
                         <ThemedText style={styles.statsLabel}>Zakończone trasy:</ThemedText>
@@ -359,11 +359,7 @@ const Profile = () => {
                         <ThemedText style={styles.statsLabel}>Łączna odległość:</ThemedText>
                         <ThemedText style={styles.statsValue}>{totalKm.toFixed(2)} km</ThemedText>
                     </View>
-                    
-                    <Spacer height={20} />
-                    <ThemedText style={styles.statsSubtitle}>⛽ Parametry paliwa</ThemedText>
-                    <Spacer height={10} />
-                    
+                
                     <ThemedText style={styles.inputLabel}>Średnie spalanie (l/100km):</ThemedText>
                     <ThemedTextInput
                         placeholder="np. 7.5"
@@ -408,7 +404,7 @@ const Profile = () => {
                 <Spacer height={30} />
 
                 {/* Sekcja raportów */}
-                <ThemedText style={styles.sectionTitle}>📄 Raporty PDF</ThemedText>
+                <ThemedText style={styles.sectionTitle}>Raporty PDF</ThemedText>
                 <Spacer height={15} />
 
                 {/* Raport tygodniowy */}

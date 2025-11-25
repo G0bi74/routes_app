@@ -7,7 +7,8 @@
  */
 
 import { StyleSheet, ScrollView, View, Alert } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '../../hooks/useUser';
 import { useRoutes } from '../../hooks/useRoutes';
 import * as Print from 'expo-print';
@@ -274,6 +275,47 @@ const Profile = () => {
     const [fuelConsumption, setFuelConsumption] = useState(''); // litry/100km
     const [fuelPrice, setFuelPrice] = useState(''); // zł/litr
 
+    // Wczytanie zapisanych wartości przy starcie
+    useEffect(() => {
+        const loadFuelData = async () => {
+            try {
+                const savedConsumption = await AsyncStorage.getItem('fuelConsumption');
+                const savedPrice = await AsyncStorage.getItem('fuelPrice');
+                
+                if (savedConsumption !== null) {
+                    setFuelConsumption(savedConsumption);
+                }
+                if (savedPrice !== null) {
+                    setFuelPrice(savedPrice);
+                }
+            } catch (error) {
+                console.error('Błąd wczytywania danych paliwowych:', error);
+            }
+        };
+        
+        loadFuelData();
+    }, []);
+
+    // Zapisywanie wartości spalania
+    const handleFuelConsumptionChange = async (value) => {
+        setFuelConsumption(value);
+        try {
+            await AsyncStorage.setItem('fuelConsumption', value);
+        } catch (error) {
+            console.error('Błąd zapisywania spalania:', error);
+        }
+    };
+
+    // Zapisywanie wartości ceny
+    const handleFuelPriceChange = async (value) => {
+        setFuelPrice(value);
+        try {
+            await AsyncStorage.setItem('fuelPrice', value);
+        } catch (error) {
+            console.error('Błąd zapisywania ceny:', error);
+        }
+    };
+
     /**
      * Generuje raport PDF
      */
@@ -364,7 +406,7 @@ const Profile = () => {
                     <ThemedTextInput
                         placeholder="np. 7.5"
                         value={fuelConsumption}
-                        onChangeText={setFuelConsumption}
+                        onChangeText={handleFuelConsumptionChange}
                         keyboardType="decimal-pad"
                         style={styles.input}
                     />
@@ -372,7 +414,7 @@ const Profile = () => {
                     <ThemedTextInput
                         placeholder="np. 6.50"
                         value={fuelPrice}
-                        onChangeText={setFuelPrice}
+                        onChangeText={handleFuelPriceChange}
                         keyboardType="decimal-pad"
                         style={styles.input}
                     />

@@ -190,10 +190,12 @@ export const RoutesProvider = ({ children }) => {
      * 4. Zwrócenie ID utworzonej trasy
      * 
      * @param {string} description - Opis trasy
+     * @param {string} photoUri - URI zdjęcia początku trasy (opcjonalne)
+     * @param {number} mileageOcr - Stan licznika wykryty z OCR (opcjonalne)
      * @returns {Promise<string>} ID utworzonej trasy
      * @throws {Error} Jeśli nie można pobrać lokalizacji lub utworzyć trasy
      */
-    async function startLiveRoute(description = "Trasa na żywo", photoUri = null) {
+    async function startLiveRoute(description = "Trasa na żywo", photoUri = null, mileageOcr = null) {
         try {
             console.log("Rozpoczynanie trasy na żywo...");
 
@@ -239,6 +241,11 @@ export const RoutesProvider = ({ children }) => {
                 startImageUri: photoUri || null,
                 endImageUri: null,
                 
+                // Stan licznika z OCR
+                startMileage: mileageOcr || null,
+                endMileage: null,
+                mileageDistance: null, // Odległość wyliczona ze stanów licznika
+                
                 // Metadane - WAŻNE: zachowujemy tę samą strukturę co trasa manualna
                 userId: user.uid,
                 createdAt: Timestamp.now(),
@@ -280,14 +287,16 @@ export const RoutesProvider = ({ children }) => {
      * Proces:
      * 1. Pobranie aktualnej lokalizacji GPS
      * 2. Zamiana współrzędnych na adres
-     * 3. Obliczenie odległości między startem a końcem
-     * 4. Aktualizacja trasy w bazie ze statusem "completed"
+     * 3. Obliczenie odległości między startem a końcem (GPS)
+     * 4. Obliczenie odległości ze stanów licznika (jeśli dostępne)
+     * 5. Aktualizacja trasy w bazie ze statusem "completed"
      * 
      * @param {string} routeId - ID trasy do zakończenia
      * @param {string} photoUri - URI zdjęcia końca trasy (opcjonalne)
+     * @param {number} mileageOcr - Stan licznika wykryty z OCR (opcjonalne)
      * @throws {Error} Jeśli nie można zakończyć trasy
      */
-    async function endLiveRoute(routeId, photoUri = null) {
+    async function endLiveRoute(routeId, photoUri = null, mileageOcr = null) {
         try {
             console.log("Kończenie trasy na żywo...");
 
@@ -317,7 +326,24 @@ export const RoutesProvider = ({ children }) => {
                 { lat: location.lat, lon: location.lon }
             );
 
-            // Krok 5: Przygotowanie danych do aktualizacji
+            // Krok 5: Obliczenie odległości ze stanów licznika (jeśli dostępne)
+            let mileageDistance = null;
+            let finalDistance = routeInfo.distance;
+            
+            if (mileageOcr && routeData.startMileage) {
+                // Oblicz różnicę między stanem końcowym a początkowym
+                mileageDistance = mileageOcr - routeData.startMileage;
+                
+                // Użyj odległości z licznika jeśli jest większa od 0
+                if (mileageDistance > 0) {
+                    finalDistance = mileageDistance;
+                    console.log(`Odległość z licznika: ${mileageDistance} km (${routeData.startMileage} -> ${mileageOcr})`);
+                } else {
+                    console.log('Odległość z licznika nieprawidłowa, używam GPS');
+                }
+            }
+            
+            // Krok 6: Przygotowanie danych do aktualizacji
             const updateData = {
                 // Dane końca trasy
                 endAddress: endAddressData.displayName,
@@ -328,9 +354,13 @@ export const RoutesProvider = ({ children }) => {
                 },
                 
                 // Informacje o trasie
-                distance: routeInfo.distance,
-                distanceMeters: routeInfo.distanceMeters,
+                distance: finalDistance, // Odległość z licznika lub GPS
+                distanceMeters: finalDistance * 1000,
                 duration: routeInfo.duration,
+                
+                // Stan licznika z OCR
+                endMileage: mileageOcr || null,
+                mileageDistance: mileageDistance, // Odległość wyliczona ze stanów licznika
                 
                 // Zdjęcie końca (jeśli jest)
                 endImageUri: photoUri || null,
@@ -340,7 +370,7 @@ export const RoutesProvider = ({ children }) => {
                 completedAt: Timestamp.now(),
             };
 
-            // Krok 6: Aktualizacja dokumentu w Firestore
+            // Krok 7: Aktualizacja dokumentu w Firestore
             console.log("Aktualizacja trasy w bazie...");
             const routeRef = doc(db, COLLECTION_NAME, routeId);
             await updateDoc(routeRef, updateData);

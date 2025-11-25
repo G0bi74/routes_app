@@ -153,8 +153,49 @@ const RouteDetails = () => {
                                 </ThemedView>
                                 <ThemedText style={styles.infoValue}>
                                     {formatDistance(route.distance)}
+                                    {route.mileageDistance && route.mileageDistance > 0 && (
+                                        <ThemedText style={styles.mileageNote}> (z licznika)</ThemedText>
+                                    )}
                                 </ThemedText>
                             </ThemedView>
+                            
+                            {/* Stany licznika - jeśli dostępne */}
+                            {(route.startMileage || route.endMileage) && (
+                                <>
+                                    {route.startMileage && (
+                                        <ThemedView style={styles.infoRow}>
+                                            <ThemedView style={styles.infoLabelContainer}>
+                                                <ThemedText style={styles.infoLabel}>Stan licznika (start)</ThemedText>
+                                            </ThemedView>
+                                            <ThemedText style={styles.infoValue}>
+                                                {route.startMileage.toLocaleString('pl-PL')} km
+                                            </ThemedText>
+                                        </ThemedView>
+                                    )}
+                                    
+                                    {route.endMileage && (
+                                        <ThemedView style={styles.infoRow}>
+                                            <ThemedView style={styles.infoLabelContainer}>
+                                                <ThemedText style={styles.infoLabel}>Stan licznika (koniec)</ThemedText>
+                                            </ThemedView>
+                                            <ThemedText style={styles.infoValue}>
+                                                {route.endMileage.toLocaleString('pl-PL')} km
+                                            </ThemedText>
+                                        </ThemedView>
+                                    )}
+                                    
+                                    {route.mileageDistance && route.mileageDistance > 0 && (
+                                        <ThemedView style={styles.infoRow}>
+                                            <ThemedView style={styles.infoLabelContainer}>
+                                                <ThemedText style={styles.infoLabel}>Różnica (licznik)</ThemedText>
+                                            </ThemedView>
+                                            <ThemedText style={[styles.infoValue, styles.mileageHighlight]}>
+                                                {route.mileageDistance.toFixed(2)} km
+                                            </ThemedText>
+                                        </ThemedView>
+                                    )}
+                                </>
+                            )}
                             
                             {route.duration && (
                                 <ThemedView style={styles.infoRow}>
@@ -245,7 +286,7 @@ const RouteDetails = () => {
                                     <Image 
                                         source={{ uri: route.startImageUri }} 
                                         style={styles.routeImage}
-                                        resizeMode="cover"
+                                        resizeMode="contain"
                                     />
                                 </ThemedView>
                             )}
@@ -256,7 +297,7 @@ const RouteDetails = () => {
                                     <Image 
                                         source={{ uri: route.endImageUri }} 
                                         style={styles.routeImage}
-                                        resizeMode="cover"
+                                        resizeMode="contain"
                                     />
                                 </ThemedView>
                             )}
@@ -281,7 +322,7 @@ const RouteDetails = () => {
                 )}
                 
                 {/* Przycisk usuwania trasy */}
-                <ThemedButton style={styles.delete} onPress={handleDelete}>
+                <ThemedButton style={styles.deleteButton} onPress={handleDelete}>
                     <Text style={{color: "#fff", textAlign: 'center'}}>
                         Usuń Trasę
                     </Text>
@@ -359,6 +400,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
+    mileageNote: {
+        fontSize: 12,
+        opacity: 0.6,
+        fontStyle: 'italic',
+    },
+    mileageHighlight: {
+        color: '#4CAF50',
+        fontWeight: '600',
+    },
     description: {
         fontSize: 15,
         lineHeight: 22,
@@ -379,7 +429,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 40,
         backgroundColor: '#2196F3',
     },
-    delete: {
+    deleteButton: {
         marginTop: 20,
         marginHorizontal: 40,
         backgroundColor: Colors.warning,
@@ -395,7 +445,7 @@ const styles = StyleSheet.create({
     },
     routeImage: {
         width: '100%',
-        height: 200,
+        height: 250,
         borderRadius: 8,
         backgroundColor: '#f0f0f0',
     }

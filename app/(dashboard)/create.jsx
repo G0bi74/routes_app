@@ -14,6 +14,7 @@
 
 import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View } from 'react-native';
 import { useRoutes } from '../../hooks/useRoutes';
+import { useOcr } from '../../hooks/useOcr';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
@@ -49,9 +50,14 @@ const Create = () => {
     // Stany dla zdjęć
     const [startPhotoUri, setStartPhotoUri] = useState(null);
     const [endPhotoUri, setEndPhotoUri] = useState(null);
+    
+    // Stany dla przebiegów z OCR
+    const [startMileage, setStartMileage] = useState(null);
+    const [endMileage, setEndMileage] = useState(null);
 
     // Pobranie funkcji z kontekstu
     const { createRoute, startLiveRoute, endLiveRoute, routes, fetchRouteById } = useRoutes();
+    const { recognizeText, isProcessing } = useOcr();
     const router = useRouter();
 
     /**
@@ -203,19 +209,39 @@ const Create = () => {
         setLoading(true);
 
         try {
-            // Rozpoczęcie trasy na żywo ze zdjęciem
+            // Rozpoznaj stan licznika ze zdjęcia
+            let mileageOcr = null;
+            if (photoUri) {
+                console.log('Rozpoczynam rozpoznawanie OCR...');
+                const ocrResult = await recognizeText(photoUri);
+                
+                if (ocrResult.success && ocrResult.mileage) {
+                    mileageOcr = ocrResult.mileage;
+                    setStartMileage(mileageOcr);
+                    console.log(`Wykryto stan licznika początkowy: ${mileageOcr} km`);
+                } else {
+                    console.log('Nie wykryto stanu licznika na zdjęciu');
+                }
+            }
+            
+            // Rozpoczęcie trasy na żywo ze zdjęciem i stanem licznika
             const routeId = await startLiveRoute(
                 description.trim() || "Trasa na żywo",
-                photoUri
+                photoUri,
+                mileageOcr
             );
 
             // Zapisanie ID trasy
             setLiveRouteId(routeId);
 
             // Pokazanie komunikatu
+            const message = mileageOcr 
+                ? `Lokalizacja początkowa, zdjęcie i stan licznika (${mileageOcr} km) zostały zapisane. Możesz teraz zakończyć trasę w dowolnym momencie.`
+                : "Lokalizacja początkowa i zdjęcie zostały zapisane. Możesz teraz zakończyć trasę w dowolnym momencie.";
+            
             Alert.alert(
                 "Trasa rozpoczęta!",
-                "Lokalizacja początkowa i zdjęcie zostały zapisane. Możesz teraz zakończyć trasę w dowolnym momencie.",
+                message,
                 [{ text: "OK" }]
             );
 
@@ -257,19 +283,46 @@ const Create = () => {
         setLoading(true);
 
         try {
-            // Zakończenie trasy ze zdjęciem
-            await endLiveRoute(liveRouteId, photoUri);
+            // Rozpoznaj stan licznika ze zdjęcia
+            let mileageOcr = null;
+            if (photoUri) {
+                console.log('Rozpoczynam rozpoznawanie OCR...');
+                const ocrResult = await recognizeText(photoUri);
+                
+                if (ocrResult.success && ocrResult.mileage) {
+                    mileageOcr = ocrResult.mileage;
+                    setEndMileage(mileageOcr);
+                    console.log(`Wykryto stan licznika końcowy: ${mileageOcr} km`);
+                } else {
+                    console.log('Nie wykryto stanu licznika na zdjęciu');
+                }
+            }
+            
+            // Zakończenie trasy ze zdjęciem i stanem licznika
+            await endLiveRoute(liveRouteId, photoUri, mileageOcr);
+
+            // Oblicz odległość ze stanów licznika jeśli oba są dostępne
+            let message = "Trasa została pomyślnie zapisana ze zdjęciem końca i obliczoną odległością.";
+            
+            if (startMileage && mileageOcr) {
+                const mileageDistance = mileageOcr - startMileage;
+                if (mileageDistance > 0) {
+                    message = `Trasa zakończona!\n\nStan licznika:\n- Początek: ${startMileage} km\n- Koniec: ${mileageOcr} km\n- Przejechano: ${mileageDistance} km`;
+                }
+            }
 
             // Pokazanie komunikatu sukcesu
             Alert.alert(
                 "Trasa zakończona!",
-                "Trasa została pomyślnie zapisana ze zdjęciem końca i obliczoną odległością.",
+                message,
                 [{ text: "OK" }]
             );
 
             // Resetowanie stanu
             setLiveRouteId(null);
             setEndPhotoUri(null);
+            setStartMileage(null);
+            setEndMileage(null);
 
             // Przekierowanie do historii
             router.replace('/history');

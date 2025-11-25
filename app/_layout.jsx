@@ -13,6 +13,7 @@ import { Colors } from "../constants/Colors";
 import { StatusBar } from "expo-status-bar";
 import { UserProvider } from "../context/UserContext";
 import { RoutesProvider } from "../context/RoutesContext";
+import { OcrProvider } from "../context/OcrContext";
 
 const RootLayout = () => {
     // Pobieranie aktualnego motywu systemowego
@@ -24,34 +25,37 @@ const RootLayout = () => {
         <UserProvider>
             {/* Provider dla tras - udostępnia trasy w całej aplikacji */}
             <RoutesProvider>
-                {/* Pasek statusu */}
-                <StatusBar style="auto" />
-                
-                {/* Stack Navigator - główna nawigacja */}
-                <Stack 
-                    screenOptions={{
-                        headerStyle: { backgroundColor: theme.navBackground},
-                        headerTintColor: theme.title,
-                    }}
-                > 
-                    {/* Strona główna */}
-                    <Stack.Screen 
-                        name="index" 
-                        options={{ title: 'Strona Główna'}} 
-                    />
+                {/* Provider dla OCR - rozpoznawanie tekstu ze zdjęć */}
+                <OcrProvider>
+                    {/* Pasek statusu */}
+                    <StatusBar style="auto" />
                     
-                    {/* Sekcja autoryzacji (login, register) */}
-                    <Stack.Screen 
-                        name="(auth)" 
-                        options={{ headerShown: false}} 
-                    />
-                    
-                    {/* Sekcja dashboard (profile, history, create) */}
-                    <Stack.Screen 
-                        name="(dashboard)" 
-                        options={{ headerShown: false}} 
-                    />
-                </Stack>
+                    {/* Stack Navigator - główna nawigacja */}
+                    <Stack 
+                        screenOptions={{
+                            headerStyle: { backgroundColor: theme.navBackground},
+                            headerTintColor: theme.title,
+                        }}
+                    > 
+                        {/* Strona główna */}
+                        <Stack.Screen 
+                            name="index" 
+                            options={{ title: 'Strona Główna'}} 
+                        />
+                        
+                        {/* Sekcja autoryzacji (login, register) */}
+                        <Stack.Screen 
+                            name="(auth)" 
+                            options={{ headerShown: false}} 
+                        />
+                        
+                        {/* Sekcja dashboard (profile, history, create) */}
+                        <Stack.Screen 
+                            name="(dashboard)" 
+                            options={{ headerShown: false}} 
+                        />
+                    </Stack>
+                </OcrProvider>
             </RoutesProvider>
         </UserProvider>
     );

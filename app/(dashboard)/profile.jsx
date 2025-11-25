@@ -368,9 +368,6 @@ const Profile = () => {
                         keyboardType="decimal-pad"
                         style={styles.input}
                     />
-                    
-                    <Spacer height={10} />
-                    
                     <ThemedText style={styles.inputLabel}>Cena paliwa (zł/litr):</ThemedText>
                     <ThemedTextInput
                         placeholder="np. 6.50"
@@ -382,7 +379,6 @@ const Profile = () => {
                     
                     {consumption > 0 && price > 0 && (
                         <>
-                            <Spacer height={20} />
                             <View style={styles.fuelStatsContainer}>
                                 <View style={styles.statsRow}>
                                     <ThemedText style={styles.statsLabel}>Zużycie paliwa:</ThemedText>

@@ -126,9 +126,6 @@ export const RoutesProvider = ({ children }) => {
                 distanceMeters: routeInfo.distanceMeters,  // w metrach
                 duration: routeInfo.duration,              // w minutach
                 
-                // Opis użytkownika
-                description: data.description,
-                
                 // Metadane
                 userId: user.uid,
                 createdAt: data.createdAt || Timestamp.now(),
@@ -189,13 +186,12 @@ export const RoutesProvider = ({ children }) => {
      * 3. Utworzenie trasy w bazie ze statusem "in-progress"
      * 4. Zwrócenie ID utworzonej trasy
      * 
-     * @param {string} description - Opis trasy
      * @param {string} photoUri - URI zdjęcia początku trasy (opcjonalne)
      * @param {number} mileageOcr - Stan licznika wykryty z OCR (opcjonalne)
      * @returns {Promise<string>} ID utworzonej trasy
      * @throws {Error} Jeśli nie można pobrać lokalizacji lub utworzyć trasy
      */
-    async function startLiveRoute(description = "Trasa na żywo", photoUri = null, mileageOcr = null) {
+    async function startLiveRoute(photoUri = null, mileageOcr = null) {
         try {
             console.log("Rozpoczynanie trasy na żywo...");
 
@@ -233,9 +229,6 @@ export const RoutesProvider = ({ children }) => {
                 distance: 0,
                 distanceMeters: 0,
                 duration: 0,
-                
-                // Opis użytkownika
-                description: description,
                 
                 // Zdjęcia
                 startImageUri: photoUri || null,

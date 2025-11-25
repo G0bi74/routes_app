@@ -262,19 +262,6 @@ const RouteDetails = () => {
                         </>
                     )}
                     
-                    {/* Sekcja opisu */}
-                    {route.description && route.description !== "Brak opisu" && (
-                        <>
-                            <ThemedText style={styles.sectionTitle}>Opis</ThemedText>
-                            <ThemedText style={styles.description}>
-                                {route.description}
-                            </ThemedText>
-                            <Spacer height={20} />
-                            <ThemedView style={styles.separator} />
-                            <Spacer height={20} />
-                        </>
-                    )}
-                    
                     {/* Sekcja zdjęć */}
                     {(route.startImageUri || route.endImageUri) && (
                         <>

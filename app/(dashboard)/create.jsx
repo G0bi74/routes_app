@@ -32,7 +32,6 @@ const Create = () => {
     // Stany dla pól formularza (tryb manualny)
     const [startAddress, setStartAddress] = useState("");
     const [endAddress, setEndAddress] = useState("");
-    const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -123,8 +122,7 @@ const Create = () => {
             // Przygotowanie danych do zapisu
             const routeData = {
                 startAddress: startAddress.trim(),
-                endAddress: endAddress.trim(),
-                description: description.trim() || "Brak opisu"
+                endAddress: endAddress.trim()
             };
 
             // Jeśli podano datę i godziny, parsuj je
@@ -176,7 +174,6 @@ const Create = () => {
             // Resetowanie formularza
             setStartAddress("");
             setEndAddress("");
-            setDescription("");
             setStartDate("");
             setStartTime("");
             setEndTime("");
@@ -226,7 +223,6 @@ const Create = () => {
             
             // Rozpoczęcie trasy na żywo ze zdjęciem i stanem licznika
             const routeId = await startLiveRoute(
-                description.trim() || "Trasa na żywo",
                 photoUri,
                 mileageOcr
             );
@@ -246,7 +242,6 @@ const Create = () => {
             );
 
             // Resetowanie formularza
-            setDescription("");
             setStartPhotoUri(null);
 
         } catch (error) {
@@ -363,19 +358,9 @@ const Create = () => {
                             
                             <Spacer height={12} />
 
-                            {/* Pole opisu dla trasy GPS */}
+                            {/* Informacja o przycisku */}
                             {!liveRouteId && (
                                 <>
-                                    <ThemedTextInput
-                                        style={styles.input}
-                                        placeholder="Opis trasy (opcjonalnie)"
-                                        value={description}
-                                        onChangeText={setDescription}
-                                        editable={loading !== true}
-                                    />
-                                    <Spacer height={15} />
-                                    
-                                    {/* Informacja o przycisku */}
                                     <ThemedText style={styles.subtitle}>
                                         Przycisk otworzy aparat do zrobienia zdjęcia i rozpocznie trasę z lokalizacją GPS
                                     </ThemedText>
@@ -453,7 +438,6 @@ const Create = () => {
                                     setShowManualForm(false);
                                     setStartAddress("");
                                     setEndAddress("");
-                                    setDescription("");
                                     setStartDate("");
                                     setStartTime("");
                                     setEndTime("");
@@ -488,19 +472,7 @@ const Create = () => {
                                 editable={loading !== true && !liveRouteId}
                             />
                             
-                            <Spacer height={10} />
-
-                            {/* Pole: Opis */}
-                            <ThemedTextInput
-                                style={styles.input}
-                                placeholder="Opis trasy (opcjonalnie)"
-                                value={description}
-                                onChangeText={setDescription}
-                                editable={loading !== true && !liveRouteId}
-                            />
-                            
                             <Spacer height={15} />
-
 
                             <ThemedText style={styles.subsectionTitle}>
                                 Opcjonalnie - Data i godziny

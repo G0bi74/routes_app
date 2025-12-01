@@ -27,6 +27,36 @@ import ThemedLoader from '../../../components/ThemedLoader';
 import LiveRouteBadge from '../../../components/LiveRouteBadge';
 import { Colors } from '../../../constants/Colors';
 
+// Dodanie funkcji formatujących
+const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    try {
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleDateString('pl-PL', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    } catch (error) {
+        console.error('Błąd formatowania daty:', error);
+        return '';
+    }
+};
+
+const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    try {
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleTimeString('pl-PL', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        console.error('Błąd formatowania czasu:', error);
+        return '';
+    }
+};
+
 const RouteDetails = () => {
     // Stan dla przechowywania szczegółów trasy
     const [route, setRoute] = useState(null);
@@ -109,120 +139,74 @@ const RouteDetails = () => {
                     
                     <Spacer height={20} />
                     
-                    {/* Sekcja informacji o trasie - tylko dla zakończonych tras */}
+                    {/* Sekcja informacji - tylko dla zakończonych tras */}
                     {route.status !== 'in-progress' && (
                         <>
-                            <ThemedText style={styles.sectionTitle}>Informacje</ThemedText>
-                            
-                            <ThemedView style={styles.infoRow}>
-                                <ThemedView style={styles.infoLabelContainer}>
-                                    
-                                    <ThemedText style={styles.infoLabel}>Odległość</ThemedText>
-                                </ThemedView>
-                                <ThemedText style={styles.infoValue}>
-                                    {formatDistance(route.distance)}
-                                    {route.mileageDistance && route.mileageDistance > 0 && (
-                                        <ThemedText style={styles.mileageNote}> (z licznika)</ThemedText>
-                                    )}
-                                </ThemedText>
+                            {/* Sekcja informacji */}
+                            <ThemedView style={styles.section}>
+                                <ThemedText style={styles.sectionTitle}>Informacje</ThemedText>
+                                
+                                {route.distance > 0 && (
+                                    <ThemedView style={styles.infoRow}>
+                                        <ThemedText style={styles.infoLabel}>Odległość:</ThemedText>
+                                        <ThemedText style={styles.infoValue}>
+                                            {route.distance.toFixed(2)} km
+                                            {route.mileageDistance > 0 && <ThemedText style={styles.mileageNote}> (z licznika)</ThemedText>}
+                                        </ThemedText>
+                                    </ThemedView>
+                                )}
+                                
+                                {route.duration > 0 && (
+                                    <ThemedView style={styles.infoRow}>
+                                        <ThemedText style={styles.infoLabel}>Czas jazdy:</ThemedText>
+                                        <ThemedText style={styles.infoValue}>{route.duration} min</ThemedText>
+                                    </ThemedView>
+                                )}
+                                
+                                {route.createdAt && (
+                                    <ThemedView style={styles.infoRow}>
+                                        <ThemedText style={styles.infoLabel}>Data:</ThemedText>
+                                        <ThemedText style={styles.infoValue}>{formatDate(route.createdAt)}</ThemedText>
+                                    </ThemedView>
+                                )}
+                                
+                                {route.startedAt && (
+                                    <ThemedView style={styles.infoRow}>
+                                        <ThemedText style={styles.infoLabel}>Rozpoczęto:</ThemedText>
+                                        <ThemedText style={styles.infoValue}>{formatTime(route.startedAt)}</ThemedText>
+                                    </ThemedView>
+                                )}
+                                
+                                {route.completedAt && (
+                                    <ThemedView style={styles.infoRow}>
+                                        <ThemedText style={styles.infoLabel}>Zakończono:</ThemedText>
+                                        <ThemedText style={styles.infoValue}>{formatTime(route.completedAt)}</ThemedText>
+                                    </ThemedView>
+                                )}
+                                
+                                {route.startMileage > 0 && (
+                                    <ThemedView style={styles.infoRow}>
+                                        <ThemedText style={styles.infoLabel}>Stan licznika (start):</ThemedText>
+                                        <ThemedText style={styles.infoValue}>{route.startMileage.toLocaleString('pl-PL')} km</ThemedText>
+                                    </ThemedView>
+                                )}
+                                
+                                {route.endMileage > 0 && (
+                                    <ThemedView style={styles.infoRow}>
+                                        <ThemedText style={styles.infoLabel}>Stan licznika (koniec):</ThemedText>
+                                        <ThemedText style={styles.infoValue}>{route.endMileage.toLocaleString('pl-PL')} km</ThemedText>
+                                    </ThemedView>
+                                )}
+                                
+                                {route.mileageDistance > 0 && (
+                                    <ThemedView style={styles.infoRow}>
+                                        <ThemedText style={styles.infoLabel}>Różnica (licznik):</ThemedText>
+                                        <ThemedText style={[styles.infoValue, styles.mileageHighlight]}>
+                                            {route.mileageDistance.toFixed(2)} km
+                                        </ThemedText>
+                                    </ThemedView>
+                                )}
                             </ThemedView>
-                            
-                            {/* Stany licznika - jeśli dostępne */}
-                            {(route.startMileage || route.endMileage) && (
-                                <>
-                                    {route.startMileage && (
-                                        <ThemedView style={styles.infoRow}>
-                                            <ThemedView style={styles.infoLabelContainer}>
-                                                <ThemedText style={styles.infoLabel}>Stan licznika (start)</ThemedText>
-                                            </ThemedView>
-                                            <ThemedText style={styles.infoValue}>
-                                                {route.startMileage.toLocaleString('pl-PL')} km
-                                            </ThemedText>
-                                        </ThemedView>
-                                    )}
-                                    
-                                    {route.endMileage && (
-                                        <ThemedView style={styles.infoRow}>
-                                            <ThemedView style={styles.infoLabelContainer}>
-                                                <ThemedText style={styles.infoLabel}>Stan licznika (koniec)</ThemedText>
-                                            </ThemedView>
-                                            <ThemedText style={styles.infoValue}>
-                                                {route.endMileage.toLocaleString('pl-PL')} km
-                                            </ThemedText>
-                                        </ThemedView>
-                                    )}
-                                    
-                                    {route.mileageDistance && route.mileageDistance > 0 && (
-                                        <ThemedView style={styles.infoRow}>
-                                            <ThemedView style={styles.infoLabelContainer}>
-                                                <ThemedText style={styles.infoLabel}>Różnica (licznik)</ThemedText>
-                                            </ThemedView>
-                                            <ThemedText style={[styles.infoValue, styles.mileageHighlight]}>
-                                                {route.mileageDistance.toFixed(2)} km
-                                            </ThemedText>
-                                        </ThemedView>
-                                    )}
-                                </>
-                            )}
-                            
-                            {route.duration && (
-                                <ThemedView style={styles.infoRow}>
-                                    <ThemedView style={styles.infoLabelContainer}>
-                                        
-                                        <ThemedText style={styles.infoLabel}>Przewidywany czas jazdy</ThemedText>
-                                    </ThemedView>
-                                    <ThemedText style={styles.infoValue}>
-                                        {formatDuration(route.duration)}
-                                    </ThemedText>
-                                </ThemedView>
-                            )}
-                            
-                            {route.createdAt && (
-                                <ThemedView style={styles.infoRow}>
-                                    <ThemedView style={styles.infoLabelContainer}>
-                                        
-                                        <ThemedText style={styles.infoLabel}>Data</ThemedText>
-                                    </ThemedView>
-                                    <ThemedText style={styles.infoValue}>
-                                        {route.createdAt.toDate().toLocaleDateString('pl-PL', { 
-                                            day: '2-digit',
-                                            month: 'short',
-                                            year: 'numeric'
-                                        })}
-                                    </ThemedText>
-                                </ThemedView>
-                            )}
-                            
-                            {route.startedAt && (
-                                <ThemedView style={styles.infoRow}>
-                                    <ThemedView style={styles.infoLabelContainer}>
-                                        
-                                        <ThemedText style={styles.infoLabel}>Rozpoczęto</ThemedText>
-                                    </ThemedView>
-                                    <ThemedText style={styles.infoValue}>
-                                        {route.startedAt.toDate().toLocaleTimeString('pl-PL', { 
-                                            hour: '2-digit', 
-                                            minute: '2-digit' 
-                                        })}
-                                    </ThemedText>
-                                </ThemedView>
-                            )}
-                            
-                            {route.completedAt && (
-                                <ThemedView style={styles.infoRow}>
-                                    <ThemedView style={styles.infoLabelContainer}>
-                                        
-                                        <ThemedText style={styles.infoLabel}>Zakończono</ThemedText>
-                                    </ThemedView>
-                                    <ThemedText style={styles.infoValue}>
-                                        {route.completedAt.toDate().toLocaleTimeString('pl-PL', { 
-                                            hour: '2-digit', 
-                                            minute: '2-digit' 
-                                        })}
-                                        
-                                    </ThemedText>
-                                </ThemedView>
-                            )}
                             
                             <Spacer height={20} />
                             <ThemedView style={styles.separator} />
@@ -380,7 +364,18 @@ const styles = StyleSheet.create({
     routeImage: {
         width: '100%',
         height: 250,
+        borderRadius: 4,
+        backgroundColor: Colors.uiBackground,
+    },
+    
+    section: {
+        marginBottom: 20,
+        padding: 15,
         borderRadius: 8,
-        backgroundColor: '#f0f0f0',
-    }
+        backgroundColor: Colors.uiBackground,
+        borderWidth: 3,
+        borderColor: 'transparent',
+    },
+    
 });
+

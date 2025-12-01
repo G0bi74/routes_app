@@ -246,7 +246,7 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
 
             ${consumption > 0 && price > 0 ? `
             <div class="fuel-summary">
-                <strong>⛽ Statystyki paliwowe:</strong><br/>
+                <strong>Statystyki paliwowe:</strong><br/>
                 <div style="margin-top: 10px;">
                     <span style="color: #666;">Średnie spalanie:</span> <strong>${consumption.toFixed(2)} l/100km</strong><br/>
                     <span style="color: #666;">Cena paliwa:</span> <strong>${price.toFixed(2)} zł/litr</strong><br/>

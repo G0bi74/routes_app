@@ -80,6 +80,39 @@ const History = () => {
         return dateB - dateA; // Odwrotna kolejność (najnowsze pierwsze)
     });
 
+    const renderRoute = ({ item }) => (
+        <Pressable
+            onPress={() => router.push(`/routes/${item.id}`)}
+            style={({ pressed }) => [
+                { opacity: pressed ? 0.7 : 1 }
+            ]}
+        >
+            <ThemedCard style={styles.routeCard}>
+                {item.status === 'in-progress' && <LiveRouteBadge />}
+                
+                <ThemedText style={styles.routeText}>
+                    {shortenAddress(item.startAddress || 'Brak adresu')} → {shortenAddress(item.endAddress || 'Nieznany cel')}
+                </ThemedText>
+                
+                <ThemedText style={styles.dateText}>
+                    {formatDate(item.createdAt)}
+                </ThemedText>
+                
+                {item.distance > 0 && (
+                    <ThemedText style={styles.distanceText}>
+                        Odległość: {item.distance.toFixed(2)} km
+                    </ThemedText>
+                )}
+                
+                {item.duration > 0 && (
+                    <ThemedText style={styles.durationText}>
+                        Czas: ~{item.duration} min
+                    </ThemedText>
+                )}
+            </ThemedCard>
+        </Pressable>
+    );
+
     return(
         <ThemedView style={styles.container} safe={true}>
             <Spacer/>
@@ -108,54 +141,7 @@ const History = () => {
                     data={sortedRoutes}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.list}
-                    renderItem={({item}) => (
-                        <Pressable onPress={() => router.push(`/routes/${item.id}`)}>
-                            <ThemedCard style={styles.card}>
-                                {/* Badge dla tras w trakcie */}
-                                {item.status === 'in-progress' && (
-                                    <>
-                                        <LiveRouteBadge status={item.status} />
-                                        <Spacer height={10} />
-                                    </>
-                                )}
-                                
-                                {/* Wyświetlenie adresów */}
-                                <ThemedText style={styles.title}>
-                                    {shortenAddress(item.startAddress)}
-                                    {item.endAddress && item.endAddress !== "" && ` → ${shortenAddress(item.endAddress)}`}
-                                    {(!item.endAddress || item.endAddress === "") && ' (w trakcie...)'}
-                                </ThemedText>
-                                
-                                {/* Wyświetlenie daty */}
-                                {item.createdAt && (
-                                    <ThemedText style={styles.date}>
-                                        {formatDate(item.createdAt)}
-                                    </ThemedText>
-                                )}
-                                
-                                {/* Wyświetlenie odległości tylko dla zakończonych tras */}
-                                {item.distance && item.distance > 0 && (
-                                    <ThemedText style={styles.distance}>
-                                        Odległość: {formatDistance(item.distance)}
-                                    </ThemedText>
-                                )}
-                                
-                                {/* Wyświetlenie czasu podróży jeśli dostępny */}
-                                {item.duration && item.duration > 0 && (
-                                    <ThemedText style={styles.duration}>
-                                        Czas: ~{item.duration} min
-                                    </ThemedText>
-                                )}
-                                
-                                {/* Info dla tras w trakcie */}
-                                {item.status === 'in-progress' && (
-                                    <ThemedText style={styles.inProgressInfo}>
-                                        Kliknij aby zakończyć trasę
-                                    </ThemedText>
-                                )}
-                            </ThemedCard>
-                        </Pressable>
-                    )}
+                    renderItem={renderRoute}
                 />
             )}
         </ThemedView>
@@ -178,7 +164,7 @@ const styles = StyleSheet.create({
     list: {
         paddingBottom: 20,
     },
-    card: {
+    routeCard: {
         width: '90%',
         marginHorizontal: '5%',
         marginVertical: 10,
@@ -187,30 +173,24 @@ const styles = StyleSheet.create({
         borderLeftColor: Colors.primary,
         borderLeftWidth: 4,
     },
-    title: {
+    routeText: {
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 8,
     },
-    date: {
+    dateText: {
         fontSize: 13,
         marginBottom: 8,
         opacity: 0.6,
     },
-    distance: {
+    distanceText: {
         fontSize: 16,
         marginTop: 5,
     },
-    duration: {
+    durationText: {
         fontSize: 14,
         marginTop: 3,
         opacity: 0.8,
-    },
-    inProgressInfo: {
-        fontSize: 12,
-        marginTop: 8,
-        opacity: 0.6,
-        fontStyle: 'italic',
     },
     emptyContainer: {
         flex: 1,

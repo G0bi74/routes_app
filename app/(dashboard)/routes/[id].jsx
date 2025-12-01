@@ -5,14 +5,12 @@
  * - Adresy początkowy i końcowy
  * - Obliczoną odległość w km
  * - Czas podróży
- * - Opis
  * - Zdjęcia startowe i końcowe (jeśli istnieją)
  * Umożliwia:
  * - Usunięcie trasy
- * - Zakończenie trasy w trakcie (GPS)
  */
 
-import { StyleSheet, Text, ScrollView, Alert, Image } from 'react-native';
+import { StyleSheet, Text, ScrollView, Image } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useRoutes } from '../../../hooks/useRoutes';
@@ -32,13 +30,12 @@ import { Colors } from '../../../constants/Colors';
 const RouteDetails = () => {
     // Stan dla przechowywania szczegółów trasy
     const [route, setRoute] = useState(null);
-    const [loading, setLoading] = useState(false);
 
     // Pobranie ID trasy z parametrów URL
     const { id } = useLocalSearchParams();
     
     // Pobranie funkcji z kontekstu
-    const { fetchRouteById, deleteRoute, endLiveRoute } = useRoutes();
+    const { fetchRouteById, deleteRoute } = useRoutes();
     const router = useRouter();
 
     /**
@@ -49,35 +46,6 @@ const RouteDetails = () => {
         await deleteRoute(id);
         setRoute(null);
         router.replace('/history');
-    }
-
-    /**
-     * Obsługa zakończenia trasy GPS
-     */
-    const handleEndRoute = async () => {
-        setLoading(true);
-        try {
-            await endLiveRoute(id);
-            
-            Alert.alert(
-                "Trasa zakończona!",
-                "Trasa została pomyślnie zapisana z obliczoną odległością.",
-                [{ text: "OK" }]
-            );
-
-            // Odśwież dane trasy
-            const updatedRoute = await fetchRouteById(id);
-            setRoute(updatedRoute);
-            
-        } catch (error) {
-            Alert.alert(
-                "Błąd",
-                error.message || "Nie można zakończyć trasy",
-                [{ text: "OK" }]
-            );
-        } finally {
-            setLoading(false);
-        }
     }
 
     /**
@@ -111,7 +79,7 @@ const RouteDetails = () => {
                             <LiveRouteBadge status={route.status} />
                             <Spacer height={20} />
                             <ThemedText style={styles.inProgressWarning}>
-                                Ta trasa jest w trakcie. Zakończ ją aby obliczyć odległość.
+                                Ta trasa jest w trakcie. Zakończ ją w zakładce "Utwórz" aby obliczyć odległość.
                             </ThemedText>
                             <Spacer height={20} />
                         </>
@@ -292,22 +260,6 @@ const RouteDetails = () => {
                     )}
                 </ThemedCard>
                 
-                {/* Przycisk zakończenia trasy GPS */}
-                {route.status === 'in-progress' && (
-                    <>
-                        <ThemedButton 
-                            style={styles.endButton} 
-                            onPress={handleEndRoute}
-                            disabled={loading}
-                        >
-                            <Text style={{color: "#fff", textAlign: 'center', fontSize: 16}}>
-                                {loading ? "Kończenie trasy..." : "✓ Zakończ trasę GPS"}
-                            </Text>
-                        </ThemedButton>
-                        <Spacer height={10} />
-                    </>
-                )}
-                
                 {/* Przycisk usuwania trasy */}
                 <ThemedButton style={styles.deleteButton} onPress={handleDelete}>
                     <Text style={{color: "#fff", textAlign: 'center'}}>
@@ -410,11 +362,6 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         borderWidth: 1,
         borderColor: '#ffc107',
-    },
-    endButton: {
-        marginTop: 20,
-        marginHorizontal: 40,
-        backgroundColor: '#2196F3',
     },
     deleteButton: {
         marginTop: 20,

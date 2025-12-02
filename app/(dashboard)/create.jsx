@@ -12,13 +12,14 @@
  * - Przy zakończeniu pobierana jest lokalizacja końcowa i obliczana odległość
  */
 
-import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View, Modal } from 'react-native';
+import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View, Modal, useColorScheme } from 'react-native';
 import { useRoutes } from '../../hooks/useRoutes';
 import { useOcr } from '../../hooks/useOcr';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Timestamp } from 'firebase/firestore';
+import { Colors } from '../../constants/Colors';
 
 // Importowanie themed components
 import Spacer from '../../components/Spacer';
@@ -28,7 +29,13 @@ import ThemedTextInput from '../../components/ThemedTextInput';
 import ThemedButton from '../../components/ThemedButton';
 import ImagePickerWithCrop from '../../components/ImagePickerWithCrop';
 
+
 const Create = () => {
+    // Motyw kolorystyczny
+    const colorScheme = useColorScheme();
+    const theme = Colors[colorScheme] ?? Colors.light;
+
+
     // Stany dla pól formularza (tryb manualny)
     const [startAddress, setStartAddress] = useState("");
     const [endAddress, setEndAddress] = useState("");
@@ -614,7 +621,7 @@ const Create = () => {
                     onRequestClose={handleCancelOcr}
                 >
                     <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
+                        <View style={[styles.modalContent, {backgroundColor: theme.background}]}>
                             <ThemedText style={styles.modalTitle}>
                                 {ocrModalType === 'start' ? 'Potwierdź stan licznika (początek)' : 'Potwierdź stan licznika (koniec)'}
                             </ThemedText>
@@ -736,20 +743,11 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         fontSize: 16,
     },
-    gpsButton: {
-        backgroundColor: '#4CAF50', // Zielony dla GPS
-    },
-    endButton: {
-        backgroundColor: '#2196F3', // Niebieski dla zakończenia
-    },
     showFormButton: {
-        backgroundColor: '#9C27B0', // Fioletowy dla pokazania formularza
+        backgroundColor: Colors.primary, // Fioletowy dla pokazania formularza
     },
     hideFormButton: {
-        backgroundColor: '#757575', // Szary dla ukrycia formularza
-    },
-    cancelButton: {
-        backgroundColor: '#757575', // Szary dla anulowania
+        backgroundColor: Colors.warning, // Szary dla ukrycia formularza
     },
     separator: {
         flexDirection: 'row',
@@ -798,7 +796,6 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         width: '85%',
-        backgroundColor: '#fff',
         borderRadius: 12,
         padding: 20,
         shadowColor: '#000',
@@ -814,28 +811,25 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         textAlign: 'center',
-        color: '#333',
+        
     },
     modalLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#555',
         marginBottom: 5,
     },
     modalDetectedValue: {
         fontSize: 22,
         fontWeight: 'bold',
         textAlign: 'center',
-        color: '#2196F3',
+        color: Colors.primary,
     },
     modalValidationMessage: {
         fontSize: 13,
         textAlign: 'center',
-        color: '#ff9800',
+        color: Colors.warning,
         fontStyle: 'italic',
-        padding: 10,
-        backgroundColor: '#fff3e0',
-        borderRadius: 6,
+        paddingHorizontal: 10,
     },
     modalInput: {
         padding: 15,
@@ -843,9 +837,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         textAlign: 'center',
-        borderWidth: 2,
-        borderColor: '#2196F3',
-        backgroundColor: '#f5f5f5',
+        borderWidth: 1,
+        borderColor: Colors.primary,
     },
     modalButtons: {
         flexDirection: 'row',
@@ -854,10 +847,10 @@ const styles = StyleSheet.create({
     },
     modalCancelButton: {
         flex: 1,
-        backgroundColor: '#757575',
+        backgroundColor: Colors.warning,
     },
     modalConfirmButton: {
         flex: 1,
-        backgroundColor: '#4CAF50',
+        backgroundColor: Colors.primary,
     },
 });

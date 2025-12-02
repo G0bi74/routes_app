@@ -22,7 +22,7 @@ const LiveRouteBadge = ({ status }) => {
         <View style={[styles.badge, { backgroundColor: colors.tint }]}>
             <View style={styles.pulse} />
             <ThemedText style={styles.badgeText}>
-                🔴 W TRAKCIE
+                W TRAKCIE
             </ThemedText>
         </View>
     );

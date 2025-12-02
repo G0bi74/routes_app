@@ -312,31 +312,48 @@ export const RoutesProvider = ({ children }) => {
             console.log("Geokodowanie lokalizacji końcowej...");
             const endAddressData = await reverseGeocode(location.lat, location.lon);
 
-            // Krok 4: Obliczenie odległości i czasu
-            console.log("Obliczanie odległości...");
-            const routeInfo = await getRouteInfo(
-                routeData.startCoordinates,
-                { lat: location.lat, lon: location.lon }
-            );
-
-            // Krok 5: Obliczenie odległości ze stanów licznika (jeśli dostępne)
+             // Krok 4: Obliczenie odległości i czasu trasy
+            let finalDistance = 0;
+            let finalDuration = 0;
             let mileageDistance = null;
-            let finalDistance = routeInfo.distance;
-            
-            if (mileageOcr && routeData.startMileage) {
+            let usedMileageForDistance = false;
+
+            // Sprawdź czy mamy dane z licznika (OCR)
+            if (mileageOcr && routeData.startMileage && mileageOcr > routeData.startMileage) {
                 // Oblicz różnicę między stanem końcowym a początkowym
                 mileageDistance = mileageOcr - routeData.startMileage;
+                finalDistance = mileageDistance;
+                usedMileageForDistance = true;
                 
-                // Użyj odległości z licznika jeśli jest większa od 0
-                if (mileageDistance > 0) {
-                    finalDistance = mileageDistance;
-                    console.log(`Odległość z licznika: ${mileageDistance} km (${routeData.startMileage} -> ${mileageOcr})`);
+                console.log(`Użyto odległości z licznika: ${mileageDistance} km (${routeData.startMileage} -> ${mileageOcr})`);
+                
+                // Oblicz rzeczywisty czas trasy na podstawie startedAt i completedAt
+                if (routeData.startedAt) {
+                    const startTime = routeData.startedAt.toDate();
+                    const endTime = new Date();
+                    const durationMs = endTime - startTime;
+                    finalDuration = Math.round(durationMs / 60000); // Konwersja milisekund na minuty
+                    
+                    console.log(`Rzeczywisty czas trasy: ${finalDuration} minut`);
                 } else {
-                    console.log('Odległość z licznika nieprawidłowa, używam GPS');
+                    // Fallback - szacunkowy czas (średnia prędkość 60 km/h)
+                    finalDuration = Math.round((mileageDistance / 60) * 60);
+                    console.log(`Szacunkowy czas trasy: ${finalDuration} minut (brak startedAt)`);
                 }
+            } else {
+                // Jeśli brak danych z licznika, użyj OSRM API
+                console.log("Brak danych z licznika, obliczanie odległości z OSRM...");
+                const routeInfo = await getRouteInfo(
+                    routeData.startCoordinates,
+                    { lat: location.lat, lon: location.lon }
+                );
+                
+                finalDistance = routeInfo.distance;
+                finalDuration = routeInfo.duration;
+                
+                console.log(`Użyto odległości z OSRM: ${finalDistance} km, czas: ${finalDuration} min`);
             }
-            
-            // Krok 6: Przygotowanie danych do aktualizacji
+            // Krok 5: Przygotowanie danych do aktualizacji
             const updateData = {
                 // Dane końca trasy
                 endAddress: endAddressData.displayName,
@@ -349,11 +366,12 @@ export const RoutesProvider = ({ children }) => {
                 // Informacje o trasie
                 distance: finalDistance, // Odległość z licznika lub GPS
                 distanceMeters: finalDistance * 1000,
-                duration: routeInfo.duration,
+                duration: finalDuration, // Rzeczywisty czas (dla OCR) lub szacunkowy (dla OSRM)
                 
                 // Stan licznika z OCR
                 endMileage: mileageOcr || null,
                 mileageDistance: mileageDistance, // Odległość wyliczona ze stanów licznika
+                usedMileageForDistance: usedMileageForDistance, // Czy użyto licznika do obliczenia odległości
                 
                 // Zdjęcie końca (jeśli jest)
                 endImageUri: photoUri || null,
@@ -363,13 +381,13 @@ export const RoutesProvider = ({ children }) => {
                 completedAt: Timestamp.now(),
             };
 
-            // Krok 7: Aktualizacja dokumentu w Firestore
+            // Krok 6: Aktualizacja dokumentu w Firestore
             console.log("Aktualizacja trasy w bazie...");
             const routeRef = doc(db, COLLECTION_NAME, routeId);
             await updateDoc(routeRef, updateData);
             
             console.log("Trasa zakończona pomyślnie!");
-            console.log("Przebyta odległość:", routeInfo.distance, "km");
+            console.log("Przebyta odległość:", finalDistance, "km");
 
         } catch (error) {
             console.error("Błąd kończenia trasy na żywo:", error);

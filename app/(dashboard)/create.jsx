@@ -12,7 +12,7 @@
  * - Przy zakończeniu pobierana jest lokalizacja końcowa i obliczana odległość
  */
 
-import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View, Modal, useColorScheme } from 'react-native';
+import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View, Modal, useColorScheme, ActivityIndicator } from 'react-native';
 import { useRoutes } from '../../hooks/useRoutes';
 import { useOcr } from '../../hooks/useOcr';
 import { useRouter } from 'expo-router';
@@ -27,6 +27,7 @@ import ThemedText from '../../components/ThemedText';
 import ThemedView from '../../components/ThemedView';
 import ThemedTextInput from '../../components/ThemedTextInput';
 import ThemedButton from '../../components/ThemedButton';
+import ThemedLoader from '../../components/ThemedLoader';
 import ImagePickerWithCrop from '../../components/ImagePickerWithCrop';
 
 
@@ -68,6 +69,7 @@ const Create = () => {
     const [ocrEditedValue, setOcrEditedValue] = useState('');
     const [ocrPhotoUri, setOcrPhotoUri] = useState(null);
     const [ocrValidationMessage, setOcrValidationMessage] = useState('');
+    const [loadingMessage, setLoadingMessage] = useState(''); // Wiadomość dla loadera
 
     // Pobranie funkcji z kontekstu
     const { createRoute, startLiveRoute, endLiveRoute, routes, fetchRouteById } = useRoutes();
@@ -327,6 +329,8 @@ const Create = () => {
 
         try {
             if (ocrModalType === 'start') {
+                setLoadingMessage('Rozpoczynanie trasy...');
+                
                 // Rozpocznij trasę z poprawioną wartością
                 setStartMileage(mileageValue);
                 
@@ -346,6 +350,8 @@ const Create = () => {
                 setStartPhotoUri(null);
                 
             } else if (ocrModalType === 'end') {
+                setLoadingMessage('Kończenie trasy...');
+                
                 // Zakończ trasę z poprawioną wartością
                 setEndMileage(mileageValue);
                 
@@ -374,6 +380,7 @@ const Create = () => {
             setError(error.message || "Nie można zapisać trasy");
         } finally {
             setLoading(false);
+            setLoadingMessage('');
             // Resetuj stany modala
             setOcrPhotoUri(null);
             setOcrModalType(null);
@@ -611,6 +618,25 @@ const Create = () => {
                         </ThemedText>
                         <Spacer height={10} />
                     </>
+                )}
+
+                {/* Loader podczas operacji GPS */}
+                {loading && !showOcrModal && (
+                    <View style={styles.loaderOverlay}>
+                        <View style={[styles.loaderContainer, { backgroundColor: theme.cardBackground }]}>
+                            <ActivityIndicator 
+                                size="large" 
+                                color={Colors.primary}
+                            />
+                            <Spacer height={16} />
+                            <ThemedText style={styles.loaderText}>
+                                {loadingMessage || 'Przetwarzanie...'}
+                            </ThemedText>
+                            <ThemedText style={styles.loaderSubtext}>
+                                Pobieranie lokalizacji GPS i zapisywanie danych
+                            </ThemedText>
+                        </View>
+                    </View>
                 )}
 
                 {/* Modal do ręcznej korekty odczytu OCR */}
@@ -852,5 +878,43 @@ const styles = StyleSheet.create({
     modalConfirmButton: {
         flex: 1,
         backgroundColor: Colors.primary,
+    },
+    loaderOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    loaderContainer: {
+        borderRadius: 20,
+        paddingHorizontal: 30,
+        paddingVertical: 25,
+        alignItems: 'center',
+        width: 280,
+        maxWidth: '85%',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 10,
+    },
+    loaderText: {
+        fontSize: 16,
+        fontWeight: '700',
+        textAlign: 'center',
+    },
+    loaderSubtext: {
+        fontSize: 12,
+        textAlign: 'center',
+        marginTop: 6,
+        opacity: 0.7,
     },
 });

@@ -12,7 +12,7 @@
  * - Przy zakończeniu pobierana jest lokalizacja końcowa i obliczana odległość
  */
 
-import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View } from 'react-native';
+import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View, Modal } from 'react-native';
 import { useRoutes } from '../../hooks/useRoutes';
 import { useOcr } from '../../hooks/useOcr';
 import { useRouter } from 'expo-router';
@@ -53,6 +53,14 @@ const Create = () => {
     // Stany dla przebiegów z OCR
     const [startMileage, setStartMileage] = useState(null);
     const [endMileage, setEndMileage] = useState(null);
+
+    // Stany dla ręcznej korekty OCR
+    const [showOcrModal, setShowOcrModal] = useState(false);
+    const [ocrModalType, setOcrModalType] = useState(null); // 'start' lub 'end'
+    const [ocrDetectedValue, setOcrDetectedValue] = useState('');
+    const [ocrEditedValue, setOcrEditedValue] = useState('');
+    const [ocrPhotoUri, setOcrPhotoUri] = useState(null);
+    const [ocrValidationMessage, setOcrValidationMessage] = useState('');
 
     // Pobranie funkcji z kontekstu
     const { createRoute, startLiveRoute, endLiveRoute, routes, fetchRouteById } = useRoutes();
@@ -207,52 +215,35 @@ const Create = () => {
 
         try {
             // Rozpoznaj stan licznika ze zdjęcia
-            let mileageOcr = null;
             if (photoUri) {
                 console.log('Rozpoczynam rozpoznawanie OCR...');
-                const ocrResult = await recognizeText(photoUri);
+                const ocrResult = await recognizeText(photoUri, true);
                 
-                if (ocrResult.success && ocrResult.mileage) {
-                    mileageOcr = ocrResult.mileage;
-                    setStartMileage(mileageOcr);
-                    console.log(`Wykryto stan licznika początkowy: ${mileageOcr} km`);
+                if (ocrResult.success) {
+                    const detectedValue = ocrResult.correctedMileage || ocrResult.mileage || '';
+                    
+                    // Zapisz dane i pokaż modal do korekty
+                    setOcrPhotoUri(photoUri);
+                    setOcrModalType('start');
+                    setOcrDetectedValue(detectedValue.toString());
+                    setOcrEditedValue(detectedValue.toString());
+                    setOcrValidationMessage(ocrResult.validationMessage || 'Sprawdź odczyt');
+                    setShowOcrModal(true);
+                    
+                    console.log(`Wykryto stan licznika: ${detectedValue} km`);
                 } else {
-                    console.log('Nie wykryto stanu licznika na zdjęciu');
+                    // Brak odczytu - pokaż modal z pustą wartością
+                    setOcrPhotoUri(photoUri);
+                    setOcrModalType('start');
+                    setOcrDetectedValue('');
+                    setOcrEditedValue('');
+                    setOcrValidationMessage('Nie wykryto liczby - wpisz ręcznie');
+                    setShowOcrModal(true);
                 }
             }
-            
-            // Rozpoczęcie trasy na żywo ze zdjęciem i stanem licznika
-            const routeId = await startLiveRoute(
-                photoUri,
-                mileageOcr
-            );
-
-            // Zapisanie ID trasy
-            setLiveRouteId(routeId);
-
-            // Pokazanie komunikatu
-            const message = mileageOcr 
-                ? `Lokalizacja początkowa, zdjęcie i stan licznika (${mileageOcr} km) zostały zapisane. Możesz teraz zakończyć trasę w dowolnym momencie.`
-                : "Lokalizacja początkowa i zdjęcie zostały zapisane. Możesz teraz zakończyć trasę w dowolnym momencie.";
-            
-            Alert.alert(
-                "Trasa rozpoczęta!",
-                message,
-                [{ text: "OK" }]
-            );
-
-            // Resetowanie formularza
-            setStartPhotoUri(null);
-
         } catch (error) {
-            console.error("Błąd rozpoczynania trasy GPS:", error);
-            
-            // Szczegółowy komunikat dla uprawnień Firebase
-            if (error.message.includes('Firebase') || error.message.includes('uprawnień do zapisu')) {
-                setError('Błąd Firebase: Sprawdź reguły bezpieczeństwa w konsoli Firebase. Zobacz plik FIREBASE_PERMISSIONS_FIX.md');
-            } else {
-                setError(error.message || "Nie można rozpocząć trasy GPS");
-            }
+            console.error("Błąd OCR:", error);
+            setError(error.message || "Nie można rozpoznać zdjęcia");
         } finally {
             setLoading(false);
         }
@@ -279,56 +270,123 @@ const Create = () => {
 
         try {
             // Rozpoznaj stan licznika ze zdjęcia
-            let mileageOcr = null;
             if (photoUri) {
                 console.log('Rozpoczynam rozpoznawanie OCR...');
-                const ocrResult = await recognizeText(photoUri);
+                const ocrResult = await recognizeText(photoUri, false);
                 
-                if (ocrResult.success && ocrResult.mileage) {
-                    mileageOcr = ocrResult.mileage;
-                    setEndMileage(mileageOcr);
-                    console.log(`Wykryto stan licznika końcowy: ${mileageOcr} km`);
+                if (ocrResult.success) {
+                    const detectedValue = ocrResult.correctedMileage || ocrResult.mileage || '';
+                    
+                    // Zapisz dane i pokaż modal do korekty
+                    setOcrPhotoUri(photoUri);
+                    setOcrModalType('end');
+                    setOcrDetectedValue(detectedValue.toString());
+                    setOcrEditedValue(detectedValue.toString());
+                    setOcrValidationMessage(ocrResult.validationMessage || 'Sprawdź odczyt');
+                    setShowOcrModal(true);
+                    
+                    console.log(`Wykryto stan licznika: ${detectedValue} km`);
                 } else {
-                    console.log('Nie wykryto stanu licznika na zdjęciu');
+                    // Brak odczytu - pokaż modal z pustą wartością
+                    setOcrPhotoUri(photoUri);
+                    setOcrModalType('end');
+                    setOcrDetectedValue('');
+                    setOcrEditedValue('');
+                    setOcrValidationMessage('Nie wykryto liczby - wpisz ręcznie');
+                    setShowOcrModal(true);
                 }
             }
-            
-            // Zakończenie trasy ze zdjęciem i stanem licznika
-            await endLiveRoute(liveRouteId, photoUri, mileageOcr);
-
-            // Oblicz odległość ze stanów licznika jeśli oba są dostępne
-            let message = "Trasa została pomyślnie zapisana ze zdjęciem końca i obliczoną odległością.";
-            
-            if (startMileage && mileageOcr) {
-                const mileageDistance = mileageOcr - startMileage;
-                if (mileageDistance > 0) {
-                    message = `Trasa zakończona!\n\nStan licznika:\n- Początek: ${startMileage} km\n- Koniec: ${mileageOcr} km\n- Przejechano: ${mileageDistance} km`;
-                }
-            }
-
-            // Pokazanie komunikatu sukcesu
-            Alert.alert(
-                "Trasa zakończona!",
-                message,
-                [{ text: "OK" }]
-            );
-
-            // Resetowanie stanu
-            setLiveRouteId(null);
-            setEndPhotoUri(null);
-            setStartMileage(null);
-            setEndMileage(null);
-
-            // Przekierowanie do historii
-            router.replace('/history');
-
         } catch (error) {
-            console.error("Błąd kończenia trasy GPS:", error);
-            setError(error.message || "Nie można zakończyć trasy GPS");
+            console.error("Błąd OCR:", error);
+            setError(error.message || "Nie można rozpoznać zdjęcia");
         } finally {
             setLoading(false);
         }
-    }
+    };
+
+    /**
+     * Obsługa zatwierdzenia skorygowanej wartości OCR
+     */
+    const handleConfirmOcr = async () => {
+        const mileageValue = parseInt(ocrEditedValue, 10);
+        
+        if (isNaN(mileageValue) || mileageValue <= 0) {
+            Alert.alert('Błąd', 'Wprowadź poprawną liczbę kilometrów');
+            return;
+        }
+
+        setShowOcrModal(false);
+        setLoading(true);
+
+        try {
+            if (ocrModalType === 'start') {
+                // Rozpocznij trasę z poprawioną wartością
+                setStartMileage(mileageValue);
+                
+                const routeId = await startLiveRoute(
+                    ocrPhotoUri,
+                    mileageValue
+                );
+
+                setLiveRouteId(routeId);
+
+                Alert.alert(
+                    "Trasa rozpoczęta!",
+                    `Lokalizacja początkowa i stan licznika (${mileageValue} km) zostały zapisane.`,
+                    [{ text: "OK" }]
+                );
+
+                setStartPhotoUri(null);
+                
+            } else if (ocrModalType === 'end') {
+                // Zakończ trasę z poprawioną wartością
+                setEndMileage(mileageValue);
+                
+                await endLiveRoute(liveRouteId, ocrPhotoUri, mileageValue);
+
+                let message = "Trasa została pomyślnie zakończona.";
+                
+                if (startMileage && mileageValue) {
+                    const mileageDistance = mileageValue - startMileage;
+                    if (mileageDistance > 0) {
+                        message = `Trasa zakończona!\n\nStan licznika:\n- Początek: ${startMileage} km\n- Koniec: ${mileageValue} km\n- Przejechano: ${mileageDistance} km`;
+                    }
+                }
+
+                Alert.alert("Trasa zakończona!", message, [{ text: "OK" }]);
+
+                setLiveRouteId(null);
+                setEndPhotoUri(null);
+                setStartMileage(null);
+                setEndMileage(null);
+
+                router.replace('/history');
+            }
+        } catch (error) {
+            console.error("Błąd zapisywania trasy:", error);
+            setError(error.message || "Nie można zapisać trasy");
+        } finally {
+            setLoading(false);
+            // Resetuj stany modala
+            setOcrPhotoUri(null);
+            setOcrModalType(null);
+            setOcrDetectedValue('');
+            setOcrEditedValue('');
+            setOcrValidationMessage('');
+        }
+    };
+
+    /**
+     * Obsługa anulowania korekty OCR
+     */
+    const handleCancelOcr = () => {
+        setShowOcrModal(false);
+        setOcrPhotoUri(null);
+        setOcrModalType(null);
+        setOcrDetectedValue('');
+        setOcrEditedValue('');
+        setOcrValidationMessage('');
+    };
 
     return(
         // TouchableWithoutFeedback - ukrywa klawiaturę po kliknięciu poza polem
@@ -547,6 +605,83 @@ const Create = () => {
                         <Spacer height={10} />
                     </>
                 )}
+
+                {/* Modal do ręcznej korekty odczytu OCR */}
+                <Modal
+                    visible={showOcrModal}
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={handleCancelOcr}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <ThemedText style={styles.modalTitle}>
+                                {ocrModalType === 'start' ? 'Potwierdź stan licznika (początek)' : 'Potwierdź stan licznika (koniec)'}
+                            </ThemedText>
+                            
+                            <Spacer height={15} />
+                            
+                            {ocrDetectedValue && (
+                                <>
+                                    <ThemedText style={styles.modalLabel}>
+                                        Wykryto przez OCR:
+                                    </ThemedText>
+                                    <ThemedText style={styles.modalDetectedValue}>
+                                        {ocrDetectedValue} km
+                                    </ThemedText>
+                                    <Spacer height={10} />
+                                </>
+                            )}
+                            
+                            {ocrValidationMessage && (
+                                <>
+                                    <ThemedText style={styles.modalValidationMessage}>
+                                        {ocrValidationMessage}
+                                    </ThemedText>
+                                    <Spacer height={15} />
+                                </>
+                            )}
+                            
+                            <ThemedText style={styles.modalLabel}>
+                                Popraw wartość jeśli potrzeba:
+                            </ThemedText>
+                            
+                            <Spacer height={8} />
+                            
+                            <ThemedTextInput
+                                style={styles.modalInput}
+                                placeholder="Wpisz stan licznika (km)"
+                                value={ocrEditedValue}
+                                onChangeText={setOcrEditedValue}
+                                keyboardType="numeric"
+                                autoFocus={true}
+                            />
+                            
+                            <Spacer height={20} />
+                            
+                            <View style={styles.modalButtons}>
+                                <ThemedButton 
+                                    onPress={handleCancelOcr}
+                                    style={styles.modalCancelButton}
+                                >
+                                    <Text style={{color: "#fff", textAlign: 'center'}}>
+                                        Anuluj
+                                    </Text>
+                                </ThemedButton>
+                                
+                                <ThemedButton 
+                                    onPress={handleConfirmOcr}
+                                    style={styles.modalConfirmButton}
+                                    disabled={loading}
+                                >
+                                    <Text style={{color: "#fff", textAlign: 'center'}}>
+                                        {loading ? 'Zapisywanie...' : 'Zatwierdź'}
+                                    </Text>
+                                </ThemedButton>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
             </ThemedView>
         </TouchableWithoutFeedback>
     );
@@ -654,5 +789,75 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#4CAF50',
         marginTop: 8,
-    }
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '85%',
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        color: '#333',
+    },
+    modalLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#555',
+        marginBottom: 5,
+    },
+    modalDetectedValue: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        color: '#2196F3',
+    },
+    modalValidationMessage: {
+        fontSize: 13,
+        textAlign: 'center',
+        color: '#ff9800',
+        fontStyle: 'italic',
+        padding: 10,
+        backgroundColor: '#fff3e0',
+        borderRadius: 6,
+    },
+    modalInput: {
+        padding: 15,
+        borderRadius: 8,
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        borderWidth: 2,
+        borderColor: '#2196F3',
+        backgroundColor: '#f5f5f5',
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 10,
+    },
+    modalCancelButton: {
+        flex: 1,
+        backgroundColor: '#757575',
+    },
+    modalConfirmButton: {
+        flex: 1,
+        backgroundColor: '#4CAF50',
+    },
 });

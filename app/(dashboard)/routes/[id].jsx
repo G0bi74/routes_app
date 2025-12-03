@@ -15,6 +15,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useRoutes } from '../../../hooks/useRoutes';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import React from 'react';
 import { formatDistance, formatDuration } from '../../../lib/routing';
 
 // Importowanie themed components
@@ -80,14 +82,18 @@ const RouteDetails = () => {
 
     /**
      * Effect hook - pobiera szczegóły trasy przy montowaniu komponentu
+     * I AKTUALIZUJE za każdym razem gdy użytkownik wraca na ten ekran
      */
-    useEffect(() => {
-        async function loadRoute(){
-            const routeData = await fetchRouteById(id);
-            setRoute(routeData);
-        }
-        loadRoute();  
-    }, [id]);
+    useFocusEffect(
+        React.useCallback(() => {
+            async function loadRoute(){
+                console.log("Odświeżanie szczegółów trasy:", id);
+                const routeData = await fetchRouteById(id);
+                setRoute(routeData);
+            }
+            loadRoute();
+        }, [id, fetchRouteById])
+    );
 
     // Wyświetlenie loadera jeśli trasa nie została jeszcze pobrana
     if(!route){

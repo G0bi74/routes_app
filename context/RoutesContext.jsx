@@ -68,6 +68,14 @@ export const RoutesProvider = ({ children }) => {
             }
         } catch(error) {
             console.log("Błąd pobierania trasy:", error.message);
+            
+            // Fallback: sprawdź cache (świeżo utworzone trasy mogą nie być jeszcze dostępne)
+            const cachedRoute = routes.find(r => r.id === id);
+            if (cachedRoute) {
+                console.log("Znaleziono trasę w lokalnym cache:", id);
+                return cachedRoute;
+            }
+            
             return null;
         }
     }
@@ -422,28 +430,56 @@ export const RoutesProvider = ({ children }) => {
         let unsubscribe;
 
         if (user) {
-            // Jeśli użytkownik jest zalogowany, tworzymy zapytanie o jego trasy
-            const q = query(
-                collection(db, COLLECTION_NAME),
-                where("userId", "==", user.uid)  // Tylko trasy tego użytkownika
-            );
+            try {
+                // Jeśli użytkownik jest zalogowany, tworzymy zapytanie o jego trasy
+                const q = query(
+                    collection(db, COLLECTION_NAME),
+                    where("userId", "==", user.uid)  // Tylko trasy tego użytkownika
+                );
 
-            // Nasłuchiwanie zmian w czasie rzeczywistym
-            unsubscribe = onSnapshot(q, (querySnapshot) => {
-                const routesData = [];
-                
-                // Iteracja po wszystkich dokumentach w wyniku zapytania
-                querySnapshot.forEach((doc) => {
-                    routesData.push({
-                        id: doc.id,           // ID dokumentu
-                        ...doc.data()         // Dane dokumentu
-                    });
-                });
-                
-                // Aktualizacja stanu z pobranymi trasami
-                setRoutes(routesData);
-                console.log("Pobrano trasy:", routesData.length);
-            });
+                // Nasłuchiwanie zmian w czasie rzeczywistym
+                unsubscribe = onSnapshot(
+                    q, 
+                    (querySnapshot) => {
+                        const routesData = [];
+                        
+                        // Iteracja po wszystkich dokumentach w wyniku zapytania
+                        querySnapshot.forEach((doc) => {
+                            routesData.push({
+                                id: doc.id,           // ID dokumentu
+                                ...doc.data()         // Dane dokumentu
+                            });
+                        });
+                        
+                        // Sortowanie po dacie utworzenia (najnowsze na górze)
+                        routesData.sort((a, b) => {
+                            const dateA = a.createdAt?.toDate() || new Date(0);
+                            const dateB = b.createdAt?.toDate() || new Date(0);
+                            return dateB - dateA;
+                        });
+                        
+                        // Aktualizacja stanu z pobranymi trasami
+                        setRoutes(routesData);
+                        console.log("Pobrano trasy:", routesData.length);
+                    },
+                    (error) => {
+                        // Obsługa błędów nasłuchiwania
+                        console.error("Błąd nasłuchiwania tras:", error.message);
+                        console.error("Kod błędu:", error.code);
+                        
+                        if (error.code === 'permission-denied') {
+                            console.error("BŁĄD UPRAWNIEŃ: Sprawdź czy Firebase Security Rules są poprawnie skonfigurowane");
+                            console.error("Upewnij się że reguła 'allow list' jest ustawiona dla /routes/{routeId}");
+                        }
+                        
+                        // W przypadku błędu, zachowaj obecny stan tras
+                        setRoutes([]);
+                    }
+                );
+            } catch (error) {
+                console.error("Błąd tworzenia zapytania:", error.message);
+                setRoutes([]);
+            }
         } else {
             // Jeśli użytkownik wylogowany, czyścimy listę tras
             setRoutes([]);

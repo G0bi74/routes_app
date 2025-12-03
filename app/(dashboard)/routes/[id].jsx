@@ -197,15 +197,6 @@ const RouteDetails = () => {
                                         <ThemedText style={styles.infoValue}>{route.endMileage.toLocaleString('pl-PL')} km</ThemedText>
                                     </ThemedView>
                                 )}
-                                
-                                {route.mileageDistance > 0 && (
-                                    <ThemedView style={styles.infoRow}>
-                                        <ThemedText style={styles.infoLabel}>Różnica (licznik):</ThemedText>
-                                        <ThemedText style={[styles.infoValue, styles.mileageHighlight]}>
-                                            {route.mileageDistance.toFixed(2)} km
-                                        </ThemedText>
-                                    </ThemedView>
-                                )}
                             </ThemedView>
                             
                             <Spacer height={20} />

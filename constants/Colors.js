@@ -3,6 +3,18 @@
 export const Colors = {
     primary: '#6849a7',     // Główny kolor aplikacji (fioletowy)
     warning: '#cc475a',     // Kolor dla ostrzeżeń i błędów (czerwony)
+    
+    black_forest: '#10451dff',
+    dark_emerald: '#155d27ff',
+    turf_green: '#1a7431ff',
+    forest_green: '#208b3aff',
+    medium_jungle: '#25a244ff',
+    jade_green: '#2dc653ff',
+    malachite: '#4ad66dff',
+    light_green: '#6ede8aff',
+    celadon: '#92e6a7ff',
+    celadon_2: '#b7efc5ff',
+
 
     // Motyw ciemny
     dark:{

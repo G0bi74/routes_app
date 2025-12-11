@@ -20,7 +20,8 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Aplikacja potrzebuje dostępu do lokalizacji aby śledzić Twoje trasy.",
         "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do aparatu aby robić zdjęcia tras.",
         "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do galerii aby wybierać zdjęcia tras.",
-        "NSPhotoLibraryAddUsageDescription": "Aplikacja potrzebuje dostępu do galerii aby zapisywać zdjęcia tras."
+        "NSPhotoLibraryAddUsageDescription": "Aplikacja potrzebuje dostępu do galerii aby zapisywać zdjęcia tras.",
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
@@ -36,7 +37,9 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
-        "READ_MEDIA_IMAGES"
+        "READ_MEDIA_IMAGES",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
       ]
     },
     "web": {
@@ -57,6 +60,15 @@
           "locationWhenInUsePermission": "Zezwól aplikacji Routes App na dostęp do Twojej lokalizacji podczas korzystania z aplikacji.",
           "isAndroidBackgroundLocationEnabled": false,
           "isIosBackgroundLocationEnabled": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/img/icon.png",
+          "color": "#ffffff",
+          "sounds": [],
+          "mode": "production"
         }
       ]
     ]

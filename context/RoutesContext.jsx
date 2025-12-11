@@ -27,6 +27,10 @@ import { useUser } from "../hooks/useUser";
 import { geocodeBothAddresses, reverseGeocode } from "../lib/geocoding";
 import { getRouteInfo } from "../lib/routing";
 import { getCurrentLocation } from "../lib/location";
+import {
+    createActiveRouteNotification,
+    dismissActiveRouteNotification,
+} from '../lib/notifications';
 
 // Nazwa kolekcji w Firestore gdzie przechowywane są trasy
 const COLLECTION_NAME = 'routes';
@@ -260,6 +264,13 @@ export const RoutesProvider = ({ children }) => {
             console.log("Zapisywanie trasy do bazy...");
             const docRef = await addDoc(collection(db, COLLECTION_NAME), routeData);
             
+            // Krok 5: Utwórz powiadomienie systemowe
+            await createActiveRouteNotification({
+                id: docRef.id,
+                startAddress: addressData.displayName,
+                startedAt: Timestamp.now(),
+            });
+            
             console.log("Trasa na żywo rozpoczęta! ID:", docRef.id);
             console.log("Lokalizacja startu:", addressData.displayName);
             
@@ -393,6 +404,9 @@ export const RoutesProvider = ({ children }) => {
             console.log("Aktualizacja trasy w bazie...");
             const routeRef = doc(db, COLLECTION_NAME, routeId);
             await updateDoc(routeRef, updateData);
+            
+            // Krok 7: Usuń powiadomienie systemowe
+            await dismissActiveRouteNotification();
             
             console.log("Trasa zakończona pomyślnie!");
             console.log("Przebyta odległość:", finalDistance, "km");

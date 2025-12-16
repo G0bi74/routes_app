@@ -455,7 +455,6 @@ const Profile = () => {
                     <ThemedButton
                         onPress={() => generateReport('week')}
                         disabled={loading}
-                        style={styles.reportButton}
                     >
                         <ThemedText style={styles.buttonText}>
                             {loading ? 'Generowanie...' : 'Generuj'}
@@ -571,11 +570,8 @@ const styles = StyleSheet.create({
         fontSize: 13,
         opacity: 0.7,
     },
-    reportButton: {
-        backgroundColor: '#2196F3',
-    },
     logoutButton: {
-        backgroundColor: '#f44336',
+        backgroundColor: '#b21e35',
     },
     buttonText: {
         color: '#fff',

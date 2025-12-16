@@ -1,8 +1,8 @@
 // Plik konfiguracji kolorów aplikacji
 // Zawiera paletę kolorów dla motywu jasnego i ciemnego
 export const Colors = {
-    primary: '#6849a7',     // Główny kolor aplikacji (fioletowy)
-    warning: '#cc475a',     // Kolor dla ostrzeżeń i błędów (czerwony)
+    primary: '#2dc653ff',     // Główny kolor aplikacji (fioletowy)
+    warning: '#b21e35',     // Kolor dla ostrzeżeń i błędów (czerwony)
     
     black_forest: '#10451dff',
     dark_emerald: '#155d27ff',
@@ -29,12 +29,12 @@ export const Colors = {
 
     // Motyw jasny
     light:{
-        text: '#625f72',                // Kolor tekstu
-        title: '#201e2b',               // Kolor tytułów
-        background: '#e0dfe8',          // Tło główne
-        navBackground: '#e8e7ef',       // Tło nawigacji
-        iconColor: '#686477',          // Kolor ikon nieaktywnych
-        iconColorFocused: '#201d2b',    // Kolor ikon aktywnych
-        uiBackground: '#d6d5e1',        // Tło elementów UI (karty, inputy)
+        text: '#155d27ff',                // Kolor tekstu
+        title: '#10451dff',               // Kolor tytułów
+        background: '#b7efc5ff',          // Tło główne
+        navBackground: '#4ad66dff',       // Tło nawigacji
+        iconColor: '#1a7431ff',          // Kolor ikon nieaktywnych
+        iconColorFocused: '#10451dff',    // Kolor ikon aktywnych
+        uiBackground: '#92e6a7ff',        // Tło elementów UI (karty, inputy)
     },
 }

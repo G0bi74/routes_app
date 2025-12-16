@@ -39,7 +39,7 @@ const AppContent = () => {
             > 
                 <Stack.Screen 
                     name="index" 
-                    options={{ title: 'Strona Główna'}} 
+                    options={{ headerShown: false}} 
                 />
                 
                 <Stack.Screen 

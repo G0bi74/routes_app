@@ -4,15 +4,18 @@
  * Wyświetla informacje o zalogowanym użytkowniku
  * Umożliwia wylogowanie się z aplikacji
  * Zawiera funkcjonalność generowania raportów PDF
+ * 
+ * Styl: Minimalistyczne kafelki z zaokrągleniami
  */
 
-import { StyleSheet, ScrollView, View, Alert } from 'react-native';
+import { StyleSheet, ScrollView, View, Alert, useColorScheme } from 'react-native';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '../../hooks/useUser';
 import { useRoutes } from '../../hooks/useRoutes';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { Ionicons } from '@expo/vector-icons';
 
 // Importowanie themed components
 import Spacer from '../../components/Spacer';
@@ -21,6 +24,8 @@ import ThemedView from '../../components/ThemedView';
 import ThemedButton from '../../components/ThemedButton';
 import ThemedCard from '../../components/ThemedCard';
 import ThemedTextInput from '../../components/ThemedTextInput';
+import ThemedDivider from '../../components/ThemedDivider';
+import { Colors } from '../../constants/Colors';
 
 /**
  * Funkcja pomocnicza - formatuje datę
@@ -271,6 +276,10 @@ const Profile = () => {
     const { routes } = useRoutes();
     const [loading, setLoading] = useState(false);
     
+    // Motyw kolorystyczny
+    const colorScheme = useColorScheme();
+    const theme = Colors[colorScheme] ?? Colors.light;
+    
     // Stany dla spalania i ceny paliwa
     const [fuelConsumption, setFuelConsumption] = useState(''); // litry/100km
     const [fuelPrice, setFuelPrice] = useState(''); // zł/litr
@@ -374,119 +383,125 @@ const Profile = () => {
     // Obliczenia paliwowe
     const consumption = parseFloat(fuelConsumption) || 0;
     const price = parseFloat(fuelPrice) || 0;
-    const totalFuelLiters = (totalKm / 100) * consumption; // litry
-    const totalFuelCost = totalFuelLiters * price; // zł
+    const totalFuelLiters = (totalKm / 100) * consumption;
+    const totalFuelCost = totalFuelLiters * price;
 
     return(
         <ThemedView style={styles.container} safe={true}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Spacer height={20} />
-
-                {/* Wyświetlenie emaila użytkownika */}
-                <ThemedText title={true} style={styles.heading}>
-                    {user.email} 
-                </ThemedText>
-                
-                <Spacer height={30} />
-
-                {/* Statystyki ogólne */}
-                <ThemedCard style={styles.statsCard}>
-                    <ThemedText style={styles.statsTitle}>Statystyki</ThemedText>
-                    <Spacer height={15} />
-                    <View style={styles.statsRow}>
-                        <ThemedText style={styles.statsLabel}>Zakończone trasy:</ThemedText>
-                        <ThemedText style={styles.statsValue}>{completedRoutes.length}</ThemedText>
+            <ScrollView 
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Nagłówek z avatarem */}
+                <View style={styles.header}>
+                    <View style={[styles.avatar, { backgroundColor: Colors.primary + '20' }]}>
+                        <Ionicons name="person" size={32} color={Colors.primary} />
                     </View>
-                    <View style={styles.statsRow}>
-                        <ThemedText style={styles.statsLabel}>Łączna odległość:</ThemedText>
-                        <ThemedText style={styles.statsValue}>{totalKm.toFixed(2)} km</ThemedText>
+                    <ThemedText title style={styles.email}>
+                        {user.email}
+                    </ThemedText>
+                </View>
+
+                {/* Kafelki statystyk */}
+                <View style={styles.statsGrid}>
+                    <View style={[styles.statTile, { backgroundColor: theme.uiBackground }]}>
+                        <Ionicons name="checkmark-circle" size={24} color={Colors.primary} />
+                        <ThemedText style={styles.statValue}>{completedRoutes.length}</ThemedText>
+                        <ThemedText style={styles.statLabel}>Ukończone trasy</ThemedText>
                     </View>
-                
-                    <ThemedText style={styles.inputLabel}>Średnie spalanie (l/100km):</ThemedText>
-                    <ThemedTextInput
-                        placeholder="np. 7.5"
-                        value={fuelConsumption}
-                        onChangeText={handleFuelConsumptionChange}
-                        keyboardType="decimal-pad"
-                        style={styles.input}
-                    />
-                    <ThemedText style={styles.inputLabel}>Cena paliwa (zł/litr):</ThemedText>
-                    <ThemedTextInput
-                        placeholder="np. 6.50"
-                        value={fuelPrice}
-                        onChangeText={handleFuelPriceChange}
-                        keyboardType="decimal-pad"
-                        style={styles.input}
-                    />
+                    <View style={[styles.statTile, { backgroundColor: theme.uiBackground }]}>
+                        <Ionicons name="speedometer" size={24} color={Colors.primary} />
+                        <ThemedText style={styles.statValue}>{totalKm.toFixed(0)}</ThemedText>
+                        <ThemedText style={styles.statLabel}>Przejechane km</ThemedText>
+                    </View>
+                </View>
+
+                {/* Ustawienia paliwa */}
+                <ThemedCard style={styles.fuelCard}>
+                    <View style={styles.cardHeader}>
+                        <Ionicons name="car" size={20} color={Colors.primary} />
+                        <ThemedText style={styles.cardTitle} title>Ustawienia paliwa</ThemedText>
+                    </View>
+                    
+                    <View style={styles.inputRow}>
+                        <ThemedText style={styles.inputLabel}>Spalanie (l/100km)</ThemedText>
+                        <ThemedTextInput
+                            placeholder="np. 7.5"
+                            value={fuelConsumption}
+                            onChangeText={handleFuelConsumptionChange}
+                            keyboardType="decimal-pad"
+                            style={styles.fuelInput}
+                        />
+                    </View>
+                    
+                    <View style={styles.inputRow}>
+                        <ThemedText style={styles.inputLabel}>Cena paliwa (zł/l)</ThemedText>
+                        <ThemedTextInput
+                            placeholder="np. 6.50"
+                            value={fuelPrice}
+                            onChangeText={handleFuelPriceChange}
+                            keyboardType="decimal-pad"
+                            style={styles.fuelInput}
+                        />
+                    </View>
                     
                     {consumption > 0 && price > 0 && (
-                        <>
-                            <View style={styles.fuelStatsContainer}>
-                                <View style={styles.statsRow}>
-                                    <ThemedText style={styles.statsLabel}>Zużycie paliwa:</ThemedText>
-                                    <ThemedText style={styles.statsValueHighlight}>
-                                        {totalFuelLiters.toFixed(2)} l
-                                    </ThemedText>
-                                </View>
-                                <View style={styles.statsRow}>
-                                    <ThemedText style={styles.statsLabel}>Koszt paliwa:</ThemedText>
-                                    <ThemedText style={styles.statsValueHighlight}>
-                                        {totalFuelCost.toFixed(2)} zł
-                                    </ThemedText>
-                                </View>
+                        <View style={[styles.fuelStats, { backgroundColor: Colors.primary + '10' }]}>
+                            <View style={styles.fuelStatRow}>
+                                <Ionicons name="water" size={16} color={Colors.primary} />
+                                <ThemedText style={styles.fuelStatLabel}>Zużycie paliwa:</ThemedText>
+                                <ThemedText style={styles.fuelStatValue}>
+                                    {totalFuelLiters.toFixed(1)} l
+                                </ThemedText>
                             </View>
-                        </>
+                            <View style={styles.fuelStatRow}>
+                                <Ionicons name="cash" size={16} color={Colors.primary} />
+                                <ThemedText style={styles.fuelStatLabel}>Koszt paliwa:</ThemedText>
+                                <ThemedText style={styles.fuelStatValue}>
+                                    {totalFuelCost.toFixed(2)} zł
+                                </ThemedText>
+                            </View>
+                        </View>
                     )}
                 </ThemedCard>
 
-                <Spacer height={30} />
-
-                {/* Sekcja raportów */}
-                <ThemedText style={styles.sectionTitle}>Raporty PDF</ThemedText>
-                <Spacer height={15} />
-
-                {/* Raport tygodniowy */}
-                <ThemedCard style={styles.reportCard}>
-                    <ThemedText style={styles.reportTitle}>Raport Tygodniowy</ThemedText>
-                    <ThemedText style={styles.reportDescription}>
-                        Ostatnie 7 dni
-                    </ThemedText>
-                    <Spacer height={10} />
-                    <ThemedButton
-                        onPress={() => generateReport('week')}
-                        disabled={loading}
-                    >
-                        <ThemedText style={styles.buttonText}>
-                            {loading ? 'Generowanie...' : 'Generuj'}
-                        </ThemedText>
-                    </ThemedButton>
+                {/* Raporty PDF */}
+                <ThemedCard style={styles.reportsCard}>
+                    <View style={styles.cardHeader}>
+                        <Ionicons name="document-text" size={20} color={Colors.primary} />
+                        <ThemedText style={styles.cardTitle} title>Raporty PDF</ThemedText>
+                    </View>
+                    
+                    <View style={styles.reportButtons}>
+                        <ThemedButton
+                            onPress={() => generateReport('week')}
+                            disabled={loading}
+                            style={styles.reportButton}
+                            icon="calendar-outline"
+                        >
+                            {loading ? 'Generowanie...' : '7 dni'}
+                        </ThemedButton>
+                        
+                        <ThemedButton
+                            onPress={() => generateReport('month')}
+                            disabled={loading}
+                            style={styles.reportButton}
+                            icon="calendar"
+                        >
+                            {loading ? 'Generowanie...' : '30 dni'}
+                        </ThemedButton>
+                    </View>
                 </ThemedCard>
 
-                <Spacer height={15} />
-
-                {/* Raport miesięczny */}
-                <ThemedCard style={styles.reportCard}>
-                    <ThemedText style={styles.reportTitle}>Raport Miesięczny</ThemedText>
-                    <ThemedText style={styles.reportDescription}>
-                        Ostatnie 30 dni
-                    </ThemedText>
-                    <Spacer height={10} />
-                    <ThemedButton
-                        onPress={() => generateReport('month')}
-                        disabled={loading}
-                        style={styles.reportButton}
-                    >
-                        <ThemedText style={styles.buttonText}>
-                            {loading ? 'Generowanie...' : 'Generuj'}
-                        </ThemedText>
-                    </ThemedButton>
-                </ThemedCard>
-
-                <Spacer height={30} />
+                <ThemedDivider />
 
                 {/* Przycisk wylogowania */}
-                <ThemedButton onPress={logout} style={styles.logoutButton}>
-                    <ThemedText style={styles.buttonText}>Wyloguj</ThemedText>
+                <ThemedButton 
+                    onPress={logout} 
+                    variant="danger"
+                    icon="log-out-outline"
+                >
+                    Wyloguj się
                 </ThemedButton>
 
                 <Spacer height={40} />
@@ -502,81 +517,99 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        paddingHorizontal: 20,
+        padding: 16,
     },
-    heading: {
-        fontWeight: 'bold',
-        fontSize: 22,
-        textAlign: 'center',
+    header: {
+        alignItems: 'center',
+        marginBottom: 24,
+        marginTop: 8,
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
+    avatar: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
     },
-    statsCard: {
-        padding: 20,
-    },
-    statsTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    statsSubtitle: {
+    email: {
         fontSize: 16,
-        fontWeight: 'bold',
-        marginTop: 5,
+        fontWeight: '600',
     },
-    statsRow: {
+    statsGrid: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 10,
+        gap: 12,
+        marginBottom: 20,
     },
-    statsLabel: {
-        fontSize: 15,
+    statTile: {
+        flex: 1,
+        padding: 16,
+        borderRadius: 16,
+        alignItems: 'center',
     },
-    statsValue: {
-        fontSize: 15,
-        fontWeight: 'bold',
+    statValue: {
+        fontSize: 28,
+        fontWeight: '700',
+        marginTop: 8,
     },
-    statsValueHighlight: {
-        fontSize: 15,
-        fontWeight: 'bold',
-        color: '#4CAF50',
+    statLabel: {
+        fontSize: 12,
+        opacity: 0.6,
+        marginTop: 4,
+        textAlign: 'center',
+    },
+    fuelCard: {
+        marginBottom: 16,
+    },
+    reportsCard: {
+        marginBottom: 16,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 16,
+    },
+    cardTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    inputRow: {
+        marginBottom: 12,
     },
     inputLabel: {
-        fontSize: 14,
-        marginBottom: 5,
-        opacity: 0.8,
-    },
-    input: {
-        fontSize: 15,
-    },
-    fuelStatsContainer: {
-        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-        padding: 15,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#4CAF50',
-    },
-    reportCard: {
-        padding: 15,
-    },
-    reportTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 5,
-    },
-    reportDescription: {
         fontSize: 13,
         opacity: 0.7,
+        marginBottom: 6,
     },
-    logoutButton: {
-        backgroundColor: '#b21e35',
-    },
-    buttonText: {
-        color: '#fff',
-        textAlign: 'center',
+    fuelInput: {
         fontSize: 15,
-        fontWeight: 'bold',
+    },
+    fuelStats: {
+        padding: 14,
+        borderRadius: 12,
+        marginTop: 8,
+    },
+    fuelStatRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 8,
+    },
+    fuelStatLabel: {
+        flex: 1,
+        fontSize: 14,
+    },
+    fuelStatValue: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: Colors.primary,
+    },
+    reportButtons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    reportButton: {
+        flex: 1,
     },
 });

@@ -7,6 +7,8 @@
  * 3. Po zrobieniu zdjęcia otwiera się ekran kadrowania
  * 4. Użytkownik przesuwa i zmienia rozmiar prostokąta
  * 5. Po zatwierdzeniu otrzymuje URI przyciętego zdjęcia
+ * 
+ * Styl: Minimalistyczne kafelki z zaokrągleniami
  */
 
 import React, { useState, useRef } from 'react';
@@ -19,18 +21,22 @@ import {
     Dimensions,
     PanResponder,
     TouchableOpacity,
+    useColorScheme,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { Ionicons } from '@expo/vector-icons';
 import ThemedButton from './ThemedButton';
 import ThemedText from './ThemedText';
 import ThemedView from './ThemedView';
+import ThemedCard from './ThemedCard';
 import Spacer from './Spacer';
+import { Colors } from '../constants/Colors';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" }) => {
+const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie", buttonIcon = "camera-outline" }) => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [showCameraModal, setShowCameraModal] = useState(false);
     const [showCropModal, setShowCropModal] = useState(false);
@@ -187,11 +193,9 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" })
             <ThemedButton
                 onPress={openCamera}
                 disabled={isProcessing}
-                style={styles.mainButton}
+                icon={buttonIcon}
             >
-                <ThemedText style={styles.buttonText}>
-                    {isProcessing ? 'Przetwarzanie...' : `${buttonText}`}
-                </ThemedText>
+                {isProcessing ? 'Przetwarzanie...' : buttonText}
             </ThemedButton>
 
             {/* Modal z custom aparatem */}
@@ -206,16 +210,13 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" })
                         style={styles.camera}
                         facing="back"
                     >
-                        {/* Przyciski aparatu */}
-                        <View style={styles.cameraControls}>
-                            {/* Przycisk zamknij (góra lewo) */}
-                            <TouchableOpacity
-                                style={styles.closeButton}
-                                onPress={() => setShowCameraModal(false)}
-                            >
-                                <ThemedText style={styles.closeButtonText}>✕</ThemedText>
-                            </TouchableOpacity>
-                        </View>
+                        {/* Przycisk zamknij (góra lewo) */}
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setShowCameraModal(false)}
+                        >
+                            <Ionicons name="close" size={28} color="#fff" />
+                        </TouchableOpacity>
 
                         {/* Dolna belka z przyciskami */}
                         <View style={styles.bottomControls}>
@@ -225,12 +226,7 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" })
                                 onPress={openGalleryFromCamera}
                                 disabled={isProcessing}
                             >
-                                <View style={styles.galleryIcon}>
-                                    <View style={styles.galleryIconSquare} />
-                                    <View style={styles.galleryIconSquare} />
-                                    <View style={styles.galleryIconSquare} />
-                                    <View style={styles.galleryIconSquare} />
-                                </View>
+                                <Ionicons name="images-outline" size={28} color="#fff" />
                             </TouchableOpacity>
 
                             {/* Przycisk zrobienia zdjęcia (środek) */}
@@ -241,6 +237,9 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" })
                             >
                                 <View style={styles.captureButtonInner} />
                             </TouchableOpacity>
+
+                            {/* Spacer dla symetrii */}
+                            <View style={styles.galleryButton} />
                         </View>
                     </CameraView>
                 </View>
@@ -260,8 +259,12 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie" })
 
 /**
  * Modal z manualnym zaznaczaniem prostokąta
+ * Styl: Minimalistyczne kafelki z zaokrągleniami
  */
 const ManualCropModal = ({ visible, imageUri, imageSize, onCrop, onCancel, isProcessing }) => {
+    const colorScheme = useColorScheme();
+    const colors = Colors[colorScheme] ?? Colors.light;
+    
     const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
     const [rectPosition, setRectPosition] = useState({ x: 50, y: 50 });
     const [rectSize, setRectSize] = useState({ width: 200, height: 200 });
@@ -399,105 +402,122 @@ const ManualCropModal = ({ visible, imageUri, imageSize, onCrop, onCancel, isPro
 
     return (
         <Modal visible={visible} animationType="slide" transparent={false}>
-            <ThemedView style={styles.modalContainer}>
-                <ThemedText style={styles.modalTitle}>
-                    Zaznacz obszar do wycięcia
-                </ThemedText>
+            <ThemedView style={styles.modalContainer} safe>
+                {/* Nagłówek */}
+                <View style={styles.modalHeader}>
+                    <Ionicons name="crop-outline" size={32} color={Colors.primary} />
+                    <ThemedText title style={styles.modalTitle}>
+                        Kadrowanie zdjęcia
+                    </ThemedText>
+                    <ThemedText style={styles.modalSubtitle}>
+                        Zaznacz obszar do wycięcia
+                    </ThemedText>
+                </View>
 
-                <ThemedText style={styles.modalSubtitle}>
-                    Przesuń i zmień rozmiar prostokąta palcem
-                </ThemedText>
+                <Spacer height={16} />
 
-                <Spacer height={20} />
+                {/* Obszar kadrowania */}
+                <ThemedCard style={styles.cropCard}>
+                    <View style={[styles.cropContainer, { height: displaySize.height }]}>
+                        <Image
+                            source={{ uri: imageUri }}
+                            style={[styles.cropImage, { width: displaySize.width, height: displaySize.height }]}
+                            resizeMode="contain"
+                        />
 
-                <View style={[styles.cropContainer, { height: displaySize.height }]}>
-                    <Image
-                        source={{ uri: imageUri }}
-                        style={[styles.cropImage, { width: displaySize.width, height: displaySize.height }]}
-                        resizeMode="contain"
-                    />
+                        {displaySize.width > 0 && (
+                            <View style={styles.overlayContainer}>
+                                {/* Ciemne overlay wokół zaznaczenia */}
+                                <View style={[styles.overlay, { height: rectPosition.y }]} />
 
-                    {displaySize.width > 0 && (
-                        <View style={styles.overlayContainer}>
-                            {/* Ciemne overlay wokół zaznaczenia */}
-                            <View style={[styles.overlay, { height: rectPosition.y }]} />
-
-                            <View style={[styles.overlay, {
-                                top: rectPosition.y,
-                                height: rectSize.height,
-                                width: rectPosition.x
-                            }]} />
-
-                            <View style={[styles.overlay, {
-                                top: rectPosition.y,
-                                height: rectSize.height,
-                                left: rectPosition.x + rectSize.width,
-                                width: displaySize.width - rectPosition.x - rectSize.width
-                            }]} />
-
-                            <View style={[styles.overlay, {
-                                top: rectPosition.y + rectSize.height,
-                                height: displaySize.height - rectPosition.y - rectSize.height
-                            }]} />
-
-                            {/* Prostokąt zaznaczenia - DRAG */}
-                            <View
-                                {...panResponder.panHandlers}
-                                style={[styles.cropRect, {
-                                    left: rectPosition.x,
+                                <View style={[styles.overlay, {
                                     top: rectPosition.y,
-                                    width: rectSize.width,
                                     height: rectSize.height,
-                                }]}
-                            >
-                                {/* Siatka i narożniki - nie blokują gestów */}
-                                <View pointerEvents="none" style={styles.decorations}>
-                                    <View style={[styles.gridLine, { left: '33%', width: 1, height: '100%' }]} />
-                                    <View style={[styles.gridLine, { left: '66%', width: 1, height: '100%' }]} />
-                                    <View style={[styles.gridLine, { top: '33%', height: 1, width: '100%' }]} />
-                                    <View style={[styles.gridLine, { top: '66%', height: 1, width: '100%' }]} />
+                                    width: rectPosition.x
+                                }]} />
 
-                                    <View style={[styles.corner, styles.cornerTL]} />
-                                    <View style={[styles.corner, styles.cornerTR]} />
-                                    <View style={[styles.corner, styles.cornerBL]} />
-                                    <View style={[styles.corner, styles.cornerBR]} />
+                                <View style={[styles.overlay, {
+                                    top: rectPosition.y,
+                                    height: rectSize.height,
+                                    left: rectPosition.x + rectSize.width,
+                                    width: displaySize.width - rectPosition.x - rectSize.width
+                                }]} />
+
+                                <View style={[styles.overlay, {
+                                    top: rectPosition.y + rectSize.height,
+                                    height: displaySize.height - rectPosition.y - rectSize.height
+                                }]} />
+
+                                {/* Prostokąt zaznaczenia - DRAG */}
+                                <View
+                                    {...panResponder.panHandlers}
+                                    style={[styles.cropRect, {
+                                        left: rectPosition.x,
+                                        top: rectPosition.y,
+                                        width: rectSize.width,
+                                        height: rectSize.height,
+                                    }]}
+                                >
+                                    {/* Siatka i narożniki - nie blokują gestów */}
+                                    <View pointerEvents="none" style={styles.decorations}>
+                                        <View style={[styles.gridLine, { left: '33%', width: 1, height: '100%' }]} />
+                                        <View style={[styles.gridLine, { left: '66%', width: 1, height: '100%' }]} />
+                                        <View style={[styles.gridLine, { top: '33%', height: 1, width: '100%' }]} />
+                                        <View style={[styles.gridLine, { top: '66%', height: 1, width: '100%' }]} />
+
+                                        <View style={[styles.corner, styles.cornerTL]} />
+                                        <View style={[styles.corner, styles.cornerTR]} />
+                                        <View style={[styles.corner, styles.cornerBL]} />
+                                        <View style={[styles.corner, styles.cornerBR]} />
+                                    </View>
+                                </View>
+
+                                {/* Uchwyt resize - oddzielny od drag */}
+                                <View
+                                    {...resizeResponder.panHandlers}
+                                    style={[styles.resizeHandle, {
+                                        left: rectPosition.x + rectSize.width - 20,
+                                        top: rectPosition.y + rectSize.height - 20,
+                                    }]}
+                                >
+                                    <Ionicons name="resize-outline" size={20} color={Colors.primary} />
                                 </View>
                             </View>
+                        )}
+                    </View>
+                </ThemedCard>
 
-                            {/* Uchwyt resize - oddzielny od drag */}
-                            <View
-                                {...resizeResponder.panHandlers}
-                                style={[styles.resizeHandle, {
-                                    left: rectPosition.x + rectSize.width - 15,
-                                    top: rectPosition.y + rectSize.height - 15,
-                                }]}
-                            >
-                                <View style={styles.resizeHandleIcon} />
-                            </View>
-                        </View>
-                    )}
+                <Spacer height={12} />
+
+                {/* Instrukcja */}
+                <View style={[styles.instructionCard, { backgroundColor: colors.uiBackground }]}>
+                    <Ionicons name="hand-left-outline" size={18} color={colors.iconColor} />
+                    <ThemedText style={styles.instruction}>
+                        Przesuń prostokąt palcem • Prawy dolny róg = zmiana rozmiaru
+                    </ThemedText>
                 </View>
 
                 <Spacer height={20} />
 
-                <ThemedText style={styles.instruction}>
-                    Dotknij prostokąt i przesuń{'\n'}
-                    Prawy dolny róg - zmiana rozmiaru
-                </ThemedText>
-
-                <Spacer height={20} />
-
+                {/* Przyciski akcji */}
                 <View style={styles.actionButtons}>
-                    <ThemedButton onPress={handleConfirm} disabled={isProcessing} style={styles.confirmButton}>
-                        <ThemedText style={styles.buttonText}>
-                            {isProcessing ? 'Przycinam...' : 'Zatwierdź'}
-                        </ThemedText>
+                    <ThemedButton 
+                        onPress={handleConfirm} 
+                        disabled={isProcessing}
+                        icon="checkmark-circle-outline"
+                    >
+                        {isProcessing ? 'Przycinam...' : 'Zatwierdź kadrowanie'}
                     </ThemedButton>
 
-                    <Spacer height={10} />
+                    <Spacer height={12} />
 
-                    <ThemedButton onPress={onCancel} disabled={isProcessing} style={styles.cancelButton}>
-                        <ThemedText style={styles.buttonText}>✕ Anuluj</ThemedText>
+                    <ThemedButton 
+                        onPress={onCancel} 
+                        disabled={isProcessing}
+                        variant="outline"
+                        icon="close-circle-outline"
+                    >
+                        Anuluj
                     </ThemedButton>
                 </View>
             </ThemedView>
@@ -508,40 +528,37 @@ const ManualCropModal = ({ visible, imageUri, imageSize, onCrop, onCancel, isPro
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        alignItems: 'center',
     },
-    mainButton: {
-        paddingHorizontal: 30,
-        paddingVertical: 15,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        textAlign: 'center',
-    },
+    
+    // Modal kadrowania
     modalContainer: {
         flex: 1,
         padding: 20,
-        paddingTop: 60,
+    },
+    modalHeader: {
+        alignItems: 'center',
+        gap: 8,
     },
     modalTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
+        fontSize: 24,
+        fontWeight: '700',
         textAlign: 'center',
     },
     modalSubtitle: {
         fontSize: 14,
         textAlign: 'center',
-        opacity: 0.7,
-        marginTop: 8,
+        opacity: 0.6,
+    },
+    cropCard: {
+        padding: 12,
+        alignItems: 'center',
     },
     cropContainer: {
         alignSelf: 'center',
         position: 'relative',
     },
     cropImage: {
-        borderRadius: 10,
+        borderRadius: 12,
     },
     overlayContainer: {
         ...StyleSheet.absoluteFillObject,
@@ -556,20 +573,21 @@ const styles = StyleSheet.create({
     cropRect: {
         position: 'absolute',
         borderWidth: 2,
-        borderColor: '#fff',
+        borderColor: Colors.primary,
         backgroundColor: 'transparent',
+        borderRadius: 4,
     },
     decorations: {
         ...StyleSheet.absoluteFillObject,
     },
     gridLine: {
         position: 'absolute',
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
     },
     corner: {
         position: 'absolute',
-        width: 20,
-        height: 20,
+        width: 24,
+        height: 24,
         borderColor: '#fff',
         backgroundColor: 'transparent',
     },
@@ -578,75 +596,68 @@ const styles = StyleSheet.create({
         left: -2,
         borderTopWidth: 4,
         borderLeftWidth: 4,
+        borderTopLeftRadius: 4,
     },
     cornerTR: {
         top: -2,
         right: -2,
         borderTopWidth: 4,
         borderRightWidth: 4,
+        borderTopRightRadius: 4,
     },
     cornerBL: {
         bottom: -2,
         left: -2,
         borderBottomWidth: 4,
         borderLeftWidth: 4,
+        borderBottomLeftRadius: 4,
     },
     cornerBR: {
         bottom: -2,
         right: -2,
         borderBottomWidth: 4,
         borderRightWidth: 4,
+        borderBottomRightRadius: 4,
     },
     resizeHandle: {
         position: 'absolute',
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#fff',
-        borderRadius: 20,
-        borderWidth: 2,
-        borderColor: '#2196F3',
+        borderRadius: 22,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
         zIndex: 10,
     },
-    resizeHandleIcon: {
-        width: 20,
-        height: 20,
-        borderRightWidth: 3,
-        borderBottomWidth: 3,
-        borderColor: '#2196F3',
+    instructionCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 12,
     },
     instruction: {
         fontSize: 13,
-        textAlign: 'center',
+        flex: 1,
         opacity: 0.8,
-        lineHeight: 20,
     },
     actionButtons: {
         width: '100%',
-        alignItems: 'center',
     },
-    confirmButton: {
-        backgroundColor: '#4CAF50',
-        paddingHorizontal: 50,
-        width: '80%',
-    },
-    cancelButton: {
-        backgroundColor: '#757575',
-        paddingHorizontal: 50,
-        width: '80%',
-    },
-    // Style dla custom aparatu
+    
+    // Custom aparat
     cameraContainer: {
         flex: 1,
         backgroundColor: '#000',
     },
     camera: {
         flex: 1,
-    },
-    cameraControls: {
-        flex: 1,
-        backgroundColor: 'transparent',
     },
     closeButton: {
         position: 'absolute',
@@ -660,63 +671,42 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         zIndex: 10,
     },
-    closeButtonText: {
-        fontSize: 28,
-        color: '#fff',
-        fontWeight: 'bold',
-    },
     bottomControls: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 30,
-        paddingBottom: 40,
+        paddingHorizontal: 40,
+        paddingBottom: 50,
         backgroundColor: 'transparent',
     },
     galleryButton: {
-        position: 'absolute',
-        left: 30,
-        width: 60,
-        height: 60,
-        borderRadius: 12,
-        backgroundColor: 'rgba(30, 30, 30, 0.8)',
+        width: 56,
+        height: 56,
+        borderRadius: 16,
+        backgroundColor: 'rgba(30, 30, 30, 0.7)',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.9)',
-    },
-    galleryIcon: {
-        width: 32,
-        height: 32,
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 3,
-        padding: 2,
-    },
-    galleryIconSquare: {
-        width: 12,
-        height: 12,
-        backgroundColor: '#fff',
-        borderRadius: 2,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
     },
     captureButton: {
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 5,
+        borderWidth: 4,
         borderColor: '#fff',
     },
     captureButtonInner: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         backgroundColor: '#fff',
     },
 });

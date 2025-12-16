@@ -5,13 +5,15 @@
  * - Adresy (od → do)
  * - Obliczona odległość w km
  * Każda trasa jest klikalną kartą prowadzącą do szczegółów
+ * 
+ * Styl: Minimalistyczne kafelki z zaokrągleniami
  */
 
-import { StyleSheet, FlatList, Pressable } from 'react-native';
+import { StyleSheet, FlatList, Pressable, View, useColorScheme } from 'react-native';
 import { useRoutes } from '../../hooks/useRoutes';
 import { Colors } from '../../constants/Colors';
 import { useRouter } from 'expo-router';
-import { formatDistance } from '../../lib/routing';
+import { Ionicons } from '@expo/vector-icons';
 
 // Importowanie themed components
 import Spacer from '../../components/Spacer';
@@ -22,92 +24,113 @@ import LiveRouteBadge from '../../components/LiveRouteBadge';
 
 /**
  * Funkcja pomocnicza - skraca adres do pierwszych dwóch części
- * Np. "Rudnik 19d, Wólka, LU, Poland" -> "Rudnik 19d, Wólka"
- * 
- * @param {string} address - Pełny adres
- * @returns {string} Skrócony adres
  */
 const shortenAddress = (address) => {
-    if (!address) return '';
-    
-    // Rozdziel adres po przecinkach
+    if (!address) return 'Nieznany adres';
     const parts = address.split(',').map(part => part.trim());
-    
-    // Weź pierwsze dwie części
-    const shortened = parts.slice(0, 2).join(', ');
-    
-    return shortened || address;
+    return parts.slice(0, 2).join(', ') || address;
 };
 
 /**
  * Funkcja pomocnicza - formatuje datę do czytelnej formy
- * 
- * @param {Object} timestamp - Timestamp Firebase
- * @returns {string} Sformatowana data (np. "18 lis 2025, 10:30")
  */
 const formatDate = (timestamp) => {
     if (!timestamp) return '';
-    
     try {
-        // Konwersja Firebase Timestamp na Date
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        
-        // Opcje formatowania
-        const options = {
+        return date.toLocaleDateString('pl-PL', {
             day: 'numeric',
             month: 'short',
             year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        };
-        
-        return date.toLocaleDateString('pl-PL', options);
+        });
     } catch (error) {
-        console.error('Błąd formatowania daty:', error);
         return '';
     }
 };
 
 const History = () => {
-    // Pobranie listy tras z kontekstu
     const { routes } = useRoutes();
     const router = useRouter();
+    const colorScheme = useColorScheme();
+    const theme = Colors[colorScheme] ?? Colors.light;
 
     // Sortowanie tras chronologicznie (najnowsze na górze)
     const sortedRoutes = [...routes].sort((a, b) => {
         const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
         const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
-        return dateB - dateA; // Odwrotna kolejność (najnowsze pierwsze)
+        return dateB - dateA;
     });
 
     const renderRoute = ({ item }) => (
         <Pressable
             onPress={() => router.push(`/routes/${item.id}`)}
             style={({ pressed }) => [
-                { opacity: pressed ? 0.7 : 1 }
+                styles.cardWrapper,
+                pressed && styles.cardPressed
             ]}
         >
             <ThemedCard style={styles.routeCard}>
-                {item.status === 'in-progress' && <LiveRouteBadge />}
+                {/* Nagłówek z badge i datą */}
+                <View style={styles.cardHeader}>
+                    {item.status === 'in-progress' ? (
+                        <LiveRouteBadge status={item.status} size="small" />
+                    ) : (
+                        <View style={styles.dateContainer}>
+                            <Ionicons name="calendar-outline" size={14} color={theme.iconColor} />
+                            <ThemedText style={styles.dateText}>
+                                {formatDate(item.createdAt)}
+                            </ThemedText>
+                        </View>
+                    )}
+                    <Ionicons name="chevron-forward" size={20} color={theme.iconColor} />
+                </View>
                 
-                <ThemedText style={styles.routeText}>
-                    {shortenAddress(item.startAddress || 'Brak adresu')} → {shortenAddress(item.endAddress || 'Nieznany cel')}
-                </ThemedText>
+                {/* Trasa */}
+                <View style={styles.routeContainer}>
+                    {/* Punkt startowy */}
+                    <View style={styles.addressRow}>
+                        <View style={[styles.dot, { backgroundColor: Colors.primary }]} />
+                        <ThemedText style={styles.addressText} numberOfLines={1}>
+                            {shortenAddress(item.startAddress)}
+                        </ThemedText>
+                    </View>
+                    
+                    {/* Linia łącząca */}
+                    <View style={styles.lineContainer}>
+                        <View style={[styles.verticalLine, { backgroundColor: theme.iconColor + '40' }]} />
+                    </View>
+                    
+                    {/* Punkt końcowy */}
+                    <View style={styles.addressRow}>
+                        <View style={[styles.dot, styles.dotEnd]} />
+                        <ThemedText style={styles.addressText} numberOfLines={1}>
+                            {item.status === 'in-progress' 
+                                ? 'W trakcie...' 
+                                : shortenAddress(item.endAddress)}
+                        </ThemedText>
+                    </View>
+                </View>
                 
-                <ThemedText style={styles.dateText}>
-                    {formatDate(item.createdAt)}
-                </ThemedText>
-                
-                {item.distance > 0 && (
-                    <ThemedText style={styles.distanceText}>
-                        Odległość: {item.distance.toFixed(2)} km
-                    </ThemedText>
-                )}
-                
-                {item.duration > 0 && (
-                    <ThemedText style={styles.durationText}>
-                        Czas: ~{item.duration} min
-                    </ThemedText>
+                {/* Statystyki */}
+                {item.status !== 'in-progress' && (item.distance > 0 || item.duration > 0) && (
+                    <View style={styles.statsContainer}>
+                        {item.distance > 0 && (
+                            <View style={styles.statItem}>
+                                <Ionicons name="speedometer-outline" size={14} color={Colors.primary} />
+                                <ThemedText style={styles.statText}>
+                                    {item.distance.toFixed(1)} km
+                                </ThemedText>
+                            </View>
+                        )}
+                        {item.duration > 0 && (
+                            <View style={styles.statItem}>
+                                <Ionicons name="timer-outline" size={14} color={Colors.primary} />
+                                <ThemedText style={styles.statText}>
+                                    {item.duration} min
+                                </ThemedText>
+                            </View>
+                        )}
+                    </View>
                 )}
             </ThemedCard>
         </Pressable>
@@ -115,32 +138,35 @@ const History = () => {
 
     return(
         <ThemedView style={styles.container} safe={true}>
-            <Spacer/>
+            {/* Nagłówek */}
+            <View style={styles.header}>
+                <ThemedText title style={styles.heading}>
+                    Twoje Trasy
+                </ThemedText>
+                <View style={[styles.countBadge, { backgroundColor: Colors.primary + '20' }]}>
+                    <ThemedText style={styles.countText}>{routes.length}</ThemedText>
+                </View>
+            </View>
             
-            {/* Nagłówek strony */}
-            <ThemedText title={true} style={styles.heading}>
-                Twoje Trasy ({routes.length})
-            </ThemedText>
-            
-            <Spacer/>
-            
-            {/* Lista tras */}
+            {/* Lista tras lub pusty stan */}
             {routes.length === 0 ? (
-                // Wyświetl gdy brak tras
-                <ThemedView style={styles.emptyContainer}>
+                <View style={styles.emptyContainer}>
+                    <View style={[styles.emptyIcon, { backgroundColor: theme.uiBackground }]}>
+                        <Ionicons name="map-outline" size={48} color={theme.iconColor} />
+                    </View>
                     <ThemedText style={styles.emptyText}>
-                        Nie masz jeszcze żadnych tras
+                        Brak zapisanych tras
                     </ThemedText>
                     <ThemedText style={styles.emptySubtext}>
-                        Kliknij "Utwórz" aby dodać pierwszą trasę
+                        Rozpocznij pierwszą trasę w zakładce "Utwórz"
                     </ThemedText>
-                </ThemedView>
+                </View>
             ) : (
-                // Wyświetl listę tras
                 <FlatList
                     data={sortedRoutes}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.list}
+                    showsVerticalScrollIndicator={false}
                     renderItem={renderRoute}
                 />
             )}
@@ -153,44 +179,105 @@ export default History;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'center',
-        alignItems: 'stretch',
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        gap: 10,
     },
     heading: {
-        fontWeight: 'bold',
-        fontSize: 20,
-        textAlign: 'center',
+        fontWeight: '700',
+        fontSize: 22,
+    },
+    countBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    countText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: Colors.primary,
     },
     list: {
+        paddingHorizontal: 16,
         paddingBottom: 20,
     },
-    routeCard: {
-        width: '90%',
-        marginHorizontal: '5%',
-        marginVertical: 10,
-        padding: 15,
-        paddingLeft: 14,
-        borderLeftColor: Colors.primary,
-        borderLeftWidth: 4,
+    cardWrapper: {
+        marginBottom: 12,
     },
-    routeText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 8,
+    cardPressed: {
+        opacity: 0.8,
+        transform: [{ scale: 0.98 }],
+    },
+    routeCard: {
+        padding: 16,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 14,
+    },
+    dateContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
     },
     dateText: {
         fontSize: 13,
-        marginBottom: 8,
         opacity: 0.6,
     },
-    distanceText: {
-        fontSize: 16,
-        marginTop: 5,
+    routeContainer: {
+        marginBottom: 4,
     },
-    durationText: {
-        fontSize: 14,
-        marginTop: 3,
-        opacity: 0.8,
+    addressRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    dot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+    },
+    dotEnd: {
+        backgroundColor: Colors.warning,
+    },
+    lineContainer: {
+        paddingLeft: 4,
+        paddingVertical: 2,
+    },
+    verticalLine: {
+        width: 2,
+        height: 16,
+        marginLeft: 4,
+        borderRadius: 1,
+    },
+    addressText: {
+        flex: 1,
+        fontSize: 15,
+        fontWeight: '500',
+    },
+    statsContainer: {
+        flexDirection: 'row',
+        gap: 16,
+        marginTop: 12,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(128, 128, 128, 0.15)',
+    },
+    statItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    statText: {
+        fontSize: 13,
+        fontWeight: '500',
     },
     emptyContainer: {
         flex: 1,
@@ -198,14 +285,23 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 40,
     },
+    emptyIcon: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
     emptyText: {
         fontSize: 18,
+        fontWeight: '600',
         textAlign: 'center',
-        marginBottom: 10,
+        marginBottom: 8,
     },
     emptySubtext: {
         fontSize: 14,
         textAlign: 'center',
-        opacity: 0.7,
-    }
+        opacity: 0.6,
+    },
 });

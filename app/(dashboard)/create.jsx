@@ -5,14 +5,10 @@
  * 1. Tryb manualny - wpisywanie adresów początku i końca
  * 2. Tryb GPS - automatyczne pobieranie lokalizacji z telefonu
  * 
- * W trybie GPS:
- * - Rozpoczęcie trasy pobiera aktualną lokalizację jako start
- * - Trasa zapisywana ze statusem "in-progress"
- * - Użytkownik może zakończyć trasę później
- * - Przy zakończeniu pobierana jest lokalizacja końcowa i obliczana odległość
+ * Styl: Minimalistyczne kafelki z zaokrągleniami
  */
 
-import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View, Modal, useColorScheme, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View, Modal, useColorScheme, ActivityIndicator, ScrollView } from 'react-native';
 import { useRoutes } from '../../hooks/useRoutes';
 import { useOcr } from '../../hooks/useOcr';
 import { useRouter } from 'expo-router';
@@ -20,6 +16,7 @@ import React, { useState, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Timestamp } from 'firebase/firestore';
 import { Colors } from '../../constants/Colors';
+import { Ionicons } from '@expo/vector-icons';
 
 // Importowanie themed components
 import Spacer from '../../components/Spacer';
@@ -27,7 +24,8 @@ import ThemedText from '../../components/ThemedText';
 import ThemedView from '../../components/ThemedView';
 import ThemedTextInput from '../../components/ThemedTextInput';
 import ThemedButton from '../../components/ThemedButton';
-import ThemedLoader from '../../components/ThemedLoader';
+import ThemedCard from '../../components/ThemedCard';
+import ThemedDivider from '../../components/ThemedDivider';
 import ImagePickerWithCrop from '../../components/ImagePickerWithCrop';
 
 
@@ -403,243 +401,210 @@ const Create = () => {
     };
 
     return(
-        // TouchableWithoutFeedback - ukrywa klawiaturę po kliknięciu poza polem
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <ThemedView safe={true} style={styles.container}>
-                <ThemedText title={true} style={styles.heading}>
-                    Utwórz nową trasę
-                </ThemedText>
-                
-                <Spacer height={15} />
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Nagłówek */}
+                    <View style={styles.header}>
+                        <Ionicons name="add-circle" size={28} color={Colors.primary} />
+                        <ThemedText title style={styles.heading}>
+                            Nowa trasa
+                        </ThemedText>
+                    </View>
 
-                {/* Sekcja GPS - Trasa na żywo */}
-                {!showManualForm && (
-                    <>
-                        <View style={styles.section}>
-                            <ThemedText style={styles.sectionTitle}>
-                                Tryb GPS
-                            </ThemedText>
-                            
-                            <Spacer height={8} />
-                            
-                            <ThemedText style={styles.subtitle}>
-                                {liveRouteId 
-                                    ? "Trasa w trakcie - zakończ ją" 
-                                    : "Automatyczne zapisywanie lokalizacji"}
-                            </ThemedText>
-                            
-                            <Spacer height={12} />
-
-                            {/* Informacja o przycisku */}
-                            {!liveRouteId && (
-                                <>
-                                    <ThemedText style={styles.subtitle}>
-                                        Przycisk otworzy aparat do zrobienia zdjęcia i rozpocznie trasę z lokalizacją GPS
-                                    </ThemedText>
-                                    <Spacer height={15} />
-                                </>
-                            )}
-                            
-                            {/* Informacja dla zakończenia trasy */}
-                            {liveRouteId && (
-                                <>
-                                    <ThemedText style={styles.subtitle}>
-                                        Przycisk otworzy aparat do zrobienia zdjęcia i zakończy trasę z lokalizacją GPS
-                                    </ThemedText>
-                                    <Spacer height={15} />
-                                </>
-                            )}
-
-                            {/* Przyciski GPS z aparatem */}
-                            {!liveRouteId ? (
-                                <ImagePickerWithCrop
-                                    onImageCaptured={handleStartLiveRoute}
-                                    buttonText="Rozpocznij trasę"
-                                />
-                            ) : (
-                                <ImagePickerWithCrop
-                                    onImageCaptured={handleEndLiveRoute}
-                                    buttonText="Zakończ trasę"
-                                />
-                            )}
-                        </View>
-
-                        <Spacer height={20} />
-
-                        {/* Separator */}
-                        <View style={styles.separator}>
-                            <View style={styles.separatorLine} />
-                            <ThemedText style={styles.separatorText}>LUB</ThemedText>
-                            <View style={styles.separatorLine} />
-                        </View>
-
-                        <Spacer height={20} />
-                    </>
-                )}
-
-                {/* Sekcja Manualna - Wpisywanie adresów */}
-                <View style={styles.section}>
-                    <ThemedText style={styles.sectionTitle}>
-                        Tryb manualny
-                    </ThemedText>
-                    
-                    <Spacer height={8} />
-                    
-                    <ThemedText style={styles.subtitle}>
-                        Dodaj trasę z przeszłości
-                    </ThemedText>
-                    
-                    <Spacer height={12} />
-
-                    {/* Przycisk pokazujący/ukrywający formularz */}
-                    {!showManualForm ? (
-                        <ThemedButton 
-                            onPress={() => setShowManualForm(true)}
-                            disabled={loading === true || !!liveRouteId}
-                            style={styles.showFormButton}
-                        >
-                            <Text style={{color: "#fff", textAlign: 'center'}}>
-                                Pokaż formularz
-                            </Text>
-                        </ThemedButton>
-                    ) : (
+                    {/* Sekcja GPS - Trasa na żywo */}
+                    {!showManualForm && (
                         <>
-                            {/* Przycisk do ukrycia formularza */}
-                            <ThemedButton 
-                                onPress={() => {
-                                    setShowManualForm(false);
-                                    setStartAddress("");
-                                    setEndAddress("");
-                                    setStartDate("");
-                                    setStartTime("");
-                                    setEndTime("");
-                                }}
-                                disabled={loading === true}
-                                style={styles.hideFormButton}
-                            >
-                                <Text style={{color: "#fff", textAlign: 'center'}}>
-                                    ▲ Ukryj formularz
-                                </Text>
-                            </ThemedButton>
+                            <ThemedCard style={styles.modeCard}>
+                                <View style={styles.cardHeader}>
+                                    <View style={[styles.modeIcon, { backgroundColor: Colors.primary + '20' }]}>
+                                        <Ionicons name="navigate" size={24} color={Colors.primary} />
+                                    </View>
+                                    <View style={styles.cardHeaderText}>
+                                        <ThemedText style={styles.cardTitle} title>Tryb GPS</ThemedText>
+                                        <ThemedText style={styles.cardSubtitle}>
+                                            {liveRouteId ? "Trasa w trakcie" : "Automatyczna lokalizacja"}
+                                        </ThemedText>
+                                    </View>
+                                </View>
+                                
+                                <ThemedText style={styles.modeDescription}>
+                                    {liveRouteId 
+                                        ? "Zrób zdjęcie licznika aby zakończyć trasę"
+                                        : "Zrób zdjęcie licznika aby rozpocząć trasę z bieżącą lokalizacją GPS"}
+                                </ThemedText>
+                                
+                                <Spacer height={16} />
 
-                            <Spacer height={12} />
+                                {!liveRouteId ? (
+                                    <ImagePickerWithCrop
+                                        onImageCaptured={handleStartLiveRoute}
+                                        buttonText="Rozpocznij trasę"
+                                        buttonIcon="play-circle"
+                                    />
+                                ) : (
+                                    <ImagePickerWithCrop
+                                        onImageCaptured={handleEndLiveRoute}
+                                        buttonText="Zakończ trasę"
+                                        buttonIcon="stop-circle"
+                                        buttonVariant="danger"
+                                    />
+                                )}
+                            </ThemedCard>
 
-                            {/* Pole: Adres początku trasy */}
-                            <ThemedTextInput
-                                style={styles.input}
-                                placeholder="Adres początku (np. Warszawa, Marszałkowska 1)"
-                                value={startAddress}
-                                onChangeText={setStartAddress}
-                                editable={loading !== true && !liveRouteId}
-                            />
-                            
-                            <Spacer height={10} />
-
-                            {/* Pole: Adres końca trasy */}
-                            <ThemedTextInput
-                                style={styles.input}
-                                placeholder="Adres końca (np. Kraków, Rynek Główny)"
-                                value={endAddress}
-                                onChangeText={setEndAddress}
-                                editable={loading !== true && !liveRouteId}
-                            />
-                            
-                            <Spacer height={15} />
-
-                            <ThemedText style={styles.subsectionTitle}>
-                                Opcjonalnie - Data i godziny
-                            </ThemedText>
-                            
-                            <Spacer height={8} />
-
-                            {/* Pole: Data */}
-                            <ThemedTextInput
-                                style={styles.input}
-                                placeholder="Data (DD.MM.YYYY, np. 18.11.2025)"
-                                value={startDate}
-                                onChangeText={setStartDate}
-                                editable={loading !== true && !liveRouteId}
-                            />
-                            
-                            <Spacer height={10} />
-
-                            {/* Pole: Godzina rozpoczęcia */}
-                            <ThemedTextInput
-                                style={styles.input}
-                                placeholder="Godzina rozpoczęcia (HH:MM, np. 14:30)"
-                                value={startTime}
-                                onChangeText={setStartTime}
-                                editable={loading !== true && !liveRouteId}
-                            />
-                            
-                            <Spacer height={10} />
-
-                            {/* Pole: Godzina zakończenia */}
-                            <ThemedTextInput
-                                style={styles.input}
-                                placeholder="Godzina zakończenia (HH:MM, np. 16:45)"
-                                value={endTime}
-                                onChangeText={setEndTime}
-                                editable={loading !== true && !liveRouteId}
-                            />
-                            
-                            <Spacer height={12} />
-
-                            {/* Przycisk tworzenia trasy manualnej */}
-                            <ThemedButton 
-                                onPress={handleSubmit} 
-                                disabled={loading === true || !!liveRouteId}
-                            >
-                                <Text style={{color: "#fff", textAlign: 'center'}}>
-                                    {loading ? "Obliczanie trasy..." : "Utwórz trasę"}
-                                </Text>
-                            </ThemedButton>
+                            <ThemedDivider text="lub" />
                         </>
                     )}
-                </View>
 
-                <Spacer height={20} />
+                    {/* Sekcja Manualna */}
+                    <ThemedCard style={styles.modeCard}>
+                        <View style={styles.cardHeader}>
+                            <View style={[styles.modeIcon, { backgroundColor: Colors.primary + '20' }]}>
+                                <Ionicons name="create" size={24} color={Colors.primary} />
+                            </View>
+                            <View style={styles.cardHeaderText}>
+                                <ThemedText style={styles.cardTitle} title>Tryb manualny</ThemedText>
+                                <ThemedText style={styles.cardSubtitle}>
+                                    Dodaj trasę z przeszłości
+                                </ThemedText>
+                            </View>
+                        </View>
 
-                {/* Wyświetlenie błędu jeśli wystąpił */}
-                {error && (
-                    <>
-                        <ThemedText style={styles.error}>
-                            {error}
-                        </ThemedText>
-                        <Spacer height={10} />
-                    </>
-                )}
+                        {!showManualForm ? (
+                            <ThemedButton 
+                                onPress={() => setShowManualForm(true)}
+                                disabled={loading === true || !!liveRouteId}
+                                variant="secondary"
+                                icon="chevron-down"
+                            >
+                                Pokaż formularz
+                            </ThemedButton>
+                        ) : (
+                            <>
+                                <ThemedButton 
+                                    onPress={() => {
+                                        setShowManualForm(false);
+                                        setStartAddress("");
+                                        setEndAddress("");
+                                        setStartDate("");
+                                        setStartTime("");
+                                        setEndTime("");
+                                    }}
+                                    disabled={loading === true}
+                                    variant="secondary"
+                                    icon="chevron-up"
+                                >
+                                    Ukryj formularz
+                                </ThemedButton>
 
-                {/* Info o czasie oczekiwania */}
-                {loading && (
-                    <>
-                        <ThemedText style={styles.loadingInfo}>
-                            Może to potrwać kilka sekund...
-                        </ThemedText>
-                        <Spacer height={10} />
-                    </>
-                )}
+                                <Spacer height={16} />
+
+                                <ThemedText style={styles.inputLabel}>Adres początkowy</ThemedText>
+                                <ThemedTextInput
+                                    placeholder="np. Warszawa, Marszałkowska 1"
+                                    value={startAddress}
+                                    onChangeText={setStartAddress}
+                                    editable={loading !== true && !liveRouteId}
+                                    icon="location"
+                                />
+                                
+                                <Spacer height={12} />
+
+                                <ThemedText style={styles.inputLabel}>Adres końcowy</ThemedText>
+                                <ThemedTextInput
+                                    placeholder="np. Kraków, Rynek Główny"
+                                    value={endAddress}
+                                    onChangeText={setEndAddress}
+                                    editable={loading !== true && !liveRouteId}
+                                    icon="flag"
+                                />
+                                
+                                <Spacer height={20} />
+
+                                <View style={styles.optionalHeader}>
+                                    <Ionicons name="time-outline" size={16} color={theme.iconColor} />
+                                    <ThemedText style={styles.optionalLabel}>
+                                        Opcjonalnie - Data i godziny
+                                    </ThemedText>
+                                </View>
+                                
+                                <Spacer height={12} />
+
+                                <ThemedTextInput
+                                    placeholder="Data (DD.MM.YYYY)"
+                                    value={startDate}
+                                    onChangeText={setStartDate}
+                                    editable={loading !== true && !liveRouteId}
+                                    icon="calendar"
+                                />
+                                
+                                <Spacer height={10} />
+
+                                <View style={styles.timeRow}>
+                                    <View style={styles.timeInput}>
+                                        <ThemedTextInput
+                                            placeholder="Start (HH:MM)"
+                                            value={startTime}
+                                            onChangeText={setStartTime}
+                                            editable={loading !== true && !liveRouteId}
+                                        />
+                                    </View>
+                                    <Ionicons name="arrow-forward" size={20} color={theme.iconColor} />
+                                    <View style={styles.timeInput}>
+                                        <ThemedTextInput
+                                            placeholder="Koniec (HH:MM)"
+                                            value={endTime}
+                                            onChangeText={setEndTime}
+                                            editable={loading !== true && !liveRouteId}
+                                        />
+                                    </View>
+                                </View>
+                                
+                                <Spacer height={16} />
+
+                                <ThemedButton 
+                                    onPress={handleSubmit} 
+                                    disabled={loading === true || !!liveRouteId}
+                                    icon="checkmark-circle"
+                                >
+                                    {loading ? "Obliczanie trasy..." : "Utwórz trasę"}
+                                </ThemedButton>
+                            </>
+                        )}
+                    </ThemedCard>
+
+                    {/* Wyświetlenie błędu */}
+                    {error && (
+                        <View style={styles.errorContainer}>
+                            <Ionicons name="alert-circle" size={20} color={Colors.warning} />
+                            <ThemedText style={styles.errorText}>{error}</ThemedText>
+                        </View>
+                    )}
+
+                    <Spacer height={40} />
+                </ScrollView>
 
                 {/* Loader podczas operacji GPS */}
                 {loading && !showOcrModal && (
                     <View style={styles.loaderOverlay}>
-                        <View style={[styles.loaderContainer, { backgroundColor: theme.cardBackground }]}>
-                            <ActivityIndicator 
-                                size="large" 
-                                color={Colors.primary}
-                            />
+                        <View style={[styles.loaderContainer, { backgroundColor: theme.uiBackground }]}>
+                            <ActivityIndicator size="large" color={Colors.primary} />
                             <Spacer height={16} />
                             <ThemedText style={styles.loaderText}>
                                 {loadingMessage || 'Przetwarzanie...'}
                             </ThemedText>
                             <ThemedText style={styles.loaderSubtext}>
-                                Pobieranie lokalizacji GPS i zapisywanie danych
+                                Pobieranie lokalizacji GPS
                             </ThemedText>
                         </View>
                     </View>
                 )}
 
-                {/* Modal do ręcznej korekty odczytu OCR */}
+                {/* Modal OCR */}
                 <Modal
                     visible={showOcrModal}
                     transparent={true}
@@ -647,42 +612,29 @@ const Create = () => {
                     onRequestClose={handleCancelOcr}
                 >
                     <View style={styles.modalOverlay}>
-                        <View style={[styles.modalContent, {backgroundColor: theme.background}]}>
-                            <ThemedText style={styles.modalTitle}>
-                                {ocrModalType === 'start' ? 'Potwierdź stan licznika (początek)' : 'Potwierdź stan licznika (koniec)'}
-                            </ThemedText>
-                            
-                            <Spacer height={15} />
+                        <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+                            <View style={styles.modalHeader}>
+                                <Ionicons name="speedometer" size={24} color={Colors.primary} />
+                                <ThemedText style={styles.modalTitle} title>
+                                    {ocrModalType === 'start' ? 'Stan licznika (start)' : 'Stan licznika (koniec)'}
+                                </ThemedText>
+                            </View>
                             
                             {ocrDetectedValue && (
-                                <>
-                                    <ThemedText style={styles.modalLabel}>
-                                        Wykryto przez OCR:
-                                    </ThemedText>
-                                    <ThemedText style={styles.modalDetectedValue}>
-                                        {ocrDetectedValue} km
-                                    </ThemedText>
-                                    <Spacer height={10} />
-                                </>
+                                <View style={[styles.ocrDetected, { backgroundColor: Colors.primary + '15' }]}>
+                                    <ThemedText style={styles.ocrDetectedLabel}>Wykryto przez OCR:</ThemedText>
+                                    <ThemedText style={styles.ocrDetectedValue}>{ocrDetectedValue} km</ThemedText>
+                                </View>
                             )}
                             
                             {ocrValidationMessage && (
-                                <>
-                                    <ThemedText style={styles.modalValidationMessage}>
-                                        {ocrValidationMessage}
-                                    </ThemedText>
-                                    <Spacer height={15} />
-                                </>
+                                <ThemedText style={styles.ocrValidation}>{ocrValidationMessage}</ThemedText>
                             )}
                             
-                            <ThemedText style={styles.modalLabel}>
-                                Popraw wartość jeśli potrzeba:
-                            </ThemedText>
-                            
-                            <Spacer height={8} />
+                            <ThemedText style={styles.ocrEditLabel}>Popraw wartość jeśli potrzeba:</ThemedText>
                             
                             <ThemedTextInput
-                                style={styles.modalInput}
+                                style={styles.ocrInput}
                                 placeholder="Wpisz stan licznika (km)"
                                 value={ocrEditedValue}
                                 onChangeText={setOcrEditedValue}
@@ -690,26 +642,21 @@ const Create = () => {
                                 autoFocus={true}
                             />
                             
-                            <Spacer height={20} />
-                            
                             <View style={styles.modalButtons}>
                                 <ThemedButton 
                                     onPress={handleCancelOcr}
-                                    style={styles.modalCancelButton}
+                                    variant="danger"
+                                    style={styles.modalButton}
                                 >
-                                    <Text style={{color: "#fff", textAlign: 'center'}}>
-                                        Anuluj
-                                    </Text>
+                                    Anuluj
                                 </ThemedButton>
                                 
                                 <ThemedButton 
                                     onPress={handleConfirmOcr}
-                                    style={styles.modalConfirmButton}
+                                    style={styles.modalButton}
                                     disabled={loading}
                                 >
-                                    <Text style={{color: "#fff", textAlign: 'center'}}>
-                                        {loading ? 'Zapisywanie...' : 'Zatwierdź'}
-                                    </Text>
+                                    {loading ? 'Zapisywanie...' : 'Zatwierdź'}
                                 </ThemedButton>
                             </View>
                         </View>
@@ -725,159 +672,92 @@ export default Create;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 15,
     },
-    heading: {
-        fontWeight: 'bold',
-        fontSize: 22,
-        textAlign: 'center',
+    scrollContent: {
+        padding: 16,
     },
-    section: {
-        width: '100%',
-        alignItems: 'center',
-    },
-    sectionTitle: {
-        fontWeight: 'bold',
-        fontSize: 16,
-        textAlign: 'center',
-    },
-    subtitle: {
-        fontSize: 12,
-        textAlign: 'center',
-        opacity: 0.7,
-    },
-    subsectionTitle: {
-        fontSize: 13,
-        fontWeight: '600',
-        textAlign: 'center',
-        opacity: 0.8,
-    },
-    input: {
-        padding: 15,
-        borderRadius: 6,
-        alignSelf: 'stretch',
-        marginHorizontal: 15,
-        fontSize: 15,
-    },  
-    multiline: {
-        padding: 20,
-        borderRadius: 6,
-        minHeight: 100,
-        alignSelf: 'stretch',
-        marginHorizontal: 20,
-        fontSize: 16,
-    },
-    showFormButton: {
-        backgroundColor: Colors.primary, // Fioletowy dla pokazania formularza
-    },
-    hideFormButton: {
-        backgroundColor: Colors.warning, // Szary dla ukrycia formularza
-    },
-    separator: {
+    header: {
         flexDirection: 'row',
         alignItems: 'center',
-        width: '80%',
-    },
-    separatorLine: {
-        flex: 1,
-        height: 1,
-        backgroundColor: '#ccc',
-        opacity: 0.3,
-    },
-    separatorText: {
-        marginHorizontal: 10,
-        fontSize: 12,
-        opacity: 0.5,
-        fontWeight: 'bold',
-    },
-    error: {
-        color: '#cc475a',
-        fontSize: 14,
-        textAlign: 'center',
-        paddingHorizontal: 30,
-    },
-    loadingInfo: {
-        fontSize: 12,
-        textAlign: 'center',
-        opacity: 0.6,
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: '600',
-        textAlign: 'center',
-    },
-    photoConfirm: {
-        fontSize: 13,
-        textAlign: 'center',
-        color: '#4CAF50',
+        justifyContent: 'center',
+        gap: 10,
+        marginBottom: 20,
         marginTop: 8,
     },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    heading: {
+        fontSize: 22,
+        fontWeight: '700',
+    },
+    modeCard: {
+        marginBottom: 8,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        marginBottom: 14,
+    },
+    modeIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    modalContent: {
-        width: '85%',
-        borderRadius: 12,
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
+    cardHeaderText: {
+        flex: 1,
     },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        
-    },
-    modalLabel: {
-        fontSize: 14,
+    cardTitle: {
+        fontSize: 17,
         fontWeight: '600',
-        marginBottom: 5,
     },
-    modalDetectedValue: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        color: Colors.primary,
-    },
-    modalValidationMessage: {
+    cardSubtitle: {
         fontSize: 13,
-        textAlign: 'center',
-        color: Colors.warning,
-        fontStyle: 'italic',
-        paddingHorizontal: 10,
+        opacity: 0.6,
+        marginTop: 2,
     },
-    modalInput: {
-        padding: 15,
-        borderRadius: 8,
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        borderWidth: 1,
-        borderColor: Colors.primary,
+    modeDescription: {
+        fontSize: 14,
+        opacity: 0.7,
+        lineHeight: 20,
     },
-    modalButtons: {
+    inputLabel: {
+        fontSize: 13,
+        opacity: 0.7,
+        marginBottom: 6,
+        marginLeft: 4,
+    },
+    optionalHeader: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 6,
+    },
+    optionalLabel: {
+        fontSize: 13,
+        opacity: 0.6,
+        fontWeight: '500',
+    },
+    timeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
         gap: 10,
     },
-    modalCancelButton: {
+    timeInput: {
         flex: 1,
-        backgroundColor: Colors.warning,
     },
-    modalConfirmButton: {
+    errorContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        padding: 14,
+        backgroundColor: Colors.warning + '15',
+        borderRadius: 12,
+        marginTop: 12,
+    },
+    errorText: {
         flex: 1,
-        backgroundColor: Colors.primary,
+        color: Colors.warning,
+        fontSize: 14,
     },
     loaderOverlay: {
         position: 'absolute',
@@ -897,18 +777,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: 280,
         maxWidth: '85%',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 10,
     },
     loaderText: {
         fontSize: 16,
-        fontWeight: '700',
+        fontWeight: '600',
         textAlign: 'center',
     },
     loaderSubtext: {
@@ -916,5 +788,65 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 6,
         opacity: 0.7,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '88%',
+        borderRadius: 20,
+        padding: 24,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+    },
+    ocrDetected: {
+        padding: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    ocrDetectedLabel: {
+        fontSize: 12,
+        opacity: 0.7,
+        marginBottom: 4,
+    },
+    ocrDetectedValue: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: Colors.primary,
+    },
+    ocrValidation: {
+        fontSize: 13,
+        textAlign: 'center',
+        color: Colors.warning,
+        marginBottom: 16,
+    },
+    ocrEditLabel: {
+        fontSize: 14,
+        marginBottom: 8,
+    },
+    ocrInput: {
+        fontSize: 18,
+        fontWeight: '600',
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    modalButton: {
+        flex: 1,
     },
 });

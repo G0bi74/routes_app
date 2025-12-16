@@ -2,14 +2,14 @@
  * Ekran logowania (Login)
  * 
  * Umożliwia użytkownikowi zalogowanie się do aplikacji
- * Pola: email, hasło
- * Zawiera link do strony rejestracji
+ * Styl: Minimalistyczne kafelki z zaokrągleniami
  */
 
-import { Keyboard, StyleSheet, Text, TouchableWithoutFeedback } from 'react-native';
+import { Keyboard, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useUser } from '../../hooks/useUser';
+import { Ionicons } from '@expo/vector-icons';
 
 // Importowanie themed components
 import ThemedText from '../../components/ThemedText';
@@ -17,82 +17,88 @@ import ThemedView from '../../components/ThemedView';
 import Spacer from '../../components/Spacer';
 import ThemedButton from '../../components/ThemedButton';
 import ThemedTextInput from '../../components/ThemedTextInput';
+import ThemedCard from '../../components/ThemedCard';
 import { Colors } from '../../constants/Colors';
 
 const Login = () => {
-    // Stany dla pól formularza
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
-
-    // Pobranie funkcji logowania z kontekstu
     const { login } = useUser();
 
-    /**
-     * Obsługa submitowania formularza logowania
-     */
     const handleSubmit = async () => {
-        // Czyszczenie poprzedniego błędu
         setError(null);
-        
         try {
-            // Próba zalogowania użytkownika
             await login(email, password);
-            // Po udanym logowaniu, użytkownik zostanie automatycznie przekierowany
         } catch (error) {
-            // Wyświetlenie błędu użytkownikowi
             setError(error.message);
         }    
     }
 
     return (
-        // TouchableWithoutFeedback - ukrywa klawiaturę po kliknięciu poza polem
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <ThemedView style={styles.container}>
-                <Spacer />
-                
-                {/* Tytuł strony */}
-                <ThemedText title={true} style={styles.title}>
-                    Zaloguj się do konta
-                </ThemedText>
-
-                {/* Pole Email */}
-                <ThemedTextInput
-                    style={{ width: '80%', marginBottom: 20 }}
-                    placeholder='Email'
-                    keyboardType="email-address"
-                    onChangeText={setEmail}
-                    value={email}
-                    autoCapitalize="none"
-                />
-
-                {/* Pole Hasło */}
-                <ThemedTextInput
-                    style={{ width: '80%', marginBottom: 20 }}
-                    placeholder='Hasło'
-                    onChangeText={setPassword}
-                    value={password}
-                    secureTextEntry  // Ukrycie wpisywanego hasła
-                />
-                
-                {/* Przycisk logowania */}
-                <ThemedButton onPress={handleSubmit}>
-                    <Text style={{color: '#f2f2f2'}}>Zaloguj</Text>
-                </ThemedButton>
-                
-                <Spacer />
-                
-                {/* Wyświetlenie błędu jeśli wystąpił */}
-                {error && <ThemedText style={styles.error}>{error}</ThemedText>}
-
-                <Spacer height={100}/>
-                
-                {/* Link do strony rejestracji */}
-                <Link href={'/register'}>
-                    <ThemedText style={{textAlign: 'center'}}>
-                        Zarejestruj się zamiast tego
+            <ThemedView style={styles.container} safe>
+                <View style={styles.content}>
+                    {/* Logo / Ikona */}
+                    <View style={styles.logoContainer}>
+                        <Ionicons name="navigate-circle" size={64} color={Colors.primary} />
+                    </View>
+                    
+                    <ThemedText title style={styles.title}>
+                        Zaloguj się
                     </ThemedText>
-                </Link>
+                    
+                    <ThemedText style={styles.subtitle}>
+                        Witaj z powrotem!
+                    </ThemedText>
+
+                    <Spacer height={30} />
+
+                    {/* Formularz */}
+                    <ThemedCard style={styles.formCard}>
+                        <ThemedTextInput
+                            placeholder='Email'
+                            keyboardType="email-address"
+                            onChangeText={setEmail}
+                            value={email}
+                            autoCapitalize="none"
+                            icon="mail-outline"
+                        />
+                        
+                        <Spacer height={12} />
+
+                        <ThemedTextInput
+                            placeholder='Hasło'
+                            onChangeText={setPassword}
+                            value={password}
+                            secureTextEntry
+                            icon="lock-closed-outline"
+                        />
+
+                        <Spacer height={20} />
+
+                        <ThemedButton onPress={handleSubmit} icon="log-in-outline">
+                            Zaloguj
+                        </ThemedButton>
+                    </ThemedCard>
+                    
+                    {/* Błąd */}
+                    {error && (
+                        <View style={styles.errorContainer}>
+                            <Ionicons name="alert-circle" size={18} color={Colors.warning} />
+                            <ThemedText style={styles.errorText}>{error}</ThemedText>
+                        </View>
+                    )}
+
+                    <Spacer height={30} />
+                    
+                    {/* Link do rejestracji */}
+                    <Link href={'/register'}>
+                        <ThemedText style={styles.link}>
+                            Nie masz konta? <ThemedText style={styles.linkBold}>Zarejestruj się</ThemedText>
+                        </ThemedText>
+                    </Link>
+                </View>
             </ThemedView>
         </TouchableWithoutFeedback>
     );
@@ -103,21 +109,51 @@ export default Login;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    content: {
+        flex: 1,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    logoContainer: {
+        marginBottom: 16,
     },
     title: {
+        fontSize: 28,
+        fontWeight: '700',
         textAlign: 'center',
-        fontSize: 18,
-        marginBottom: 30,
     },
-    error: {
+    subtitle: {
+        fontSize: 15,
+        opacity: 0.6,
+        marginTop: 8,
+    },
+    formCard: {
+        width: '100%',
+        maxWidth: 400,
+    },
+    errorContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: Colors.warning + '15',
+        borderRadius: 12,
+    },
+    errorText: {
         color: Colors.warning,
-        padding: 10,
-        backgroundColor: '#f5c1c8',
-        borderColor: Colors.warning,
-        borderWidth: 1,
-        borderRadius: 6,
-        marginHorizontal: 30
-    }
+        fontSize: 14,
+        flex: 1,
+    },
+    link: {
+        textAlign: 'center',
+        fontSize: 14,
+    },
+    linkBold: {
+        fontWeight: '600',
+        color: Colors.primary,
+    },
 });

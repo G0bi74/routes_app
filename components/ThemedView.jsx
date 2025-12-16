@@ -20,6 +20,9 @@ const ThemedView = ({style, safe = false, ...props}) => {
     
     // Wybór palety kolorów
     const theme = Colors[colorScheme] ?? Colors.light;
+    
+    // Pobieranie wymiarów safe area (ZAWSZE wywołane - zasada hooków)
+    const insets = useSafeAreaInsets();
 
     // Jeśli nie używamy safe area, zwróć zwykły View
     if (!safe) return(
@@ -28,9 +31,6 @@ const ThemedView = ({style, safe = false, ...props}) => {
             {...props}
         />
     );
-    
-    // Pobieranie wymiarów safe area (obszary bezpieczne urządzenia)
-    const insets = useSafeAreaInsets();
 
     // Zwróć View z paddingiem uwzględniającym safe area
     return (

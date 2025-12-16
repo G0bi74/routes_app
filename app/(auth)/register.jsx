@@ -19,6 +19,7 @@ import Spacer from '../../components/Spacer';
 import ThemedButton from '../../components/ThemedButton';
 import ThemedTextInput from '../../components/ThemedTextInput';
 import ThemedCard from '../../components/ThemedCard';
+import ThemedLogo from '../../components/ThemedLogo';
 
 const Register = () => {
     const [email, setEmail] = useState('');
@@ -39,9 +40,9 @@ const Register = () => {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <ThemedView style={styles.container} safe>
                 <View style={styles.content}>
-                    {/* Logo / Ikona */}
+                    {/* Logo */}
                     <View style={styles.logoContainer}>
-                        <Ionicons name="person-add-outline" size={64} color={Colors.primary} />
+                        <ThemedLogo size={120} />
                     </View>
                     
                     <ThemedText title style={styles.title}>

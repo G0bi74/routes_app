@@ -1,66 +1,34 @@
 /**
- * Strona główna aplikacji (Home)
+ * Strona główna aplikacji (Splash/Router)
  * 
- * Strona powitalna z linkami do głównych sekcji aplikacji
- * Widoczna dla wszystkich użytkowników (zalogowanych i niezalogowanych)
+ * Automatycznie przekierowuje użytkownika:
+ * - Zalogowany → profil
+ * - Niezalogowany → logowanie
  */
 
-import { StyleSheet } from 'react-native';
-import { Link } from 'expo-router';
-
-// Importowanie themed components
-import ThemedView from '../components/ThemedView';
-import ThemedText from '../components/ThemedText';
-import ThemedLogo from '../components/ThemedLogo';
-import Spacer from '../components/Spacer';
+import { useEffect } from 'react';
+import { useRouter } from 'expo-router';
+import { useUser } from '../hooks/useUser';
+import ThemedLoader from '../components/ThemedLoader';
 
 const Home = () => {
-    return (
-        <ThemedView style={styles.container}>
-            {/* Logo aplikacji */}
-            <ThemedLogo/>
-            <Spacer height={20}/>
+    const { user, authChecked } = useUser();
+    const router = useRouter();
 
-            {/* Tytuł aplikacji */}
-            <ThemedText style={styles.title} title={true}>
-                Aplikacja Tras #1
-            </ThemedText>
+    useEffect(() => {
+        // Czekaj aż sprawdzimy stan uwierzytelnienia
+        if (!authChecked) return;
 
-            <Spacer height={10}/>
-            
-            {/* Opis */}
-            <ThemedText>
-                Zarządzaj swoimi trasami
-            </ThemedText>
-            
-            <Spacer />
-            
-            {/* Linki nawigacyjne */}
-            <Link href={"/login"} style={styles.link}>
-                <ThemedText>Strona Logowania</ThemedText>
-            </Link>
-            
-            <Link href={"/register"} style={styles.link}>
-                <ThemedText>Strona Rejestracji</ThemedText>
-            </Link>
-        </ThemedView>
-    );
+        // Przekieruj w zależności od stanu zalogowania
+        if (user) {
+            router.replace('/profile');
+        } else {
+            router.replace('/login');
+        }
+    }, [user, authChecked]);
+
+    // Wyświetl loader podczas sprawdzania stanu uwierzytelnienia
+    return <ThemedLoader />;
 }
 
 export default Home;
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    link: {
-        marginVertical: 10,
-        borderBottomWidth: 1,
-    }
-});

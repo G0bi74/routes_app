@@ -410,7 +410,7 @@ const Profile = () => {
                         <ThemedText style={styles.statLabel}>Ukończone trasy</ThemedText>
                     </View>
                     <View style={[styles.statTile, { backgroundColor: theme.uiBackground }]}>
-                        <Ionicons name="speedometer" size={24} color={Colors.primary} />
+                        <Ionicons name="trail-sign" size={24} color={Colors.primary} />
                         <ThemedText style={styles.statValue}>{totalKm.toFixed(0)}</ThemedText>
                         <ThemedText style={styles.statLabel}>Przejechane km</ThemedText>
                     </View>

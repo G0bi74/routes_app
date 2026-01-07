@@ -118,6 +118,8 @@ const imageToBase64 = async (uri) => {
 
 /**
  * Generuje HTML dla raportu
+ * Layout: LP | Siatka danych (3 wiersze x 2 kolumny) | Zdjęcia
+ * Zoptymalizowany pod druk - minimalne kolory, bez przycinania zdjęć
  */
 const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fuelPrice) => {
     const totalKm = routes.reduce((sum, route) => sum + (route.distance || 0), 0);
@@ -137,25 +139,60 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
         })
     );
     
-    const routesHTML = routesWithImages.map((route, index) => `
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 12px;">${index + 1}</td>
-            <td style="border: 1px solid #ddd; padding: 12px;">${formatDate(route.createdAt)}</td>
-            <td style="border: 1px solid #ddd; padding: 12px;">
-                <strong>Start:</strong> ${shortenAddress(route.startAddress)}<br/>
-                <strong>Koniec:</strong> ${shortenAddress(route.endAddress)}
-            </td>
-            <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-                ${formatTime(route.startedAt)}<br/>
-                ${formatTime(route.completedAt)}
-            </td>
-            <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">${(route.distance || 0).toFixed(2)} km</td>
-            <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-                ${route.startImageBase64 ? `<img src="${route.startImageBase64}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; margin: 5px;" />` : '—'}<br/>
-                ${route.endImageBase64 ? `<img src="${route.endImageBase64}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; margin: 5px;" />` : '—'}
-            </td>
-        </tr>
-    `).join('');
+    // Layout: LP | Dane (siatka 3x2) | Zdjęcia
+    const routesHTML = routesWithImages.map((route, index) => {
+        const hasImages = route.startImageBase64 || route.endImageBase64;
+        
+        return `
+        <div class="route-block">
+            <div class="route-lp">${index + 1}</div>
+            <div class="route-data">
+                <table class="data-grid">
+                    <tr>
+                        <td class="label">Data:</td>
+                        <td class="value">${formatDate(route.createdAt)}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Start:</td>
+                        <td class="value">${shortenAddress(route.startAddress)}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Godz. startu:</td>
+                        <td class="value">${formatTime(route.startedAt)}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Dystans:</td>
+                        <td class="value bold">${(route.distance || 0).toFixed(2)} km</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Koniec:</td>
+                        <td class="value">${shortenAddress(route.endAddress)}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Godz. końca:</td>
+                        <td class="value">${formatTime(route.completedAt)}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="route-images">
+                ${hasImages ? `
+                    ${route.startImageBase64 ? `
+                    <div class="image-box">
+                        <img src="${route.startImageBase64}" alt="Start" />
+                        <span class="img-label">Start</span>
+                    </div>
+                    ` : ''}
+                    ${route.endImageBase64 ? `
+                    <div class="image-box">
+                        <img src="${route.endImageBase64}" alt="Koniec" />
+                        <span class="img-label">Koniec</span>
+                    </div>
+                    ` : ''}
+                ` : '<div class="no-images">Brak zdjęć</div>'}
+            </div>
+        </div>
+    `;
+    }).join('');
 
     return `
         <!DOCTYPE html>
@@ -164,106 +201,230 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
+                @page {
+                    margin: 15mm 10mm 15mm 10mm;
+                }
+                * {
+                    box-sizing: border-box;
+                    margin: 0;
+                    padding: 0;
+                }
                 body {
                     font-family: Arial, sans-serif;
-                    margin: 20px;
+                    margin: 0;
+                    padding: 10px;
                     color: #333;
+                    font-size: 10px;
+                    line-height: 1.3;
                 }
                 h1 {
-                    color: #2196F3;
-                    border-bottom: 3px solid #2196F3;
-                    padding-bottom: 10px;
+                    font-size: 18px;
+                    color: #1a5276;
+                    border-bottom: 3px solid #1a5276;
+                    padding-bottom: 6px;
+                    margin-bottom: 10px;
                 }
-                .info {
-                    margin: 20px 0;
-                    padding: 15px;
-                    background-color: #f5f5f5;
-                    border-radius: 5px;
+                .header-info {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 12px;
+                    padding: 6px 10px;
+                    background-color: #f8f9fa;
+                    border-left: 3px solid #1a5276;
+                    font-size: 9px;
+                    color: #555;
                 }
-                table {
+                
+                /* Blok pojedynczej trasy - layout: LP | DANE | ZDJĘCIA */
+                .route-block {
+                    display: flex;
+                    border: 1px solid #aaa;
+                    margin-bottom: 8px;
+                    page-break-inside: avoid;
+                    min-height: 120px;
+                }
+                
+                /* Kolumna LP */
+                .route-lp {
+                    width: 30px;
+                    min-width: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    font-size: 14px;
+                    color: #fff;
+                    border-right: 1px solid #aaa;
+                    background-color: #1a5276;
+                }
+                
+                /* Kolumna danych - siatka */
+                .route-data {
+                    flex: 1;
+                    padding: 6px 8px;
+                    border-right: 1px solid #aaa;
+                    display: flex;
+                    align-items: center;
+                }
+                .data-grid {
                     width: 100%;
                     border-collapse: collapse;
-                    margin-top: 20px;
                 }
-                th {
-                    background-color: #2196F3;
-                    color: white;
-                    padding: 12px;
-                    text-align: left;
-                    border: 1px solid #1976D2;
+                .data-grid td {
+                    padding: 3px 6px;
+                    border: 1px solid #ddd;
+                    vertical-align: middle;
                 }
-                td img {
-                    display: block;
-                    margin: 5px auto;
+                .data-grid .label {
+                    width: 80px;
+                    font-weight: bold;
+                    color: #1a5276;
+                    background-color: #f8f9fa;
+                    white-space: nowrap;
                 }
-                .summary {
-                    margin-top: 30px;
-                    padding: 20px;
-                    background-color: #e3f2fd;
-                    border-radius: 5px;
-                    font-size: 18px;
+                .data-grid .value {
+                    color: #333;
                 }
-                .fuel-summary {
-                    margin-top: 20px;
-                    padding: 20px;
-                    background-color: #e8f5e9;
-                    border-radius: 5px;
-                    font-size: 16px;
-                    border-left: 4px solid #4CAF50;
+                .data-grid .value.bold {
+                    font-weight: bold;
+                    color: #1a5276;
                 }
-                .footer {
-                    margin-top: 50px;
+                
+                /* Kolumna zdjęć - duże zdjęcia */
+                .route-images {
+                    width: 360px;
+                    min-width: 360px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                    padding: 8px;
+                    background-color: #fafafa;
+                }
+                .image-box {
                     text-align: center;
+                    flex: 1;
+                }
+                .image-box img {
+                    max-width: 165px;
+                    max-height: 100px;
+                    width: auto;
+                    height: auto;
+                    object-fit: contain;
+                    border: 1px solid #bbb;
+                    display: block;
+                    margin: 0 auto;
+                }
+                .img-label {
+                    font-size: 8px;
+                    color: #1a5276;
+                    font-weight: bold;
+                    display: block;
+                    margin-top: 3px;
+                }
+                .no-images {
+                    color: #999;
+                    font-size: 9px;
+                    font-style: italic;
+                }
+                
+                /* Podsumowanie */
+                .summary-section {
+                    margin-top: 15px;
+                    border: 1px solid #aaa;
+                    border-left: 4px solid #1a5276;
+                    padding: 10px 12px;
+                    background-color: #f8f9fa;
+                }
+                .summary-title {
+                    font-weight: bold;
                     font-size: 12px;
+                    color: #1a5276;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid #ddd;
+                    padding-bottom: 5px;
+                }
+                .summary-grid {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px 25px;
+                }
+                .summary-item {
+                    display: flex;
+                    gap: 6px;
+                    font-size: 10px;
+                }
+                .summary-item .label {
                     color: #666;
+                }
+                .summary-item .value {
+                    font-weight: bold;
+                    color: #1a5276;
+                }
+                
+                .footer {
+                    margin-top: 25px;
+                    text-align: center;
+                    font-size: 8px;
+                    color: #999;
+                    border-top: 1px solid #ddd;
+                    padding-top: 8px;
+                }
+                
+                @media print {
+                    body {
+                        padding: 0;
+                    }
+                    .route-block {
+                        page-break-inside: avoid;
+                    }
                 }
             </style>
         </head>
         <body>
             <h1>${title}</h1>
             
-            <div class="info">
-                <p><strong>Okres:</strong> ${formatDate({ toDate: () => dateRange.start })} - ${formatDate({ toDate: () => dateRange.end })}</p>
-                <p><strong>Data wygenerowania:</strong> ${new Date().toLocaleString('pl-PL')}</p>
+            <div class="header-info">
+                <span><strong>Okres:</strong> ${formatDate({ toDate: () => dateRange.start })} - ${formatDate({ toDate: () => dateRange.end })}</span>
+                <span><strong>Wygenerowano:</strong> ${new Date().toLocaleString('pl-PL')}</span>
             </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 5%;">Lp.</th>
-                        <th style="width: 12%;">Data</th>
-                        <th style="width: 30%;">Trasa</th>
-                        <th style="width: 13%;">Godziny<br/>(Start/Koniec)</th>
-                        <th style="width: 10%;">Odległość</th>
-                        <th style="width: 20%;">Zdjęcia<br/>(Start/Koniec)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${routesHTML}
-                </tbody>
-            </table>
+            ${routesHTML}
 
-            <div class="summary">
-                <strong>Podsumowanie:</strong><br/>
-                Liczba tras: ${routes.length}<br/>
-                Łączna odległość: ${totalKm.toFixed(2)} km
-            </div>
-
-            ${consumption > 0 && price > 0 ? `
-            <div class="fuel-summary">
-                <strong>Statystyki paliwowe:</strong><br/>
-                <div style="margin-top: 10px;">
-                    <span style="color: #666;">Średnie spalanie:</span> <strong>${consumption.toFixed(2)} l/100km</strong><br/>
-                    <span style="color: #666;">Cena paliwa:</span> <strong>${price.toFixed(2)} zł/litr</strong><br/>
-                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #ccc;"/>
-                    <span style="color: #666;">Zużycie paliwa:</span> <strong style="color: #4CAF50;">${totalFuelLiters.toFixed(2)} litrów</strong><br/>
-                    <span style="color: #666;">Koszt paliwa:</span> <strong style="color: #4CAF50;">${totalFuelCost.toFixed(2)} zł</strong>
+            <div class="summary-section">
+                <div class="summary-title">Podsumowanie</div>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="label">Liczba tras:</span>
+                        <span class="value">${routes.length}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Łączna odległość:</span>
+                        <span class="value">${totalKm.toFixed(2)} km</span>
+                    </div>
+                    ${consumption > 0 && price > 0 ? `
+                    <div class="summary-item">
+                        <span class="label">Spalanie:</span>
+                        <span class="value">${consumption.toFixed(2)} l/100km</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Cena paliwa:</span>
+                        <span class="value">${price.toFixed(2)} zł/l</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Zużycie paliwa:</span>
+                        <span class="value">${totalFuelLiters.toFixed(2)} l</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Koszt paliwa:</span>
+                        <span class="value">${totalFuelCost.toFixed(2)} zł</span>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
-            ` : ''}
 
             <div class="footer">
-                <p>Raport wygenerowany automatycznie przez Routes App</p>
+                Raport wygenerowany przez Routes App
             </div>
         </body>
         </html>

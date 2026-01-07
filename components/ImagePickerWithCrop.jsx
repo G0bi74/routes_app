@@ -15,7 +15,6 @@ import React, { useState, useRef } from 'react';
 import {
     View,
     StyleSheet,
-    Alert,
     Image,
     Modal,
     Dimensions,
@@ -33,6 +32,7 @@ import ThemedView from './ThemedView';
 import ThemedCard from './ThemedCard';
 import Spacer from './Spacer';
 import { Colors } from '../constants/Colors';
+import { useAlertHelpers } from './ThemedAlert';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -44,6 +44,9 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie", b
     const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
     const [cameraPermission, requestCameraPermission] = useCameraPermissions();
     const cameraRef = useRef(null);
+    
+    // Themed alerts
+    const { error: showError, warning, confirm } = useAlertHelpers();
 
     /**
      * Otwiera custom aparat
@@ -53,27 +56,27 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie", b
             const mediaPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
             
             if (!cameraPermission) {
-                Alert.alert('Błąd', 'Nie można sprawdzić uprawnień aparatu');
+                showError('Błąd', 'Nie można sprawdzić uprawnień aparatu');
                 return;
             }
 
             if (!cameraPermission.granted) {
                 const result = await requestCameraPermission();
                 if (!result.granted) {
-                    Alert.alert('Brak uprawnień', 'Potrzebujemy dostępu do aparatu');
+                    warning('Brak uprawnień', 'Potrzebujemy dostępu do aparatu');
                     return;
                 }
             }
 
             if (mediaPermission.status !== 'granted') {
-                Alert.alert('Brak uprawnień', 'Potrzebujemy dostępu do galerii');
+                warning('Brak uprawnień', 'Potrzebujemy dostępu do galerii');
                 return;
             }
 
             setShowCameraModal(true);
         } catch (error) {
             console.error('Błąd uprawnień:', error);
-            Alert.alert('Błąd', 'Nie można otworzyć aparatu');
+            showError('Błąd', 'Nie można otworzyć aparatu');
         }
     };
 
@@ -97,7 +100,7 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie", b
             setIsProcessing(false);
         } catch (error) {
             console.error('Błąd robienia zdjęcia:', error);
-            Alert.alert('Błąd', 'Nie można zrobić zdjęcia');
+            showError('Błąd', 'Nie można zrobić zdjęcia');
             setIsProcessing(false);
         }
     };
@@ -127,7 +130,7 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie", b
             setIsProcessing(false);
         } catch (error) {
             console.error('Błąd galerii:', error);
-            Alert.alert('Błąd', 'Nie można otworzyć galerii');
+            showError('Błąd', 'Nie można otworzyć galerii');
             setIsProcessing(false);
         }
     };
@@ -164,27 +167,20 @@ const ImagePickerWithCrop = ({ onImageCaptured, buttonText = "Zrób zdjęcie", b
             }
         } catch (error) {
             console.error('Błąd kadrowania:', error);
-            Alert.alert('Błąd', 'Nie można przyciąć zdjęcia');
+            showError('Błąd', 'Nie można przyciąć zdjęcia');
         } finally {
             setIsProcessing(false);
         }
     };
 
     const handleCancel = () => {
-        Alert.alert(
+        confirm(
             'Anulować?',
             'Zdjęcie nie zostanie zapisane',
-            [
-                { text: 'Nie', style: 'cancel' },
-                {
-                    text: 'Tak',
-                    style: 'destructive',
-                    onPress: () => {
-                        setShowCropModal(false);
-                        setImageToProcess(null);
-                    }
-                }
-            ]
+            () => {
+                setShowCropModal(false);
+                setImageToProcess(null);
+            }
         );
     };
 

@@ -8,7 +8,7 @@
  * Styl: Minimalistyczne kafelki z zaokrągleniami
  */
 
-import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, View, Modal, useColorScheme, ActivityIndicator, ScrollView } from 'react-native';
+import { StyleSheet, Text, TouchableWithoutFeedback, Keyboard, View, Modal, useColorScheme, ActivityIndicator, ScrollView } from 'react-native';
 import { useRoutes } from '../../hooks/useRoutes';
 import { useOcr } from '../../hooks/useOcr';
 import { useRouter } from 'expo-router';
@@ -27,12 +27,16 @@ import ThemedButton from '../../components/ThemedButton';
 import ThemedCard from '../../components/ThemedCard';
 import ThemedDivider from '../../components/ThemedDivider';
 import ImagePickerWithCrop from '../../components/ImagePickerWithCrop';
+import { useAlertHelpers } from '../../components/ThemedAlert';
 
 
 const Create = () => {
     // Motyw kolorystyczny
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme] ?? Colors.light;
+    
+    // Themed alerts
+    const { success, error: showError, warning } = useAlertHelpers();
 
 
     // Stany dla pól formularza (tryb manualny)
@@ -180,11 +184,7 @@ const Create = () => {
             await createRoute(routeData);
 
             // Pokazanie komunikatu sukcesu
-            Alert.alert(
-                "Sukces!",
-                "Trasa została utworzona pomyślnie",
-                [{ text: "OK" }]
-            );
+            success("Sukces!", "Trasa została utworzona pomyślnie");
 
             // Resetowanie formularza
             setStartAddress("");
@@ -318,7 +318,7 @@ const Create = () => {
         const mileageValue = parseInt(ocrEditedValue, 10);
         
         if (isNaN(mileageValue) || mileageValue <= 0) {
-            Alert.alert('Błąd', 'Wprowadź poprawną liczbę kilometrów');
+            showError('Błąd', 'Wprowadź poprawną liczbę kilometrów');
             return;
         }
 
@@ -339,10 +339,9 @@ const Create = () => {
 
                 setLiveRouteId(routeId);
 
-                Alert.alert(
+                success(
                     "Trasa rozpoczęta!",
-                    `Lokalizacja początkowa i stan licznika (${mileageValue} km) zostały zapisane.`,
-                    [{ text: "OK" }]
+                    `Lokalizacja początkowa i stan licznika (${mileageValue} km) zostały zapisane.`
                 );
 
                 setStartPhotoUri(null);
@@ -364,7 +363,7 @@ const Create = () => {
                     }
                 }
 
-                Alert.alert("Trasa zakończona!", message, [{ text: "OK" }]);
+                success("Trasa zakończona!", message);
 
                 setLiveRouteId(null);
                 setEndPhotoUri(null);

@@ -14,6 +14,7 @@ import { StatusBar } from "expo-status-bar";
 import { UserProvider } from "../context/UserContext";
 import { RoutesProvider } from "../context/RoutesContext";
 import { OcrProvider } from "../context/OcrContext";
+import { AlertProvider } from "../components/ThemedAlert";
 import { useActiveRouteNotification } from "../hooks/useActiveRouteNotification";
 
 /**
@@ -58,13 +59,15 @@ const AppContent = () => {
 
 const RootLayout = () => {
     return (
-        <UserProvider>
-            <RoutesProvider>
-                <OcrProvider>
-                    <AppContent />
-                </OcrProvider>
-            </RoutesProvider>
-        </UserProvider>
+        <AlertProvider>
+            <UserProvider>
+                <RoutesProvider>
+                    <OcrProvider>
+                        <AppContent />
+                    </OcrProvider>
+                </RoutesProvider>
+            </UserProvider>
+        </AlertProvider>
     );
 };
 

@@ -8,7 +8,7 @@
  * Styl: Minimalistyczne kafelki z zaokrągleniami
  */
 
-import { StyleSheet, ScrollView, View, Alert, useColorScheme } from 'react-native';
+import { StyleSheet, ScrollView, View, useColorScheme } from 'react-native';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '../../hooks/useUser';
@@ -26,6 +26,7 @@ import ThemedCard from '../../components/ThemedCard';
 import ThemedTextInput from '../../components/ThemedTextInput';
 import ThemedDivider from '../../components/ThemedDivider';
 import { Colors } from '../../constants/Colors';
+import { useAlertHelpers } from '../../components/ThemedAlert';
 
 /**
  * Funkcja pomocnicza - formatuje datę
@@ -437,6 +438,9 @@ const Profile = () => {
     const { routes } = useRoutes();
     const [loading, setLoading] = useState(false);
     
+    // Themed alerts
+    const { success, error: showError, warning } = useAlertHelpers();
+    
     // Motyw kolorystyczny
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme] ?? Colors.light;
@@ -496,10 +500,9 @@ const Profile = () => {
             const filteredRoutes = filterRoutesByDateRange(routes, start, end);
 
             if (filteredRoutes.length === 0) {
-                Alert.alert(
+                warning(
                     'Brak tras',
-                    `Nie znaleziono żadnych zakończonych tras w wybranym okresie (${type === 'week' ? 'ostatnie 7 dni' : 'ostatnie 30 dni'}).`,
-                    [{ text: 'OK' }]
+                    `Nie znaleziono żadnych zakończonych tras w wybranym okresie (${type === 'week' ? 'ostatnie 7 dni' : 'ostatnie 30 dni'}).`
                 );
                 setLoading(false);
                 return;
@@ -526,12 +529,12 @@ const Profile = () => {
                     UTI: 'com.adobe.pdf'
                 });
             } else {
-                Alert.alert('Sukces', `Raport zapisany: ${uri}`);
+                success('Sukces', `Raport zapisany: ${uri}`);
             }
 
         } catch (error) {
             console.error('Błąd generowania raportu:', error);
-            Alert.alert('Błąd', 'Nie udało się wygenerować raportu');
+            showError('Błąd', 'Nie udało się wygenerować raportu');
         } finally {
             setLoading(false);
         }

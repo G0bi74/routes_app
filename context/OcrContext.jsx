@@ -8,7 +8,7 @@
  */
 
 import { createContext, useState } from "react";
-import { Alert } from "react-native";
+import { useAlert } from "../components/ThemedAlert";
 
 // Klucz API do OCR.space - darmowy API key lub własny z ocr.space
 const OCR_SPACE_API_KEY = process.env.EXPO_PUBLIC_OCR_SPACE_API_KEY || 'K87899142388957';
@@ -22,6 +22,7 @@ export const OcrContext = createContext();
  */
 export const OcrProvider = ({ children }) => {
     const [isProcessing, setIsProcessing] = useState(false);
+    const { showAlert } = useAlert();
 
     /**
      * Rozpoznaje tekst ze zdjęcia przy użyciu OCR.space API
@@ -192,9 +193,9 @@ Wykryte liczby: ${result.numbers.join(', ')}
 ${result.mileage ? `\nPrzebieg: ${result.mileage} km` : '\nBrak przebiegu'}
             `.trim();
             
-            Alert.alert('Wynik OCR', message);
+            showAlert('Wynik OCR', message, { variant: 'info' });
         } else {
-            Alert.alert('Błąd OCR', result.error || 'Nie udało się rozpoznać tekstu');
+            showAlert('Błąd OCR', result.error || 'Nie udało się rozpoznać tekstu', { variant: 'error' });
         }
     };
 

@@ -60,6 +60,33 @@ const formatTime = (timestamp) => {
     }
 };
 
+/**
+ * Komponent AutoImage - automatycznie dostosowuje wysokość do proporcji zdjęcia
+ */
+const AutoImage = ({ uri, style }) => {
+    const [aspectRatio, setAspectRatio] = useState(4/3); // domyślne proporcje
+    
+    useEffect(() => {
+        if (uri) {
+            Image.getSize(uri, (width, height) => {
+                if (width && height) {
+                    setAspectRatio(width / height);
+                }
+            }, (error) => {
+                console.error('Błąd pobierania wymiarów obrazu:', error);
+            });
+        }
+    }, [uri]);
+    
+    return (
+        <Image 
+            source={{ uri }} 
+            style={[style, { aspectRatio, height: undefined }]}
+            resizeMode="contain"
+        />
+    );
+};
+
 const RouteDetails = () => {
     // Stan dla przechowywania szczegółów trasy
     const [route, setRoute] = useState(null);
@@ -282,10 +309,9 @@ const RouteDetails = () => {
                                     <Ionicons name="camera" size={16} color={Colors.primary} />
                                     <ThemedText style={styles.imageLabel}>Zdjęcie startowe</ThemedText>
                                 </View>
-                                <Image 
-                                    source={{ uri: route.startImageUri }} 
+                                <AutoImage 
+                                    uri={route.startImageUri} 
                                     style={styles.routeImage}
-                                    resizeMode="cover"
                                 />
                             </View>
                         )}
@@ -296,10 +322,9 @@ const RouteDetails = () => {
                                     <Ionicons name="camera" size={16} color={Colors.warning} />
                                     <ThemedText style={styles.imageLabel}>Zdjęcie końcowe</ThemedText>
                                 </View>
-                                <Image 
-                                    source={{ uri: route.endImageUri }} 
+                                <AutoImage 
+                                    uri={route.endImageUri} 
                                     style={styles.routeImage}
-                                    resizeMode="cover"
                                 />
                             </View>
                         )}
@@ -487,7 +512,6 @@ const styles = StyleSheet.create({
     },
     routeImage: {
         width: '100%',
-        height: 220,
         borderRadius: 12,
     },
     

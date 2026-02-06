@@ -295,35 +295,35 @@ const RouteDetails = () => {
                     </View>
                 )}
                 
-                {/* Sekcja zdjęć */}
-                {(route.startImageUri || route.endImageUri) && (
+                {/* Sekcja zdjęć - preferuje URL z Appwrite, fallback na lokalne URI */}
+                {(route.startImageUrl || route.startImageUri || route.endImageUrl || route.endImageUri) && (
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
                             <Ionicons name="images" size={20} color={Colors.primary} />
                             <ThemedText style={styles.sectionTitle} title>Dokumentacja</ThemedText>
                         </View>
                         
-                        {route.startImageUri && (
+                        {(route.startImageUrl || route.startImageUri) && (
                             <View style={[styles.imageCard, { backgroundColor: theme.uiBackground }]}>
                                 <View style={styles.imageLabelRow}>
                                     <Ionicons name="camera" size={16} color={Colors.primary} />
                                     <ThemedText style={styles.imageLabel}>Zdjęcie startowe</ThemedText>
                                 </View>
                                 <AutoImage 
-                                    uri={route.startImageUri} 
+                                    uri={route.startImageUrl || route.startImageUri} 
                                     style={styles.routeImage}
                                 />
                             </View>
                         )}
                         
-                        {route.endImageUri && (
+                        {(route.endImageUrl || route.endImageUri) && (
                             <View style={[styles.imageCard, { backgroundColor: theme.uiBackground }]}>
                                 <View style={styles.imageLabelRow}>
                                     <Ionicons name="camera" size={16} color={Colors.warning} />
                                     <ThemedText style={styles.imageLabel}>Zdjęcie końcowe</ThemedText>
                                 </View>
                                 <AutoImage 
-                                    uri={route.endImageUri} 
+                                    uri={route.endImageUrl || route.endImageUri} 
                                     style={styles.routeImage}
                                 />
                             </View>

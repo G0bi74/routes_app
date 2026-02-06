@@ -132,10 +132,13 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
     const totalFuelCost = price > 0 ? totalFuelLiters * price : 0;
     
     // Konwertuj wszystkie zdjęcia na Base64
+    // Preferuje URL z Appwrite, fallback na lokalne URI
     const routesWithImages = await Promise.all(
         routes.map(async (route) => {
-            const startImageBase64 = route.startImageUri ? await imageToBase64(route.startImageUri) : null;
-            const endImageBase64 = route.endImageUri ? await imageToBase64(route.endImageUri) : null;
+            const startImageSource = route.startImageUrl || route.startImageUri;
+            const endImageSource = route.endImageUrl || route.endImageUri;
+            const startImageBase64 = startImageSource ? await imageToBase64(startImageSource) : null;
+            const endImageBase64 = endImageSource ? await imageToBase64(endImageSource) : null;
             return { ...route, startImageBase64, endImageBase64 };
         })
     );

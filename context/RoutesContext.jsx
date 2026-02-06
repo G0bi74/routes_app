@@ -7,10 +7,13 @@
  * - Tworzenie nowych tras
  * - Usuwanie tras
  * - Automatyczne aktualizowanie listy tras w czasie rzeczywistym
+ * 
+ * Zdjęcia tras są przechowywane w Appwrite Storage
  */
 
 import { createContext, useEffect, useState } from "react";
 import { db } from "../lib/firebase";
+import { uploadRouteImage, deleteRouteImage } from "../lib/appwrite";
 import { 
     collection, 
     addDoc, 
@@ -37,6 +40,31 @@ const COLLECTION_NAME = 'routes';
 
 // Tworzenie kontekstu dla tras
 export const RoutesContext = createContext();
+
+/**
+ * Funkcja pomocnicza do uploadu zdjęcia do Appwrite
+ * Zwraca obiekt z URL i fileId lub null jeśli brak zdjęcia
+ * 
+ * @param {string} userId - ID użytkownika
+ * @param {string} routeId - ID trasy
+ * @param {string} photoUri - Lokalne URI zdjęcia
+ * @param {string} type - Typ zdjęcia ('start' lub 'end')
+ * @returns {Promise<{url: string, fileId: string}|null>}
+ */
+async function uploadPhotoToStorage(userId, routeId, photoUri, type) {
+    if (!photoUri) return null;
+    
+    try {
+        console.log(`[Upload] Przesyłanie zdjęcia ${type} do Appwrite...`);
+        const result = await uploadRouteImage(userId, routeId, photoUri, type);
+        console.log(`[Upload] Zdjęcie ${type} przesłane, URL: ${result.url}`);
+        return result;
+    } catch (error) {
+        console.error(`[Upload] Błąd uploadu zdjęcia ${type}:`, error);
+        // Zwracamy null zamiast rzucać błąd - zdjęcie jest opcjonalne
+        return null;
+    }
+}
 
 /**
  * Provider dla kontekstu tras
@@ -173,17 +201,32 @@ export const RoutesProvider = ({ children }) => {
 
     /**
      * Funkcja do usuwania trasy
+     * Usuwa również zdjęcia z Appwrite Storage
+     * 
      * @param {string} id - ID trasy do usunięcia
      */
     async function deleteRoute(id){
         try {
-            // Referencja do dokumentu do usunięcia
+            // Pobierz trasę przed usunięciem, żeby usunąć zdjęcia
             const routeRef = doc(db, COLLECTION_NAME, id);
+            const routeSnap = await getDoc(routeRef);
             
-            // Usunięcie dokumentu
+            if (routeSnap.exists()) {
+                const routeData = routeSnap.data();
+                
+                // Usuń zdjęcia z Appwrite (jeśli istnieją)
+                if (routeData.startImageFileId) {
+                    await deleteRouteImage(routeData.startImageFileId);
+                }
+                if (routeData.endImageFileId) {
+                    await deleteRouteImage(routeData.endImageFileId);
+                }
+            }
+            
+            // Usunięcie dokumentu z Firestore
             await deleteDoc(routeRef);
             
-            console.log("Trasa została usunięta");
+            console.log("Trasa i zdjęcia zostały usunięte");
         } catch (error) {
             console.log("Błąd usuwania trasy:", error.message);
         }
@@ -215,7 +258,16 @@ export const RoutesProvider = ({ children }) => {
             console.log("Geokodowanie lokalizacji...");
             const addressData = await reverseGeocode(location.lat, location.lon);
 
-            // Krok 3: Przygotowanie danych trasy "w trakcie"
+            // Krok 3: Generowanie tymczasowego ID dla nazwy pliku
+            const tempRouteId = `temp_${Date.now()}`;
+            
+            // Krok 4: Upload zdjęcia do Appwrite (jeśli jest)
+            let startImageData = null;
+            if (photoUri) {
+                startImageData = await uploadPhotoToStorage(user.uid, tempRouteId, photoUri, 'start');
+            }
+
+            // Krok 5: Przygotowanie danych trasy "w trakcie"
             const routeData = {
                 // Adresy (tylko start - koniec będzie dodany później)
                 startAddress: addressData.displayName,
@@ -242,9 +294,13 @@ export const RoutesProvider = ({ children }) => {
                 distanceMeters: 0,
                 duration: 0,
                 
-                // Zdjęcia
-                startImageUri: photoUri || null,
+                // Zdjęcia - URL z Appwrite zamiast lokalnego URI
+                startImageUri: photoUri || null, // Zachowujemy lokalne URI jako backup
+                startImageUrl: startImageData?.url || null, // URL do Appwrite
+                startImageFileId: startImageData?.fileId || null, // ID pliku w Appwrite
                 endImageUri: null,
+                endImageUrl: null,
+                endImageFileId: null,
                 
                 // Stan licznika z OCR
                 startMileage: mileageOcr || null,
@@ -260,11 +316,11 @@ export const RoutesProvider = ({ children }) => {
                 startedAt: Timestamp.now(),
             };
 
-            // Krok 4: Zapis do Firestore
+            // Krok 6: Zapis do Firestore
             console.log("Zapisywanie trasy do bazy...");
             const docRef = await addDoc(collection(db, COLLECTION_NAME), routeData);
             
-            // Krok 5: Utwórz powiadomienie systemowe
+            // Krok 7: Utwórz powiadomienie systemowe
             await createActiveRouteNotification({
                 id: docRef.id,
                 startAddress: addressData.displayName,
@@ -372,7 +428,14 @@ export const RoutesProvider = ({ children }) => {
                 
                 console.log(`Użyto odległości z OSRM: ${finalDistance} km, czas: ${finalDuration} min`);
             }
-            // Krok 5: Przygotowanie danych do aktualizacji
+            
+            // Krok 5: Upload zdjęcia końcowego do Appwrite (jeśli jest)
+            let endImageData = null;
+            if (photoUri) {
+                endImageData = await uploadPhotoToStorage(user.uid, routeId, photoUri, 'end');
+            }
+            
+            // Krok 6: Przygotowanie danych do aktualizacji
             const updateData = {
                 // Dane końca trasy
                 endAddress: endAddressData.displayName,
@@ -392,20 +455,22 @@ export const RoutesProvider = ({ children }) => {
                 mileageDistance: mileageDistance, // Odległość wyliczona ze stanów licznika
                 usedMileageForDistance: usedMileageForDistance, // Czy użyto licznika do obliczenia odległości
                 
-                // Zdjęcie końca (jeśli jest)
-                endImageUri: photoUri || null,
+                // Zdjęcie końca - URL z Appwrite zamiast lokalnego URI
+                endImageUri: photoUri || null, // Zachowujemy lokalne URI jako backup
+                endImageUrl: endImageData?.url || null, // URL do Appwrite
+                endImageFileId: endImageData?.fileId || null, // ID pliku w Appwrite
                 
                 // Status i czas zakończenia
                 status: "completed",
                 completedAt: Timestamp.now(),
             };
 
-            // Krok 6: Aktualizacja dokumentu w Firestore
+            // Krok 7: Aktualizacja dokumentu w Firestore
             console.log("Aktualizacja trasy w bazie...");
             const routeRef = doc(db, COLLECTION_NAME, routeId);
             await updateDoc(routeRef, updateData);
             
-            // Krok 7: Usuń powiadomienie systemowe
+            // Krok 8: Usuń powiadomienie systemowe
             await dismissActiveRouteNotification();
             
             console.log("Trasa zakończona pomyślnie!");

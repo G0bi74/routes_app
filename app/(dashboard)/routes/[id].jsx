@@ -10,7 +10,7 @@
  * - Usunięcie trasy
  */
 
-import { StyleSheet, Text, ScrollView, Image, View, useColorScheme } from 'react-native';
+import { StyleSheet, Text, ScrollView, Image, View, useColorScheme, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useRoutes } from '../../../hooks/useRoutes';
@@ -62,9 +62,12 @@ const formatTime = (timestamp) => {
 
 /**
  * Komponent AutoImage - automatycznie dostosowuje wysokość do proporcji zdjęcia
+ * Pobiera wymiary obrazu i ustawia odpowiedni aspect ratio
  */
 const AutoImage = ({ uri, style }) => {
     const [aspectRatio, setAspectRatio] = useState(4/3); // domyślne proporcje
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     
     useEffect(() => {
         if (uri) {
@@ -72,18 +75,53 @@ const AutoImage = ({ uri, style }) => {
                 if (width && height) {
                     setAspectRatio(width / height);
                 }
-            }, (error) => {
-                console.error('Błąd pobierania wymiarów obrazu:', error);
+            }, (err) => {
+                console.log('Nie można pobrać wymiarów, używam domyślnych:', err);
+                // Nie ustawiamy error - zdjęcie może się załadować mimo braku wymiarów
             });
         }
     }, [uri]);
     
+    if (!uri) return null;
+    
     return (
-        <Image 
-            source={{ uri }} 
-            style={[style, { aspectRatio, height: undefined }]}
-            resizeMode="contain"
-        />
+        <View style={{ position: 'relative' }}>
+            <Image 
+                source={{ uri }} 
+                style={[style, { aspectRatio, height: undefined }]}
+                resizeMode="contain"
+                onLoadStart={() => setLoading(true)}
+                onLoadEnd={() => setLoading(false)}
+                onError={(e) => {
+                    console.log('Błąd ładowania obrazu:', uri, e.nativeEvent?.error);
+                    setError(true);
+                    setLoading(false);
+                }}
+            />
+            {loading && !error && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.1)',
+                }}>
+                    <ActivityIndicator size="small" color={Colors.primary} />
+                </View>
+            )}
+            {error && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.05)',
+                }}>
+                    <Ionicons name="image-outline" size={40} color="#ccc" />
+                    <Text style={{ color: '#999', fontSize: 12, marginTop: 4 }}>Nie można załadować</Text>
+                </View>
+            )}
+        </View>
     );
 };
 

@@ -6,13 +6,58 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_OCR_SPACE_API_KEY": "K81956327588957",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "69861c370009f5819162",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_NAME": "RutesApp",
+        "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://fra.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_APPWRITE_BUCKET_ID": "69861cb70037951cb74c",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDSZ5EQKc-a9vVwwdnH8u7DJfYDpbUEL1s",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "routesapp-55bb2.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "routesapp-55bb2",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "routesapp-55bb2.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1001288712594",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:1001288712594:web:062f69f7f905f6313f814b",
+        "EXPO_PUBLIC_ORS_API_KEY": "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIxODY4MDNhNWI2MzQ4NjBiZjEzN2E4YTUyN2UzMWIxIiwiaCI6Im11cm11cjY0In0="
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_OCR_SPACE_API_KEY": "K81956327588957",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "69861c370009f5819162",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_NAME": "RutesApp",
+        "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://fra.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_APPWRITE_BUCKET_ID": "69861cb70037951cb74c",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDSZ5EQKc-a9vVwwdnH8u7DJfYDpbUEL1s",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "routesapp-55bb2.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "routesapp-55bb2",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "routesapp-55bb2.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1001288712594",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:1001288712594:web:062f69f7f905f6313f814b",
+        "EXPO_PUBLIC_ORS_API_KEY": "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIxODY4MDNhNWI2MzQ4NjBiZjEzN2E4YTUyN2UzMWIxIiwiaCI6Im11cm11cjY0In0="
+      },
+      "android": {
+        "buildType": "apk"
+      }
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_OCR_SPACE_API_KEY": "K81956327588957",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "69861c370009f5819162",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_NAME": "RutesApp",
+        "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://fra.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_APPWRITE_BUCKET_ID": "69861cb70037951cb74c",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDSZ5EQKc-a9vVwwdnH8u7DJfYDpbUEL1s",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "routesapp-55bb2.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "routesapp-55bb2",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "routesapp-55bb2.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1001288712594",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:1001288712594:web:062f69f7f905f6313f814b",
+        "EXPO_PUBLIC_ORS_API_KEY": "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIxODY4MDNhNWI2MzQ4NjBiZjEzN2E4YTUyN2UzMWIxIiwiaCI6Im11cm11cjY0In0="
+      },
       "android": {               
         "buildType": "apk"     
       }

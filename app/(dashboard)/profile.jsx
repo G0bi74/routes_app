@@ -1,153 +1,131 @@
-/**
- * Ekran profilu użytkownika (Profile)
- * 
- * Wyświetla informacje o zalogowanym użytkowniku
- * Umożliwia wylogowanie się z aplikacji
- * Zawiera funkcjonalność generowania raportów PDF
- * 
- * Styl: Minimalistyczne kafelki z zaokrągleniami
- */
+import { StyleSheet, ScrollView, View, useColorScheme } from "react-native";
+import { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUser } from "../../hooks/useUser";
+import { useRoutes } from "../../hooks/useRoutes";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
+import { Ionicons } from "@expo/vector-icons";
 
-import { StyleSheet, ScrollView, View, useColorScheme } from 'react-native';
-import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useUser } from '../../hooks/useUser';
-import { useRoutes } from '../../hooks/useRoutes';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
-import { Ionicons } from '@expo/vector-icons';
+import Spacer from "../../components/Spacer";
+import ThemedText from "../../components/ThemedText";
+import ThemedView from "../../components/ThemedView";
+import ThemedButton from "../../components/ThemedButton";
+import ThemedCard from "../../components/ThemedCard";
+import ThemedTextInput from "../../components/ThemedTextInput";
+import ThemedDivider from "../../components/ThemedDivider";
+import { Colors } from "../../constants/Colors";
+import { useAlertHelpers } from "../../components/ThemedAlert";
 
-// Importowanie themed components
-import Spacer from '../../components/Spacer';
-import ThemedText from '../../components/ThemedText';
-import ThemedView from '../../components/ThemedView';
-import ThemedButton from '../../components/ThemedButton';
-import ThemedCard from '../../components/ThemedCard';
-import ThemedTextInput from '../../components/ThemedTextInput';
-import ThemedDivider from '../../components/ThemedDivider';
-import { Colors } from '../../constants/Colors';
-import { useAlertHelpers } from '../../components/ThemedAlert';
-
-/**
- * Funkcja pomocnicza - formatuje datę
- */
 const formatDate = (timestamp) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('pl-PL', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
+  if (!timestamp) return "";
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleDateString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 };
 
-/**
- * Funkcja pomocnicza - formatuje godzinę
- */
 const formatTime = (timestamp) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleTimeString('pl-PL', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+  if (!timestamp) return "";
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleTimeString("pl-PL", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
-/**
- * Funkcja pomocnicza - skraca adres do pierwszych dwóch części
- * Np. "Rudnik 19d, Wólka, LU, Poland" -> "Rudnik 19d, Wólka"
- */
 const shortenAddress = (address) => {
-    if (!address) return 'Brak danych';
-    const parts = address.split(',').map(part => part.trim());
-    return parts.slice(0, 2).join(', ') || address;
+  if (!address) return "Brak danych";
+  const parts = address.split(",").map((part) => part.trim());
+  return parts.slice(0, 2).join(", ") || address;
 };
 
-/**
- * Funkcja pomocnicza - pobiera zakres dat (tydzień/miesiąc)
- */
 const getDateRange = (type) => {
-    const now = new Date();
-    const end = new Date(now);
-    let start = new Date(now);
+  const now = new Date();
+  const end = new Date(now);
+  let start = new Date(now);
 
-    if (type === 'week') {
-        start.setDate(start.getDate() - 7);
-    } else if (type === 'month') {
-        start.setDate(start.getDate() - 30);
-    }
+  if (type === "week") {
+    start.setDate(start.getDate() - 7);
+  } else if (type === "month") {
+    start.setDate(start.getDate() - 30);
+  }
 
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
 
-    return { start, end };
+  return { start, end };
 };
 
-/**
- * Funkcja pomocnicza - filtruje trasy po zakresie dat
- */
 const filterRoutesByDateRange = (routes, start, end) => {
-    return routes.filter(route => {
-        if (!route.createdAt) return false;
-        const routeDate = route.createdAt.toDate ? route.createdAt.toDate() : new Date(route.createdAt);
-        return routeDate >= start && routeDate <= end && route.status === 'completed';
-    }).sort((a, b) => {
-        const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
-        const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
-        return dateA - dateB;
+  return routes
+    .filter((route) => {
+      if (!route.createdAt) return false;
+      const routeDate = route.createdAt.toDate
+        ? route.createdAt.toDate()
+        : new Date(route.createdAt);
+      return (
+        routeDate >= start && routeDate <= end && route.status === "completed"
+      );
+    })
+    .sort((a, b) => {
+      const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
+      const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
+      return dateA - dateB;
     });
 };
 
-/**
- * Konwertuje obraz URI na Base64
- */
 const imageToBase64 = async (uri) => {
-    try {
-        const response = await fetch(uri);
-        const blob = await response.blob();
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    } catch (error) {
-        console.error('Błąd konwersji obrazu:', error);
-        return null;
-    }
+  try {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error("Błąd konwersji obrazu:", error);
+    return null;
+  }
 };
 
-/**
- * Generuje HTML dla raportu
- * Layout: LP | Siatka danych (3 wiersze x 2 kolumny) | Zdjęcia
- * Zoptymalizowany pod druk - minimalne kolory, bez przycinania zdjęć
- */
-const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fuelPrice) => {
-    const totalKm = routes.reduce((sum, route) => sum + (route.distance || 0), 0);
-    
-    // Obliczenia paliwowe
-    const consumption = parseFloat(fuelConsumption) || 0;
-    const price = parseFloat(fuelPrice) || 0;
-    const totalFuelLiters = consumption > 0 ? (totalKm / 100) * consumption : 0;
-    const totalFuelCost = price > 0 ? totalFuelLiters * price : 0;
-    
-    // Konwertuj wszystkie zdjęcia na Base64
-    // Preferuje URL z Appwrite, fallback na lokalne URI
-    const routesWithImages = await Promise.all(
-        routes.map(async (route) => {
-            const startImageSource = route.startImageUrl || route.startImageUri;
-            const endImageSource = route.endImageUrl || route.endImageUri;
-            const startImageBase64 = startImageSource ? await imageToBase64(startImageSource) : null;
-            const endImageBase64 = endImageSource ? await imageToBase64(endImageSource) : null;
-            return { ...route, startImageBase64, endImageBase64 };
-        })
-    );
-    
-    // Layout: LP | Dane (siatka 3x2) | Zdjęcia
-    const routesHTML = routesWithImages.map((route, index) => {
-        const hasImages = route.startImageBase64 || route.endImageBase64;
-        
-        return `
+const generateReportHTML = async (
+  routes,
+  title,
+  dateRange,
+  fuelConsumption,
+  fuelPrice,
+) => {
+  const totalKm = routes.reduce((sum, route) => sum + (route.distance || 0), 0);
+
+  const consumption = parseFloat(fuelConsumption) || 0;
+  const price = parseFloat(fuelPrice) || 0;
+  const totalFuelLiters = consumption > 0 ? (totalKm / 100) * consumption : 0;
+  const totalFuelCost = price > 0 ? totalFuelLiters * price : 0;
+
+  const routesWithImages = await Promise.all(
+    routes.map(async (route) => {
+      const startImageSource = route.startImageUrl || route.startImageUri;
+      const endImageSource = route.endImageUrl || route.endImageUri;
+      const startImageBase64 = startImageSource
+        ? await imageToBase64(startImageSource)
+        : null;
+      const endImageBase64 = endImageSource
+        ? await imageToBase64(endImageSource)
+        : null;
+      return { ...route, startImageBase64, endImageBase64 };
+    }),
+  );
+
+  const routesHTML = routesWithImages
+    .map((route, index) => {
+      const hasImages = route.startImageBase64 || route.endImageBase64;
+
+      return `
         <div class="route-block">
             <div class="route-lp">${index + 1}</div>
             <div class="route-data">
@@ -179,26 +157,39 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
                 </table>
             </div>
             <div class="route-images">
-                ${hasImages ? `
-                    ${route.startImageBase64 ? `
+                ${
+                  hasImages
+                    ? `
+                    ${
+                      route.startImageBase64
+                        ? `
                     <div class="image-box">
                         <img src="${route.startImageBase64}" alt="Start" />
                         <span class="img-label">Start</span>
                     </div>
-                    ` : ''}
-                    ${route.endImageBase64 ? `
+                    `
+                        : ""
+                    }
+                    ${
+                      route.endImageBase64
+                        ? `
                     <div class="image-box">
                         <img src="${route.endImageBase64}" alt="Koniec" />
                         <span class="img-label">Koniec</span>
                     </div>
-                    ` : ''}
-                ` : '<div class="no-images">Brak zdjęć</div>'}
+                    `
+                        : ""
+                    }
+                `
+                    : '<div class="no-images">Brak zdjęć</div>'
+                }
             </div>
         </div>
     `;
-    }).join('');
+    })
+    .join("");
 
-    return `
+  return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -239,7 +230,6 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
                     color: #555;
                 }
                 
-                /* Blok pojedynczej trasy - layout: LP | DANE | ZDJĘCIA */
                 .route-block {
                     display: flex;
                     border: 1px solid #aaa;
@@ -248,7 +238,6 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
                     min-height: 120px;
                 }
                 
-                /* Kolumna LP */
                 .route-lp {
                     width: 30px;
                     min-width: 30px;
@@ -262,7 +251,6 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
                     background-color: #1a5276;
                 }
                 
-                /* Kolumna danych - siatka */
                 .route-data {
                     flex: 1;
                     padding: 6px 8px;
@@ -294,7 +282,6 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
                     color: #1a5276;
                 }
                 
-                /* Kolumna zdjęć - duże zdjęcia */
                 .route-images {
                     width: 360px;
                     min-width: 360px;
@@ -332,7 +319,6 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
                     font-style: italic;
                 }
                 
-                /* Podsumowanie */
                 .summary-section {
                     margin-top: 15px;
                     border: 1px solid #aaa;
@@ -390,7 +376,7 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
             
             <div class="header-info">
                 <span><strong>Okres:</strong> ${formatDate({ toDate: () => dateRange.start })} - ${formatDate({ toDate: () => dateRange.end })}</span>
-                <span><strong>Wygenerowano:</strong> ${new Date().toLocaleString('pl-PL')}</span>
+                <span><strong>Wygenerowano:</strong> ${new Date().toLocaleString("pl-PL")}</span>
             </div>
 
             ${routesHTML}
@@ -406,7 +392,9 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
                         <span class="label">Łączna odległość:</span>
                         <span class="value">${totalKm.toFixed(2)} km</span>
                     </div>
-                    ${consumption > 0 && price > 0 ? `
+                    ${
+                      consumption > 0 && price > 0
+                        ? `
                     <div class="summary-item">
                         <span class="label">Spalanie:</span>
                         <span class="value">${consumption.toFixed(2)} l/100km</span>
@@ -423,7 +411,9 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
                         <span class="label">Koszt paliwa:</span>
                         <span class="value">${totalFuelCost.toFixed(2)} zł</span>
                     </div>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </div>
             </div>
 
@@ -436,347 +426,362 @@ const generateReportHTML = async (routes, title, dateRange, fuelConsumption, fue
 };
 
 const Profile = () => {
-    // Pobranie danych użytkownika i funkcji wylogowania
-    const { logout, user } = useUser();
-    const { routes } = useRoutes();
-    const [loading, setLoading] = useState(false);
-    
-    // Themed alerts
-    const { success, error: showError, warning } = useAlertHelpers();
-    
-    // Motyw kolorystyczny
-    const colorScheme = useColorScheme();
-    const theme = Colors[colorScheme] ?? Colors.light;
-    
-    // Stany dla spalania i ceny paliwa
-    const [fuelConsumption, setFuelConsumption] = useState(''); // litry/100km
-    const [fuelPrice, setFuelPrice] = useState(''); // zł/litr
+  const { logout, user } = useUser();
+  const { routes } = useRoutes();
+  const [loading, setLoading] = useState(false);
 
-    // Wczytanie zapisanych wartości przy starcie
-    useEffect(() => {
-        const loadFuelData = async () => {
-            try {
-                const savedConsumption = await AsyncStorage.getItem('fuelConsumption');
-                const savedPrice = await AsyncStorage.getItem('fuelPrice');
-                
-                if (savedConsumption !== null) {
-                    setFuelConsumption(savedConsumption);
-                }
-                if (savedPrice !== null) {
-                    setFuelPrice(savedPrice);
-                }
-            } catch (error) {
-                console.error('Błąd wczytywania danych paliwowych:', error);
-            }
-        };
-        
-        loadFuelData();
-    }, []);
+  const { success, error: showError, warning } = useAlertHelpers();
 
-    // Zapisywanie wartości spalania
-    const handleFuelConsumptionChange = async (value) => {
-        setFuelConsumption(value);
-        try {
-            await AsyncStorage.setItem('fuelConsumption', value);
-        } catch (error) {
-            console.error('Błąd zapisywania spalania:', error);
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme] ?? Colors.light;
+
+  const [fuelConsumption, setFuelConsumption] = useState("");
+  const [fuelPrice, setFuelPrice] = useState("");
+
+  useEffect(() => {
+    const loadFuelData = async () => {
+      try {
+        const savedConsumption = await AsyncStorage.getItem("fuelConsumption");
+        const savedPrice = await AsyncStorage.getItem("fuelPrice");
+
+        if (savedConsumption !== null) {
+          setFuelConsumption(savedConsumption);
         }
+        if (savedPrice !== null) {
+          setFuelPrice(savedPrice);
+        }
+      } catch (error) {
+        console.error("Błąd wczytywania danych paliwowych:", error);
+      }
     };
 
-    // Zapisywanie wartości ceny
-    const handleFuelPriceChange = async (value) => {
-        setFuelPrice(value);
-        try {
-            await AsyncStorage.setItem('fuelPrice', value);
-        } catch (error) {
-            console.error('Błąd zapisywania ceny:', error);
-        }
-    };
+    loadFuelData();
+  }, []);
 
-    /**
-     * Generuje raport PDF
-     */
-    const generateReport = async (type) => {
-        setLoading(true);
-        try {
-            const { start, end } = getDateRange(type);
-            const filteredRoutes = filterRoutesByDateRange(routes, start, end);
+  const handleFuelConsumptionChange = async (value) => {
+    setFuelConsumption(value);
+    try {
+      await AsyncStorage.setItem("fuelConsumption", value);
+    } catch (error) {
+      console.error("Błąd zapisywania spalania:", error);
+    }
+  };
 
-            if (filteredRoutes.length === 0) {
-                warning(
-                    'Brak tras',
-                    `Nie znaleziono żadnych zakończonych tras w wybranym okresie (${type === 'week' ? 'ostatnie 7 dni' : 'ostatnie 30 dni'}).`
-                );
-                setLoading(false);
-                return;
-            }
+  const handleFuelPriceChange = async (value) => {
+    setFuelPrice(value);
+    try {
+      await AsyncStorage.setItem("fuelPrice", value);
+    } catch (error) {
+      console.error("Błąd zapisywania ceny:", error);
+    }
+  };
 
-            const title = type === 'week' ? 'Raport Tygodniowy' : 'Raport Miesięczny';
-            const html = await generateReportHTML(
-                filteredRoutes, 
-                title, 
-                { start, end },
-                fuelConsumption,
-                fuelPrice
-            );
+  const generateReport = async (type) => {
+    setLoading(true);
+    try {
+      const { start, end } = getDateRange(type);
+      const filteredRoutes = filterRoutesByDateRange(routes, start, end);
 
-            // Generowanie PDF
-            const { uri } = await Print.printToFileAsync({ html });
+      if (filteredRoutes.length === 0) {
+        warning(
+          "Brak tras",
+          `Nie znaleziono żadnych zakończonych tras w wybranym okresie (${type === "week" ? "ostatnie 7 dni" : "ostatnie 30 dni"}).`,
+        );
+        setLoading(false);
+        return;
+      }
 
-            // Udostępnianie pliku
-            const isAvailable = await Sharing.isAvailableAsync();
-            if (isAvailable) {
-                await Sharing.shareAsync(uri, {
-                    mimeType: 'application/pdf',
-                    dialogTitle: `Zapisz ${title}`,
-                    UTI: 'com.adobe.pdf'
-                });
-            } else {
-                success('Sukces', `Raport zapisany: ${uri}`);
-            }
+      const title = type === "week" ? "Raport Tygodniowy" : "Raport Miesięczny";
+      const html = await generateReportHTML(
+        filteredRoutes,
+        title,
+        { start, end },
+        fuelConsumption,
+        fuelPrice,
+      );
 
-        } catch (error) {
-            console.error('Błąd generowania raportu:', error);
-            showError('Błąd', 'Nie udało się wygenerować raportu');
-        } finally {
-            setLoading(false);
-        }
-    };
+      const { uri } = await Print.printToFileAsync({ html });
 
-    // Statystyki
-    const completedRoutes = routes.filter(r => r.status === 'completed');
-    const totalKm = completedRoutes.reduce((sum, r) => sum + (r.distance || 0), 0);
-    
-    // Obliczenia paliwowe
-    const consumption = parseFloat(fuelConsumption) || 0;
-    const price = parseFloat(fuelPrice) || 0;
-    const totalFuelLiters = (totalKm / 100) * consumption;
-    const totalFuelCost = totalFuelLiters * price;
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (isAvailable) {
+        await Sharing.shareAsync(uri, {
+          mimeType: "application/pdf",
+          dialogTitle: `Zapisz ${title}`,
+          UTI: "com.adobe.pdf",
+        });
+      } else {
+        success("Sukces", `Raport zapisany: ${uri}`);
+      }
+    } catch (error) {
+      console.error("Błąd generowania raportu:", error);
+      showError("Błąd", "Nie udało się wygenerować raportu");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return(
-        <ThemedView style={styles.container} safe={true}>
-            <ScrollView 
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
+  const completedRoutes = routes.filter((r) => r.status === "completed");
+  const totalKm = completedRoutes.reduce(
+    (sum, r) => sum + (r.distance || 0),
+    0,
+  );
+
+  const consumption = parseFloat(fuelConsumption) || 0;
+  const price = parseFloat(fuelPrice) || 0;
+  const totalFuelLiters = (totalKm / 100) * consumption;
+  const totalFuelCost = totalFuelLiters * price;
+
+  return (
+    <ThemedView style={styles.container} safe={true}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {}
+        <View style={styles.header}>
+          <View
+            style={[styles.avatar, { backgroundColor: Colors.primary + "20" }]}
+          >
+            <Ionicons name="person" size={32} color={Colors.primary} />
+          </View>
+          <ThemedText title style={styles.email}>
+            {user.email}
+          </ThemedText>
+        </View>
+
+        {}
+        <View style={styles.statsGrid}>
+          <View
+            style={[styles.statTile, { backgroundColor: theme.uiBackground }]}
+          >
+            <Ionicons
+              name="checkmark-circle"
+              size={24}
+              color={Colors.primary}
+            />
+            <ThemedText style={styles.statValue}>
+              {completedRoutes.length}
+            </ThemedText>
+            <ThemedText style={styles.statLabel}>Ukończone trasy</ThemedText>
+          </View>
+          <View
+            style={[styles.statTile, { backgroundColor: theme.uiBackground }]}
+          >
+            <Ionicons name="trail-sign" size={24} color={Colors.primary} />
+            <ThemedText style={styles.statValue}>
+              {totalKm.toFixed(0)}
+            </ThemedText>
+            <ThemedText style={styles.statLabel}>Przejechane km</ThemedText>
+          </View>
+        </View>
+
+        {}
+        <ThemedCard style={styles.fuelCard}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="car" size={20} color={Colors.primary} />
+            <ThemedText style={styles.cardTitle} title>
+              Ustawienia paliwa
+            </ThemedText>
+          </View>
+
+          <View style={styles.inputRow}>
+            <ThemedText style={styles.inputLabel}>
+              Spalanie (l/100km)
+            </ThemedText>
+            <ThemedTextInput
+              placeholder="np. 7.5"
+              value={fuelConsumption}
+              onChangeText={handleFuelConsumptionChange}
+              keyboardType="decimal-pad"
+              style={styles.fuelInput}
+            />
+          </View>
+
+          <View style={styles.inputRow}>
+            <ThemedText style={styles.inputLabel}>
+              Cena paliwa (zł/l)
+            </ThemedText>
+            <ThemedTextInput
+              placeholder="np. 6.50"
+              value={fuelPrice}
+              onChangeText={handleFuelPriceChange}
+              keyboardType="decimal-pad"
+              style={styles.fuelInput}
+            />
+          </View>
+
+          {consumption > 0 && price > 0 && (
+            <View
+              style={[
+                styles.fuelStats,
+                { backgroundColor: Colors.primary + "10" },
+              ]}
             >
-                {/* Nagłówek z avatarem */}
-                <View style={styles.header}>
-                    <View style={[styles.avatar, { backgroundColor: Colors.primary + '20' }]}>
-                        <Ionicons name="person" size={32} color={Colors.primary} />
-                    </View>
-                    <ThemedText title style={styles.email}>
-                        {user.email}
-                    </ThemedText>
-                </View>
+              <View style={styles.fuelStatRow}>
+                <Ionicons name="water" size={16} color={Colors.primary} />
+                <ThemedText style={styles.fuelStatLabel}>
+                  Zużycie paliwa:
+                </ThemedText>
+                <ThemedText style={styles.fuelStatValue}>
+                  {totalFuelLiters.toFixed(1)} l
+                </ThemedText>
+              </View>
+              <View style={styles.fuelStatRow}>
+                <Ionicons name="cash" size={16} color={Colors.primary} />
+                <ThemedText style={styles.fuelStatLabel}>
+                  Koszt paliwa:
+                </ThemedText>
+                <ThemedText style={styles.fuelStatValue}>
+                  {totalFuelCost.toFixed(2)} zł
+                </ThemedText>
+              </View>
+            </View>
+          )}
+        </ThemedCard>
 
-                {/* Kafelki statystyk */}
-                <View style={styles.statsGrid}>
-                    <View style={[styles.statTile, { backgroundColor: theme.uiBackground }]}>
-                        <Ionicons name="checkmark-circle" size={24} color={Colors.primary} />
-                        <ThemedText style={styles.statValue}>{completedRoutes.length}</ThemedText>
-                        <ThemedText style={styles.statLabel}>Ukończone trasy</ThemedText>
-                    </View>
-                    <View style={[styles.statTile, { backgroundColor: theme.uiBackground }]}>
-                        <Ionicons name="trail-sign" size={24} color={Colors.primary} />
-                        <ThemedText style={styles.statValue}>{totalKm.toFixed(0)}</ThemedText>
-                        <ThemedText style={styles.statLabel}>Przejechane km</ThemedText>
-                    </View>
-                </View>
+        {}
+        <ThemedCard style={styles.reportsCard}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="document-text" size={20} color={Colors.primary} />
+            <ThemedText style={styles.cardTitle} title>
+              Raporty PDF
+            </ThemedText>
+          </View>
 
-                {/* Ustawienia paliwa */}
-                <ThemedCard style={styles.fuelCard}>
-                    <View style={styles.cardHeader}>
-                        <Ionicons name="car" size={20} color={Colors.primary} />
-                        <ThemedText style={styles.cardTitle} title>Ustawienia paliwa</ThemedText>
-                    </View>
-                    
-                    <View style={styles.inputRow}>
-                        <ThemedText style={styles.inputLabel}>Spalanie (l/100km)</ThemedText>
-                        <ThemedTextInput
-                            placeholder="np. 7.5"
-                            value={fuelConsumption}
-                            onChangeText={handleFuelConsumptionChange}
-                            keyboardType="decimal-pad"
-                            style={styles.fuelInput}
-                        />
-                    </View>
-                    
-                    <View style={styles.inputRow}>
-                        <ThemedText style={styles.inputLabel}>Cena paliwa (zł/l)</ThemedText>
-                        <ThemedTextInput
-                            placeholder="np. 6.50"
-                            value={fuelPrice}
-                            onChangeText={handleFuelPriceChange}
-                            keyboardType="decimal-pad"
-                            style={styles.fuelInput}
-                        />
-                    </View>
-                    
-                    {consumption > 0 && price > 0 && (
-                        <View style={[styles.fuelStats, { backgroundColor: Colors.primary + '10' }]}>
-                            <View style={styles.fuelStatRow}>
-                                <Ionicons name="water" size={16} color={Colors.primary} />
-                                <ThemedText style={styles.fuelStatLabel}>Zużycie paliwa:</ThemedText>
-                                <ThemedText style={styles.fuelStatValue}>
-                                    {totalFuelLiters.toFixed(1)} l
-                                </ThemedText>
-                            </View>
-                            <View style={styles.fuelStatRow}>
-                                <Ionicons name="cash" size={16} color={Colors.primary} />
-                                <ThemedText style={styles.fuelStatLabel}>Koszt paliwa:</ThemedText>
-                                <ThemedText style={styles.fuelStatValue}>
-                                    {totalFuelCost.toFixed(2)} zł
-                                </ThemedText>
-                            </View>
-                        </View>
-                    )}
-                </ThemedCard>
+          <View style={styles.reportButtons}>
+            <ThemedButton
+              onPress={() => generateReport("week")}
+              disabled={loading}
+              style={styles.reportButton}
+              icon="calendar-outline"
+            >
+              {loading ? "Generowanie..." : "7 dni"}
+            </ThemedButton>
 
-                {/* Raporty PDF */}
-                <ThemedCard style={styles.reportsCard}>
-                    <View style={styles.cardHeader}>
-                        <Ionicons name="document-text" size={20} color={Colors.primary} />
-                        <ThemedText style={styles.cardTitle} title>Raporty PDF</ThemedText>
-                    </View>
-                    
-                    <View style={styles.reportButtons}>
-                        <ThemedButton
-                            onPress={() => generateReport('week')}
-                            disabled={loading}
-                            style={styles.reportButton}
-                            icon="calendar-outline"
-                        >
-                            {loading ? 'Generowanie...' : '7 dni'}
-                        </ThemedButton>
-                        
-                        <ThemedButton
-                            onPress={() => generateReport('month')}
-                            disabled={loading}
-                            style={styles.reportButton}
-                            icon="calendar"
-                        >
-                            {loading ? 'Generowanie...' : '30 dni'}
-                        </ThemedButton>
-                    </View>
-                </ThemedCard>
+            <ThemedButton
+              onPress={() => generateReport("month")}
+              disabled={loading}
+              style={styles.reportButton}
+              icon="calendar"
+            >
+              {loading ? "Generowanie..." : "30 dni"}
+            </ThemedButton>
+          </View>
+        </ThemedCard>
 
-                <ThemedDivider />
+        <ThemedDivider />
 
-                {/* Przycisk wylogowania */}
-                <ThemedButton 
-                    onPress={logout} 
-                    variant="danger"
-                    icon="log-out-outline"
-                >
-                    Wyloguj się
-                </ThemedButton>
+        {}
+        <ThemedButton onPress={logout} variant="danger" icon="log-out-outline">
+          Wyloguj się
+        </ThemedButton>
 
-                <Spacer height={40} />
-            </ScrollView>
-        </ThemedView>
-    );
-}
+        <Spacer height={40} />
+      </ScrollView>
+    </ThemedView>
+  );
+};
 
 export default Profile;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    scrollContent: {
-        padding: 16,
-    },
-    header: {
-        alignItems: 'center',
-        marginBottom: 24,
-        marginTop: 8,
-    },
-    avatar: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    email: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    statsGrid: {
-        flexDirection: 'row',
-        gap: 12,
-        marginBottom: 20,
-    },
-    statTile: {
-        flex: 1,
-        padding: 16,
-        borderRadius: 16,
-        alignItems: 'center',
-    },
-    statValue: {
-        fontSize: 28,
-        fontWeight: '700',
-        marginTop: 8,
-    },
-    statLabel: {
-        fontSize: 12,
-        opacity: 0.6,
-        marginTop: 4,
-        textAlign: 'center',
-    },
-    fuelCard: {
-        marginBottom: 16,
-    },
-    reportsCard: {
-        marginBottom: 16,
-    },
-    cardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 16,
-    },
-    cardTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    inputRow: {
-        marginBottom: 12,
-    },
-    inputLabel: {
-        fontSize: 13,
-        opacity: 0.7,
-        marginBottom: 6,
-    },
-    fuelInput: {
-        fontSize: 15,
-    },
-    fuelStats: {
-        padding: 14,
-        borderRadius: 12,
-        marginTop: 8,
-    },
-    fuelStatRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 8,
-    },
-    fuelStatLabel: {
-        flex: 1,
-        fontSize: 14,
-    },
-    fuelStatValue: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: Colors.primary,
-    },
-    reportButtons: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    reportButton: {
-        flex: 1,
-    },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 24,
+    marginTop: 8,
+  },
+  avatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  email: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  statsGrid: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 20,
+  },
+  statTile: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: "center",
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: "700",
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  fuelCard: {
+    marginBottom: 16,
+  },
+  reportsCard: {
+    marginBottom: 16,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  inputRow: {
+    marginBottom: 12,
+  },
+  inputLabel: {
+    fontSize: 13,
+    opacity: 0.7,
+    marginBottom: 6,
+  },
+  fuelInput: {
+    fontSize: 15,
+  },
+  fuelStats: {
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  fuelStatRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  fuelStatLabel: {
+    flex: 1,
+    fontSize: 14,
+  },
+  fuelStatValue: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: Colors.primary,
+  },
+  reportButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  reportButton: {
+    flex: 1,
+  },
 });

@@ -415,11 +415,8 @@ export const RoutesProvider = ({ children }) => {
           where("userId", "==", user.uid),
         );
 
-        unsubscribe = onSnapshot(
-          q,
-          (querySnapshot) => {
+        unsubscribe = onSnapshot(q,(querySnapshot) => {
             const routesData = [];
-
             querySnapshot.forEach((doc) => {
               routesData.push({
                 id: doc.id,

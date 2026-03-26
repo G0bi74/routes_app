@@ -2,7 +2,7 @@ import { createContext, useState } from "react";
 import { useAlert } from "../components/ThemedAlert";
 
 const OCR_SPACE_API_KEY =
-  process.env.EXPO_PUBLIC_OCR_SPACE_API_KEY || "K87899142388957";
+  process.env.EXPO_PUBLIC_OCR_SPACE_API_KEY;
 
 export const OcrContext = createContext();
 

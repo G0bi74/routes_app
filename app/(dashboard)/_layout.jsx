@@ -69,7 +69,9 @@ const DashboardLayout = () => {
         />
 
         {}
+
         <Tabs.Screen name="routes/[id]" options={{ href: null }} />
+        
       </Tabs>
     </UserOnly>
   );

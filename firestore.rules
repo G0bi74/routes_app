@@ -3,37 +3,58 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Funkcja pomocnicza - sprawdza czy użytkownik jest zalogowany
     function isSignedIn() {
       return request.auth != null;
     }
     
-    // Funkcja pomocnicza - sprawdza czy użytkownik jest właścicielem dokumentu
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
     
-    // Reguły dla kolekcji 'routes'
+    function isDocumentOwner() {
+      return isSignedIn() && request.auth.uid == resource.data.userId;
+    }
+    
+    function hasValidUserId() {
+      return request.resource.data.userId == request.auth.uid;
+    }
+    
+    function validateRouteData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['startAddress', 'userId', 'createdAt'])
+             && data.startAddress is string
+             && data.userId is string
+             && data.createdAt is timestamp;
+    }
+    
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && hasValidUserId();
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+    
     match /routes/{routeId} {
+     
+      allow get: if isDocumentOwner();
       
-      // Odczyt (read) - użytkownik może czytać tylko swoje trasy
-      allow read: if isSignedIn() && isOwner(resource.data.userId);
+       
+      allow list: if isSignedIn();
       
-      // Tworzenie (create) - użytkownik może tworzyć trasy tylko dla siebie
+     
       allow create: if isSignedIn() 
-                    && request.resource.data.userId == request.auth.uid
-                    && request.resource.data.userId is string;
+                    && hasValidUserId() 
+                    && validateRouteData();
       
-      // Aktualizacja (update) - użytkownik może aktualizować tylko swoje trasy
-      allow update: if isSignedIn() 
-                    && isOwner(resource.data.userId)
-                    && request.resource.data.userId == resource.data.userId; // userId nie może się zmienić
       
-      // Usuwanie (delete) - użytkownik może usuwać tylko swoje trasy
-      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+      allow update: if isDocumentOwner() 
+                    && hasValidUserId() 
+                    && validateRouteData();
+      
+      
+      allow delete: if isDocumentOwner();
     }
     
-    // Domyślnie blokuj dostęp do wszystkich innych kolekcji
     match /{document=**} {
       allow read, write: if false;
     }

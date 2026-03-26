@@ -1,4 +1,4 @@
-﻿# Aplikacja mobilna wspomagająca rejestrowanie podróży służbowych
+# Aplikacja mobilna wspomagająca rejestrowanie podróży służbowych
 
 ## PLAN PRACY
 
@@ -124,23 +124,23 @@ Warstwa mobilna aplikacji zrealizowana została z wykorzystaniem frameworka Reac
 
 #### 2.2.1. Framework React Native
 
-React Native jest frameworkiem programistycznym umożliwiającym tworzenie natywnych aplikacji mobilnych z wykorzystaniem języka JavaScript oraz biblioteki React [1]. Framework został opracowany przez firmę Meta i udostępniony jako projekt open source w 2015 roku. W projekcie wykorzystano wersję 0.81.5.
+React Native jest frameworkiem programistycznym umożliwiającym tworzenie natywnych aplikacji mobilnych z wykorzystaniem języka JavaScript oraz biblioteki React [Meta Platforms, „React Native Documentation", https://reactnative.dev/docs/getting-started (dostęp: 23.03.2026).]. Framework został opracowany przez firmę Meta i udostępniony jako projekt open source w 2015 roku. W projekcie wykorzystano wersję 0.81.5.
 
-Kluczową cechą React Native jest sposób renderowania interfejsu użytkownika. W odróżnieniu od rozwiązań opartych na technologii WebView, gdzie interfejs renderowany jest przez silnik przeglądarki internetowej, React Native mapuje komponenty napisane w JavaScript na rzeczywiste komponenty natywne platformy docelowej [1]. Architektura frameworka opiera się na tzw. moście (*bridge*), stanowiącym warstwę komunikacyjną pomiędzy kodem JavaScript a natywnymi modułami platformy. Komunikacja ta odbywa się asynchronicznie, co pozwala na utrzymanie responsywności interfejsu nawet podczas intensywnych operacji [2].
+Kluczową cechą React Native jest sposób renderowania interfejsu użytkownika. W odróżnieniu od rozwiązań opartych na technologii WebView, gdzie interfejs renderowany jest przez silnik przeglądarki internetowej, React Native mapuje komponenty napisane w JavaScript na rzeczywiste komponenty natywne platformy docelowej [Meta Platforms, „React Native Documentation", https://reactnative.dev/docs/getting-started (dostęp: 23.03.2026).]. Architektura frameworka opiera się na tzw. moście (*bridge*), stanowiącym warstwę komunikacyjną pomiędzy kodem JavaScript a natywnymi modułami platformy. Komunikacja ta odbywa się asynchronicznie, co pozwala na utrzymanie responsywności interfejsu nawet podczas intensywnych operacji [Eisenman, B., *Learning React Native*, 2nd ed., O'Reilly Media, 2017.].
 
-Programowanie interfejsu użytkownika w React Native opiera się na składni JSX, będącej rozszerzeniem języka JavaScript o elementy deklaratywne wizualnie przypominające znaczniki HTML, lecz mapowane na natywne komponenty mobilne. Przykładowo, komponent `<View>` odpowiada natywnemu `UIView` na platformie iOS oraz `android.view.View` na platformie Android [1]. Model ten, w połączeniu z jednokierunkowym przepływem danych i mechanizmem stanu komponentów, sprzyja tworzeniu kodu modularnego i łatwego w utrzymaniu.
+Programowanie interfejsu użytkownika w React Native opiera się na składni JSX, będącej rozszerzeniem języka JavaScript o elementy deklaratywne wizualnie przypominające znaczniki HTML, lecz mapowane na natywne komponenty mobilne. Przykładowo, komponent `<View>` odpowiada natywnemu `UIView` na platformie iOS oraz `android.view.View` na platformie Android [Meta Platforms, „React Native Documentation", https://reactnative.dev/docs/getting-started (dostęp: 23.03.2026).]. Model ten, w połączeniu z jednokierunkowym przepływem danych i mechanizmem stanu komponentów, sprzyja tworzeniu kodu modularnego i łatwego w utrzymaniu.
 
 #### 2.2.2. Platforma Expo
 
-Expo jest platformą stanowiącą warstwę abstrakcji nad React Native, dostarczającą zunifikowane interfejsy programistyczne do funkcjonalności platformowych oraz narzędzia usprawniające proces wytwórczy [3]. W projekcie wykorzystano wersję 54.0.20. Platforma składa się z trzech głównych elementów: zestawu bibliotek programistycznych (Expo SDK), narzędzi deweloperskich oraz usługi Expo Application Services (EAS) do budowania i dystrybucji aplikacji.
+Expo jest platformą stanowiącą warstwę abstrakcji nad React Native, dostarczającą zunifikowane interfejsy programistyczne do funkcjonalności platformowych oraz narzędzia usprawniające proces wytwórczy [Expo Documentation, „Introduction to Expo", https://docs.expo.dev/ (dostęp: 23.03.2026).]. W projekcie wykorzystano wersję 54.0.20. Platforma składa się z trzech głównych elementów: zestawu bibliotek programistycznych (Expo SDK), narzędzi deweloperskich oraz usługi Expo Application Services (EAS) do budowania i dystrybucji aplikacji.
 
-Expo SDK dostarcza biblioteki obsługujące typowe funkcjonalności aplikacji mobilnych — od dostępu do aparatu i galerii, przez usługi lokalizacyjne, po powiadomienia i generowanie dokumentów. Wykorzystanie tych bibliotek zamiast bezpośredniej integracji z natywnymi API znacząco redukuje ilość kodu specyficznego dla poszczególnych platform [3]. Usługa EAS umożliwia budowanie produkcyjnych wersji aplikacji w infrastrukturze chmurowej, eliminując wymóg posiadania lokalnego środowiska deweloperskiego dla każdej platformy docelowej, co jest szczególnie istotne przy kompilacji aplikacji iOS wymagającej systemu macOS.
+Expo SDK dostarcza biblioteki obsługujące typowe funkcjonalności aplikacji mobilnych — od dostępu do aparatu i galerii, przez usługi lokalizacyjne, po powiadomienia i generowanie dokumentów. Wykorzystanie tych bibliotek zamiast bezpośredniej integracji z natywnymi API znacząco redukuje ilość kodu specyficznego dla poszczególnych platform [Expo Documentation, „Introduction to Expo", https://docs.expo.dev/ (dostęp: 23.03.2026).]. Usługa EAS umożliwia budowanie produkcyjnych wersji aplikacji w infrastrukturze chmurowej, eliminując wymóg posiadania lokalnego środowiska deweloperskiego dla każdej platformy docelowej, co jest szczególnie istotne przy kompilacji aplikacji iOS wymagającej systemu macOS.
 
 #### 2.2.3. Expo Router
 
 Expo Router w wersji 6.0.14 jest biblioteką implementującą paradygmat nawigacji opartej na strukturze systemu plików (*file-based routing*), zainspirowany rozwiązaniami stosowanymi w frameworkach webowych takich jak Next.js [4]. Każdy plik z rozszerzeniem JSX umieszczony w katalogu `app/` reprezentuje odrębny ekran aplikacji, a ścieżki nawigacyjne generowane są automatycznie na podstawie hierarchii katalogów.
 
-Biblioteka udostępnia komponenty nawigacyjne `Stack` i `Tabs`, odpowiadające za dwa główne wzorce nawigacji w aplikacjach mobilnych: nawigację stosową (przejścia między ekranami z możliwością powrotu) oraz nawigację zakładkową (przełączanie między sekcjami aplikacji) [4].
+Biblioteka udostępnia komponenty nawigacyjne `Stack` i `Tabs`, odpowiadające za dwa główne wzorce nawigacji w aplikacjach mobilnych: nawigację stosową (przejścia między ekranami z możliwością powrotu) oraz nawigację zakładkową (przełączanie między sekcjami aplikacji) [Expo Documentation, „Expo Router — Introduction", https://docs.expo.dev/router/introduction/ (dostęp: 23.03.2026).].
 
 ```javascript
 import { Stack } from "expo-router";
@@ -151,10 +151,10 @@ import { Stack } from "expo-router";
   <Stack.Screen name="(dashboard)" options={{ headerShown: false }} />
 </Stack>
 ```
-*Zrzut ekranu 2.1. Konfiguracja nawigacji stosowej z wykorzystaniem komponentu Stack — kod własny*
+*Listing 2.1. Konfiguracja nawigacji stosowej z wykorzystaniem komponentu Stack — kod własny*
 <!-- ZRZUT EKRANU: app/_layout.jsx, linie 21–32 -->
 
-Komponent `Stack` definiuje nawigator stosowy, którego bezpośrednie dzieci (`Stack.Screen`) reprezentują ekrany dostępne na danym poziomie hierarchii. Atrybut `name` odpowiada nazwie pliku lub katalogu w strukturze projektu, a `options` pozwala na konfigurację nagłówka i zachowania ekranu [4]. Nazwy w nawiasach okrągłych, jak `(auth)` i `(dashboard)`, oznaczają tzw. grupy tras — katalogi organizacyjne, które nie wpływają na ścieżkę URL, lecz umożliwiają zastosowanie odrębnych layoutów dla różnych sekcji aplikacji.
+Komponent `Stack` definiuje nawigator stosowy, którego bezpośrednie dzieci (`Stack.Screen`) reprezentują ekrany dostępne na danym poziomie hierarchii. Atrybut `name` odpowiada nazwie pliku lub katalogu w strukturze projektu, a `options` pozwala na konfigurację nagłówka i zachowania ekranu [Expo Documentation, „Expo Router — Introduction", https://docs.expo.dev/router/introduction/ (dostęp: 23.03.2026).]. Nazwy w nawiasach okrągłych, jak `(auth)` i `(dashboard)`, oznaczają tzw. grupy tras — katalogi organizacyjne, które nie wpływają na ścieżkę URL, lecz umożliwiają zastosowanie odrębnych layoutów dla różnych sekcji aplikacji.
 
 Expo Router obsługuje również trasy dynamiczne z parametrami. Plik o nazwie `[id].jsx` definiuje trasę parametryzowaną, w której wartość parametru dostępna jest za pośrednictwem hooka `useLocalSearchParams()`.
 
@@ -163,16 +163,16 @@ import { Tabs } from "expo-router";
 
 <Tabs.Screen name="routes/[id]" options={{ href: null }} />
 ```
-*Zrzut ekranu 2.2. Definicja trasy dynamicznej w nawigatorze zakładkowym — kod własny*
+*Listing 2.2. Definicja trasy dynamicznej w nawigatorze zakładkowym — kod własny*
 <!-- ZRZUT EKRANU: app/(dashboard)/_layout.jsx, linia 72 -->
 
-Opcja `href: null` ukrywa trasę dynamiczną z paska zakładek, zachowując jej dostępność programową — jest to typowy wzorzec dla ekranów szczegółowych, do których nawigacja odbywa się z poziomu listy, a nie bezpośrednio z paska nawigacji [4].
+Opcja `href: null` ukrywa trasę dynamiczną z paska zakładek, zachowując jej dostępność programową — jest to typowy wzorzec dla ekranów szczegółowych, do których nawigacja odbywa się z poziomu listy, a nie bezpośrednio z paska nawigacji [Expo Documentation, „Expo Router — Introduction", https://docs.expo.dev/router/introduction/ (dostęp: 23.03.2026).].
 
 #### 2.2.4. Expo Print i Expo Sharing
 
-Biblioteka Expo Print w wersji 15.0.7 umożliwia generowanie dokumentów PDF z szablonów HTML bezpośrednio na urządzeniu mobilnym [3]. Biblioteka Expo Sharing w wersji 14.0.7 uzupełnia ten proces o możliwość udostępniania wygenerowanych plików za pośrednictwem systemowego interfejsu udostępniania.
+Biblioteka Expo Print w wersji 15.0.7 umożliwia generowanie dokumentów PDF z szablonów HTML bezpośrednio na urządzeniu mobilnym [Expo Documentation, „Introduction to Expo", https://docs.expo.dev/ (dostęp: 23.03.2026).]. Biblioteka Expo Sharing w wersji 14.0.7 uzupełnia ten proces o możliwość udostępniania wygenerowanych plików za pośrednictwem systemowego interfejsu udostępniania.
 
-Metoda `printToFileAsync()` przyjmuje ciąg znaków HTML i generuje z niego plik PDF zapisywany w katalogu tymczasowym urządzenia. Metoda `shareAsync()` otwiera systemowy dialog udostępniania, umożliwiając użytkownikowi zapisanie pliku lub przesłanie go przez wybraną aplikację [3].
+Metoda `printToFileAsync()` przyjmuje ciąg znaków HTML i generuje z niego plik PDF zapisywany w katalogu tymczasowym urządzenia. Metoda `shareAsync()` otwiera systemowy dialog udostępniania, umożliwiając użytkownikowi zapisanie pliku lub przesłanie go przez wybraną aplikację [Expo Documentation, „Introduction to Expo", https://docs.expo.dev/ (dostęp: 23.03.2026).].
 
 ```javascript
 const { uri } = await Print.printToFileAsync({ html });
@@ -186,20 +186,28 @@ if (isAvailable) {
   });
 }
 ```
-*Zrzut ekranu 2.3. Generowanie pliku PDF i udostępnianie za pomocą Expo Print i Sharing — kod własny*
+*Listing 2.3. Generowanie pliku PDF i udostępnianie za pomocą Expo Print i Sharing — kod własny*
 <!-- ZRZUT EKRANU: app/(dashboard)/profile.jsx, linie 503–511 -->
 
-Metoda `isAvailableAsync()` sprawdza, czy urządzenie obsługuje funkcję udostępniania — jest to istotne, ponieważ na niektórych emulatorach i konfiguracjach systemowych funkcja ta może być niedostępna. Parametr `mimeType` określa typ MIME udostępnianego pliku, a `UTI` (*Uniform Type Identifier*) jest identyfikatorem typu stosowanym na platformie iOS [3].
+Metoda `isAvailableAsync()` sprawdza, czy urządzenie obsługuje funkcję udostępniania — jest to istotne, ponieważ na niektórych emulatorach i konfiguracjach systemowych funkcja ta może być niedostępna. Parametr `mimeType` określa typ MIME udostępnianego pliku, a `UTI` (*Uniform Type Identifier*) jest identyfikatorem typu stosowanym na platformie iOS [Expo Documentation, „Introduction to Expo", https://docs.expo.dev/ (dostęp: 23.03.2026).].
 
+#### 2.2.5. Źródła
 
+[1] Meta Platforms, „React Native Documentation", https://reactnative.dev/docs/getting-started (dostęp: 23.03.2026).
+
+[2] Eisenman, B., *Learning React Native*, 2nd ed., O'Reilly Media, 2017.
+
+[3] Expo Documentation, „Introduction to Expo", https://docs.expo.dev/ (dostęp: 23.03.2026).
+
+[4] Expo Documentation, „Expo Router — Introduction", https://docs.expo.dev/router/introduction/ (dostęp: 23.03.2026).
 
 ### 2.3. Firebase Authentication
 
-Firebase Authentication jest usługą uwierzytelniania wchodzącą w skład platformy Firebase, oferowanej przez Google w modelu Backend-as-a-Service [5]. Usługa ta dostarcza gotowe mechanizmy rejestracji, logowania i zarządzania sesjami użytkowników, eliminując konieczność implementacji własnego serwera uwierzytelniającego [6]. Firebase Authentication obsługuje wiele metod uwierzytelniania — od klasycznej kombinacji email i hasło, przez dostawców tożsamości OAuth (Google, Apple, Facebook), po logowanie anonimowe i telefoniczne [5]. W projekcie wykorzystano metodę email/hasło.
+Firebase Authentication jest usługą uwierzytelniania wchodzącą w skład platformy Firebase, oferowanej przez Google w modelu Backend-as-a-Service [Firebase Documentation, „Firebase Authentication — Web", https://firebase.google.com/docs/auth/web/start (dostęp: 24.03.2026).]. Usługa ta dostarcza gotowe mechanizmy rejestracji, logowania i zarządzania sesjami użytkowników, eliminując konieczność implementacji własnego serwera uwierzytelniającego [Moroney, L., *The Definitive Guide to Firebase*, Apress, 2017.]. Firebase Authentication obsługuje wiele metod uwierzytelniania — od klasycznej kombinacji email i hasło, przez dostawców tożsamości OAuth (Google, Apple, Facebook), po logowanie anonimowe i telefoniczne [Firebase Documentation, „Firebase Authentication — Web", https://firebase.google.com/docs/auth/web/start (dostęp: 24.03.2026).]. W projekcie wykorzystano metodę email/hasło.
 
 #### 2.3.1. Inicjalizacja i persystencja sesji
 
-Konfiguracja Firebase Authentication wymaga utworzenia instancji aplikacji Firebase na podstawie obiektu konfiguracyjnego zawierającego klucze identyfikujące projekt, a następnie zainicjalizowania modułu uwierzytelniania. W środowisku React Native standardowy mechanizm persystencji sesji oparty na przeglądarce internetowej jest niedostępny, dlatego konieczne jest jawne wskazanie alternatywnego magazynu danych [5].
+Konfiguracja Firebase Authentication wymaga utworzenia instancji aplikacji Firebase na podstawie obiektu konfiguracyjnego zawierającego klucze identyfikujące projekt, a następnie zainicjalizowania modułu uwierzytelniania. W środowisku React Native standardowy mechanizm persystencji sesji oparty na przeglądarce internetowej jest niedostępny, dlatego konieczne jest jawne wskazanie alternatywnego magazynu danych [Firebase Documentation, „Firebase Authentication — Web", https://firebase.google.com/docs/auth/web/start (dostęp: 24.03.2026).].
 
 ```javascript
 import { initializeApp } from "firebase/app";
@@ -212,14 +220,14 @@ export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
 ```
-*Zrzut ekranu 2.4. Inicjalizacja Firebase Authentication z persystencją sesji w AsyncStorage — kod własny*
+*Listing 2.4. Inicjalizacja Firebase Authentication z persystencją sesji w AsyncStorage — kod własny*
 <!-- ZRZUT EKRANU: lib/firebase.js, linie 1–4 oraz 15–19 -->
 
-Funkcja `initializeAuth()` zastępuje standardową `getAuth()` i przyjmuje drugi argument konfiguracyjny, w którym opcja `persistence` wskazuje mechanizm trwałego przechowywania tokenów sesji. Adapter `getReactNativePersistence()` integruje Firebase z biblioteką AsyncStorage — asynchronicznym magazynem klucz-wartość dostępnym na urządzeniu mobilnym [5]. Dzięki temu token sesji zapisywany jest lokalnie i automatycznie odtwarzany przy kolejnym uruchomieniu aplikacji, eliminując konieczność ponownego logowania.
+Funkcja `initializeAuth()` zastępuje standardową `getAuth()` i przyjmuje drugi argument konfiguracyjny, w którym opcja `persistence` wskazuje mechanizm trwałego przechowywania tokenów sesji. Adapter `getReactNativePersistence()` integruje Firebase z biblioteką AsyncStorage — asynchronicznym magazynem klucz-wartość dostępnym na urządzeniu mobilnym [Firebase Documentation, „Firebase Authentication — Web", https://firebase.google.com/docs/auth/web/start (dostęp: 24.03.2026).]. Dzięki temu token sesji zapisywany jest lokalnie i automatycznie odtwarzany przy kolejnym uruchomieniu aplikacji, eliminując konieczność ponownego logowania.
 
 #### 2.3.2. Rejestracja i logowanie
 
-Firebase Authentication udostępnia funkcje `createUserWithEmailAndPassword()` do rejestracji nowego konta oraz `signInWithEmailAndPassword()` do logowania istniejącego użytkownika [5]. Obie metody działają asynchronicznie i zwracają obiekt `UserCredential` zawierający dane uwierzytelnionego użytkownika.
+Firebase Authentication udostępnia funkcje `createUserWithEmailAndPassword()` do rejestracji nowego konta oraz `signInWithEmailAndPassword()` do logowania istniejącego użytkownika [Firebase Documentation, „Firebase Authentication — Web", https://firebase.google.com/docs/auth/web/start (dostęp: 24.03.2026).]. Obie metody działają asynchronicznie i zwracają obiekt `UserCredential` zawierający dane uwierzytelnionego użytkownika.
 
 ```javascript
 import {
@@ -240,14 +248,14 @@ async function register(email, password) {
   await login(email, password);
 }
 ```
-*Zrzut ekranu 2.5. Rejestracja i logowanie z wykorzystaniem Firebase Authentication — kod własny*
+*Listing 2.5. Rejestracja i logowanie z wykorzystaniem Firebase Authentication — kod własny*
 <!-- ZRZUT EKRANU: context/UserContext.jsx, linie 17–38 -->
 
-Metoda `signInWithEmailAndPassword()` przyjmuje instancję `auth`, adres email i hasło, a w przypadku powodzenia zwraca obiekt `userCredential.user` zawierający identyfikator użytkownika (`uid`), adres email oraz metadane konta. Walidacja formatu adresu email i siły hasła realizowana jest po stronie Firebase — próba logowania z nieprawidłowymi danymi powoduje wygenerowanie błędu z kodem identyfikującym przyczynę [5].
+Metoda `signInWithEmailAndPassword()` przyjmuje instancję `auth`, adres email i hasło, a w przypadku powodzenia zwraca obiekt `userCredential.user` zawierający identyfikator użytkownika (`uid`), adres email oraz metadane konta. Walidacja formatu adresu email i siły hasła realizowana jest po stronie Firebase — próba logowania z nieprawidłowymi danymi powoduje wygenerowanie błędu z kodem identyfikującym przyczynę [Firebase Documentation, „Firebase Authentication — Web", https://firebase.google.com/docs/auth/web/start (dostęp: 24.03.2026).].
 
 #### 2.3.3. Nasłuchiwanie stanu uwierzytelnienia
 
-Centralnym mechanizmem zarządzania sesją jest funkcja `onAuthStateChanged()`, rejestrująca obserwatora wywoływanego automatycznie przy każdej zmianie stanu uwierzytelnienia — zarówno po zalogowaniu, wylogowaniu, jak i przy automatycznym odtworzeniu sesji z AsyncStorage [5].
+Centralnym mechanizmem zarządzania sesją jest funkcja `onAuthStateChanged()`, rejestrująca obserwatora wywoływanego automatycznie przy każdej zmianie stanu uwierzytelnienia — zarówno po zalogowaniu, wylogowaniu, jak i przy automatycznym odtworzeniu sesji z AsyncStorage [Firebase Documentation, „Firebase Authentication — Web", https://firebase.google.com/docs/auth/web/start (dostęp: 24.03.2026).].
 
 ```javascript
 import { onAuthStateChanged } from "firebase/auth";
@@ -261,20 +269,24 @@ useEffect(() => {
   return () => unsubscribe();
 }, []);
 ```
-*Zrzut ekranu 2.6. Nasłuchiwanie zmian stanu uwierzytelnienia w komponencie React — kod własny*
+*Listing 2.6. Nasłuchiwanie zmian stanu uwierzytelnienia w komponencie React — kod własny*
 <!-- ZRZUT EKRANU: context/UserContext.jsx, linie 51–59 -->
 
-Funkcja `onAuthStateChanged()` zwraca funkcję `unsubscribe`, która jest wywoływana w fazie czyszczenia hooka `useEffect`, zapobiegając wyciekom pamięci. Callback otrzymuje obiekt użytkownika (`currentUser`) lub wartość `null`, jeśli użytkownik nie jest zalogowany. Flaga `authChecked` sygnalizuje zakończenie weryfikacji stanu sesji, co pozwala na wyświetlenie ekranu ładowania do momentu ustalenia statusu uwierzytelnienia [5].
+Funkcja `onAuthStateChanged()` zwraca funkcję `unsubscribe`, która jest wywoływana w fazie czyszczenia hooka `useEffect`, zapobiegając wyciekom pamięci. Callback otrzymuje obiekt użytkownika (`currentUser`) lub wartość `null`, jeśli użytkownik nie jest zalogowany. Flaga `authChecked` sygnalizuje zakończenie weryfikacji stanu sesji, co pozwala na wyświetlenie ekranu ładowania do momentu ustalenia statusu uwierzytelnienia [Firebase Documentation, „Firebase Authentication — Web", https://firebase.google.com/docs/auth/web/start (dostęp: 24.03.2026).].
 
+#### 2.3.4. Źródła
 
+[1] Firebase Documentation, „Firebase Authentication — Web", https://firebase.google.com/docs/auth/web/start (dostęp: 24.03.2026).
+
+[2] Moroney, L., *The Definitive Guide to Firebase*, Apress, 2017.
 
 ### 2.4. Firebase Cloud Firestore
 
-Firebase Cloud Firestore jest nierelacyjną bazą danych typu NoSQL o architekturze dokumentowej, wchodzącą w skład platformy Firebase [7]. Dane w Firestore organizowane są w kolekcje (*collections*) zawierające dokumenty (*documents*), gdzie każdy dokument jest zbiorem par klucz-wartość o elastycznej strukturze, niewymagającej z góry zdefiniowanego schematu [7]. Firestore udostępnia interfejs programistyczny do operacji CRUD oraz mechanizm synchronizacji danych w czasie rzeczywistym. W projekcie baza służy do przechowywania informacji o zarejestrowanych trasach podróży służbowych.
+Firebase Cloud Firestore jest nierelacyjną bazą danych typu NoSQL o architekturze dokumentowej, wchodzącą w skład platformy Firebase [Firebase Documentation, „Cloud Firestore — Web", https://firebase.google.com/docs/firestore/quickstart (dostęp: 24.03.2026).]. Dane w Firestore organizowane są w kolekcje (*collections*) zawierające dokumenty (*documents*), gdzie każdy dokument jest zbiorem par klucz-wartość o elastycznej strukturze, niewymagającej z góry zdefiniowanego schematu [Firebase Documentation, „Cloud Firestore — Web", https://firebase.google.com/docs/firestore/quickstart (dostęp: 24.03.2026).]. Firestore udostępnia interfejs programistyczny do operacji CRUD oraz mechanizm synchronizacji danych w czasie rzeczywistym. W projekcie baza służy do przechowywania informacji o zarejestrowanych trasach podróży służbowych.
 
 #### 2.4.1. Operacje zapisu
 
-Firestore udostępnia funkcje modyfikujące dane w kolekcjach: `addDoc()` do tworzenia nowego dokumentu z automatycznie generowanym identyfikatorem, `updateDoc()` do aktualizacji wybranych pól istniejącego dokumentu oraz `deleteDoc()` do usuwania dokumentu [7]. 
+Firestore udostępnia funkcje modyfikujące dane w kolekcjach: `addDoc()` do tworzenia nowego dokumentu z automatycznie generowanym identyfikatorem, `updateDoc()` do aktualizacji wybranych pól istniejącego dokumentu oraz `deleteDoc()` do usuwania dokumentu [Firebase Documentation, „Cloud Firestore — Web", https://firebase.google.com/docs/firestore/quickstart (dostęp: 24.03.2026).]. Klasa `Timestamp` zapewnia spójną reprezentację znaczników czasu niezależną od strefy czasowej urządzenia.
 
 ```javascript
 import {
@@ -291,14 +303,23 @@ await addDoc(collection(db, COLLECTION_NAME), {
   status: "completed",
 });
 ```
-*Zrzut ekranu 2.7. Utworzenie dokumentu w kolekcji Firestore metodą addDoc — kod własny*
+*Listing 2.7. Utworzenie dokumentu w kolekcji Firestore metodą addDoc — kod własny*
 <!-- ZRZUT EKRANU: context/RoutesContext.jsx, linie 4–15 oraz 116 -->
 
-Funkcja `addDoc()` przyjmuje referencję do kolekcji i obiekt danych, a zwraca referencję do nowo utworzonego dokumentu z automatycznie wygenerowanym unikalnym identyfikatorem.
+Funkcja `addDoc()` przyjmuje referencję do kolekcji i obiekt danych, a zwraca referencję do nowo utworzonego dokumentu z automatycznie wygenerowanym unikalnym identyfikatorem. Aktualizacja istniejącego dokumentu realizowana jest przez `updateDoc()`, która przyjmuje referencję do konkretnego dokumentu uzyskaną za pomocą funkcji `doc()`.
+
+```javascript
+const routeRef = doc(db, COLLECTION_NAME, routeId);
+await updateDoc(routeRef, updateData);
+```
+*Listing 2.8. Aktualizacja dokumentu Firestore metodą updateDoc — kod własny*
+<!-- ZRZUT EKRANU: context/RoutesContext.jsx, linie 367–368 -->
+
+Metoda `updateDoc()` modyfikuje wyłącznie pola wymienione w przekazanym obiekcie, pozostawiając pozostałe pola dokumentu niezmienione — jest to tzw. częściowa aktualizacja (*partial update*), odróżniająca ją od operacji `setDoc()`, która zastępuje cały dokument [Firebase Documentation, „Cloud Firestore — Web", https://firebase.google.com/docs/firestore/quickstart (dostęp: 24.03.2026).].
 
 #### 2.4.2. Zapytania i synchronizacja w czasie rzeczywistym
 
-Firestore umożliwia konstruowanie zapytań przez kompozycję funkcji `query()` i operatorów filtrujących, takich jak `where()`. Tak skonstruowane zapytanie może być wykonane jednorazowo lub przekazane do funkcji `onSnapshot()`, która rejestruje nasłuchiwacz wywoływany automatycznie przy każdej zmianie danych spełniających kryteria zapytania [7].
+Firestore umożliwia konstruowanie zapytań przez kompozycję funkcji `query()` i operatorów filtrujących, takich jak `where()`. Tak skonstruowane zapytanie może być wykonane jednorazowo lub przekazane do funkcji `onSnapshot()`, która rejestruje nasłuchiwacz wywoływany automatycznie przy każdej zmianie danych spełniających kryteria zapytania [Firebase Documentation, „Cloud Firestore — Web", https://firebase.google.com/docs/firestore/quickstart (dostęp: 24.03.2026).].
 
 ```javascript
 const q = query(
@@ -319,16 +340,20 @@ unsubscribe = onSnapshot(q, (querySnapshot) => {
 
 return () => unsubscribe();
 ```
-*Zrzut ekranu 2.9. Nasłuchiwanie zmian w kolekcji Firestore z filtrowaniem po użytkowniku — kod własny*
+*Listing 2.9. Nasłuchiwanie zmian w kolekcji Firestore z filtrowaniem po użytkowniku — kod własny*
 <!-- ZRZUT EKRANU: context/RoutesContext.jsx, linie 413–437 -->
 
-Operator `where("userId", "==", user.uid)` ogranicza wyniki do dokumentów należących do zalogowanego użytkownika. Funkcja `onSnapshot()` zwraca funkcję `unsubscribe`, którą należy wywołać przy odmontowaniu komponentu, aby odrejestrować nasłuchiwacz i uniknąć wycieków pamięci. Obiekt `querySnapshot` udostępnia metodę `forEach()` do iteracji po dokumentach spełniających kryteria zapytania. Każdy dokument udostępnia właściwość `id` (identyfikator) oraz metodę `data()` zwracającą zapisane pola [7]. Mechanizm ten zapewnia automatyczną synchronizację interfejsu użytkownika ze stanem bazy danych bez konieczności ręcznego odświeżania.
+Operator `where("userId", "==", user.uid)` ogranicza wyniki do dokumentów należących do zalogowanego użytkownika. Funkcja `onSnapshot()` zwraca funkcję `unsubscribe`, którą należy wywołać przy odmontowaniu komponentu, aby odrejestrować nasłuchiwacz i uniknąć wycieków pamięci. Obiekt `querySnapshot` udostępnia metodę `forEach()` do iteracji po dokumentach spełniających kryteria zapytania. Każdy dokument udostępnia właściwość `id` (identyfikator) oraz metodę `data()` zwracającą zapisane pola [Firebase Documentation, „Cloud Firestore — Web", https://firebase.google.com/docs/firestore/quickstart (dostęp: 24.03.2026).]. Mechanizm ten zapewnia automatyczną synchronizację interfejsu użytkownika ze stanem bazy danych bez konieczności ręcznego odświeżania.
 
+#### 2.4.3. Źródła
 
+[1] Firebase Documentation, „Cloud Firestore — Web", https://firebase.google.com/docs/firestore/quickstart (dostęp: 24.03.2026).
+
+[2] Moroney, L., *The Definitive Guide to Firebase*, Apress, 2017.
 
 ### 2.5. Usługi geolokalizacyjne
 
-Rejestrowanie podróży służbowych wymaga przetwarzania danych przestrzennych na kilku etapach: od pozyskania współrzędnych geograficznych urządzenia, przez ich konwersję na adresy czytelne dla użytkownika, aż po obliczenie dystansu trasy uwzględniającego rzeczywisty przebieg sieci drogowej. W aplikacji zadania te realizowane są przez dwa niezależne komponenty – bibliotekę Expo Location odpowiedzialną za interakcję z odbiornikiem GPS urządzenia mobilnego [8] oraz interfejs programistyczny OpenRouteService dostarczający usługi geokodowania i wyznaczania tras [9]. Sposób wykorzystania tych komponentów zależy od trybu rejestrowania trasy wybranego przez użytkownika, co ilustruje poniższy diagram.
+Rejestrowanie podróży służbowych wymaga przetwarzania danych przestrzennych na kilku etapach: od pozyskania współrzędnych geograficznych urządzenia, przez ich konwersję na adresy czytelne dla użytkownika, aż po obliczenie dystansu trasy uwzględniającego rzeczywisty przebieg sieci drogowej. W aplikacji zadania te realizowane są przez dwa niezależne komponenty – bibliotekę Expo Location odpowiedzialną za interakcję z odbiornikiem GPS urządzenia mobilnego [Expo Documentation, „Location — Expo SDK", https://docs.expo.dev/versions/latest/sdk/location/ (dostęp: 19.03.2026).] oraz interfejs programistyczny OpenRouteService dostarczający usługi geokodowania i wyznaczania tras [OpenRouteService, „API Documentation — Geocoding, Directions", https://openrouteservice.org/dev/#/api-docs (dostęp: 19.03.2026).]. Sposób wykorzystania tych komponentów zależy od trybu rejestrowania trasy wybranego przez użytkownika, co ilustruje poniższy diagram.
 
 ```mermaid
 flowchart TD
@@ -348,7 +373,7 @@ Jak przedstawiono na diagramie, oba tryby prowadzą do tego samego rezultatu –
 
 #### 2.5.1. Expo Location – pozyskiwanie pozycji GPS
 
-Biblioteka Expo Location w wersji 19.0.7 dostarcza zunifikowany interfejs programistyczny do interakcji z usługami lokalizacyjnymi urządzenia mobilnego, abstrahując różnice pomiędzy platformami Android i iOS [8]. W trybie GPS aplikacja wykorzystuje tę bibliotekę w dwóch kluczowych momentach: przy rozpoczęciu trasy (pobranie lokalizacji punktu startowego) oraz przy jej zakończeniu (pobranie lokalizacji punktu docelowego).
+Biblioteka Expo Location w wersji 19.0.7 dostarcza zunifikowany interfejs programistyczny do interakcji z usługami lokalizacyjnymi urządzenia mobilnego, abstrahując różnice pomiędzy platformami Android i iOS [Expo Documentation, „Location — Expo SDK", https://docs.expo.dev/versions/latest/sdk/location/ (dostęp: 19.03.2026).]. W trybie GPS aplikacja wykorzystuje tę bibliotekę w dwóch kluczowych momentach: przy rozpoczęciu trasy (pobranie lokalizacji punktu startowego) oraz przy jej zakończeniu (pobranie lokalizacji punktu docelowego).
 
 Przed każdym odczytem pozycji wymagane jest uzyskanie uprawnień użytkownika do dostępu do lokalizacji. Aplikacja realizuje to dwuetapowo: najpierw sprawdza aktualny stan uprawnień, a w przypadku ich braku wyświetla systemowy dialog z prośbą o ich przyznanie.
 
@@ -361,10 +386,10 @@ if (existingStatus !== "granted") {
   finalStatus = status;
 }
 ```
-*Zrzut ekranu 2.10. Weryfikacja i żądanie uprawnień lokalizacyjnych — kod własny*
+*Listing 2.1. Weryfikacja i żądanie uprawnień lokalizacyjnych — kod własny*
 <!-- ZRZUT EKRANU: lib/location.js, linie 7–16 -->
 
-Metoda `getForegroundPermissionsAsync()` zwraca obiekt zawierający pole `status`, które przyjmuje wartość `"granted"` w przypadku wcześniejszego przyznania uprawnień. Jeśli uprawnienia nie zostały jeszcze przyznane, wywoływana jest metoda `requestForegroundPermissionsAsync()`, która prezentuje użytkownikowi systemowy dialog uprawnień zgodny z wytycznymi danej platformy [8]. Zastosowanie uprawnień typu *foreground* oznacza, że aplikacja może pobierać lokalizację wyłącznie gdy jest aktywna na pierwszym planie, co jest wystarczające dla scenariusza rejestrowania tras i jednocześnie respektuje prywatność użytkownika.
+Metoda `getForegroundPermissionsAsync()` zwraca obiekt zawierający pole `status`, które przyjmuje wartość `"granted"` w przypadku wcześniejszego przyznania uprawnień. Jeśli uprawnienia nie zostały jeszcze przyznane, wywoływana jest metoda `requestForegroundPermissionsAsync()`, która prezentuje użytkownikowi systemowy dialog uprawnień zgodny z wytycznymi danej platformy [Expo Documentation, „Location — Expo SDK", https://docs.expo.dev/versions/latest/sdk/location/ (dostęp: 19.03.2026).]. Zastosowanie uprawnień typu *foreground* oznacza, że aplikacja może pobierać lokalizację wyłącznie gdy jest aktywna na pierwszym planie, co jest wystarczające dla scenariusza rejestrowania tras i jednocześnie respektuje prywatność użytkownika.
 
 Po uzyskaniu uprawnień aplikacja pobiera bieżącą pozycję urządzenia z zastosowaniem konfigurowalnego poziomu dokładności. W projekcie wykorzystano poziom `Location.Accuracy.High`, stanowiący kompromis pomiędzy precyzją odczytu a czasem odpowiedzi modułu GPS.
 
@@ -387,14 +412,14 @@ const result = {
   timestamp: location.timestamp,
 };
 ```
-*Zrzut ekranu 2.11. Konfiguracja parametrów odczytu i pobranie bieżącej pozycji GPS — kod własny*
+*Listing 2.2. Konfiguracja parametrów odczytu i pobranie bieżącej pozycji GPS — kod własny*
 <!-- ZRZUT EKRANU: lib/location.js, linie 42–46 oraz 63–73 -->
 
 Obiekt `defaultOptions` definiuje trzy parametry odczytu: `accuracy` określa żądaną dokładność pomiaru, `timeout` ogranicza czas oczekiwania na odczyt do 15 sekund, a `maximumAge` pozwala na wykorzystanie pozycji buforowanej przez system operacyjny, jeśli została pobrana w ciągu ostatnich 10 sekund. Metoda `getCurrentPositionAsync()` zwraca obiekt lokalizacji, z którego aplikacja buduje strukturę wynikową zawierającą współrzędne geograficzne, dokładność odczytu, wysokość nad poziomem morza, prędkość, kierunek przemieszczania oraz znacznik czasu. Choć w procesie rejestrowania tras wykorzystywane są przede wszystkim współrzędne i dokładność, pozostałe pola zachowano z myślą o potencjalnym rozszerzeniu funkcjonalności aplikacji. Uzyskane współrzędne stanowią dane wejściowe dla kolejnego etapu przetwarzania, jakim jest konwersja na adres tekstowy za pośrednictwem usługi geokodowania.
 
 #### 2.5.2. OpenRouteService Geocoding API
 
-Surowe współrzędne GPS nie niosą informacji czytelnej dla użytkownika, dlatego wymagają konwersji na adresy tekstowe. Proces ten, nazywany odwrotnym geokodowaniem (*reverse geocoding*), realizowany jest przez Geocoding API platformy OpenRouteService [9]. Usługa ta oparta jest na silniku Pelias i wykorzystuje dane OpenStreetMap, udostępniając wyniki w formacie GeoJSON zgodnym ze specyfikacją RFC 7946 [11].
+Surowe współrzędne GPS nie niosą informacji czytelnej dla użytkownika, dlatego wymagają konwersji na adresy tekstowe. Proces ten, nazywany odwrotnym geokodowaniem (*reverse geocoding*), realizowany jest przez Geocoding API platformy OpenRouteService [OpenRouteService, „API Documentation — Geocoding, Directions", https://openrouteservice.org/dev/#/api-docs (dostęp: 19.03.2026).]. Usługa ta oparta jest na silniku Pelias i wykorzystuje dane OpenStreetMap, udostępniając wyniki w formacie GeoJSON zgodnym ze specyfikacją RFC 7946 [Butler, H., Daly, M., Doyle, A., Gillies, S., Hagen, S., Schaub, T., „The GeoJSON Format", RFC 7946, Internet Engineering Task Force (IETF), 2016, https://tools.ietf.org/html/rfc7946 (dostęp: 19.03.2026).].
 
 W trybie GPS, po pobraniu współrzędnych przez Expo Location, aplikacja wysyła zapytanie do endpointu `/reverse`, przekazując wartości szerokości i długości geograficznej jako parametry zapytania HTTP.
 
@@ -409,7 +434,7 @@ const response = await fetch(url, {
   headers: { Accept: "application/json" },
 });
 ```
-*Zrzut ekranu 2.12. Wywołanie endpointu reverse geocoding — kod własny*
+*Listing 2.3. Wywołanie endpointu reverse geocoding — kod własny*
 <!-- ZRZUT EKRANU: lib/geocoding.js, linie 79–86 -->
 
 W odpowiedzi usługa zwraca kolekcję obiektów GeoJSON `features`, z których aplikacja wykorzystuje pierwszy (najlepiej dopasowany) wynik. Z właściwości obiektu ekstrahowane są dane adresowe, na podstawie których budowany jest czytelny adres zawierający ulicę, numer, miejscowość i kod pocztowy.
@@ -433,7 +458,7 @@ const result = {
   postalCode: properties.postalcode,
 };
 ```
-*Zrzut ekranu 2.13. Parsowanie odpowiedzi reverse geocoding i budowanie struktury adresowej — kod własny*
+*Listing 2.4. Parsowanie odpowiedzi reverse geocoding i budowanie struktury adresowej — kod własny*
 <!-- ZRZUT EKRANU: lib/geocoding.js, linie 99–118 -->
 
 W trybie manualnym, gdy użytkownik wprowadza adresy tekstowo, aplikacja korzysta z endpointu `/search` realizującego geokodowanie w przeciwnym kierunku — konwersję adresu tekstowego na współrzędne geograficzne. Oba adresy (startowy i docelowy) geokodowane są równolegle z wykorzystaniem mechanizmu `Promise.all`, co minimalizuje łączny czas oczekiwania na odpowiedź usługi.
@@ -444,14 +469,14 @@ const [startCoords, endCoords] = await Promise.all([
   geocodeAddress(endAddress),
 ]);
 ```
-*Zrzut ekranu 2.14. Równoległe geokodowanie adresu początkowego i końcowego — kod własny*
+*Listing 2.5. Równoległe geokodowanie adresu początkowego i końcowego — kod własny*
 <!-- ZRZUT EKRANU: lib/geocoding.js, linie 58–61 -->
 
 #### 2.5.3. OpenRouteService Directions API
 
-Niezależnie od trybu rejestrowania, po uzyskaniu współrzędnych obu punktów trasy konieczne jest obliczenie przejechanego dystansu. W literaturze z zakresu systemów informacji geograficznej rozróżnia się odległość euklidesową (w linii prostej) od odległości sieciowej, uwzględniającej rzeczywisty przebieg infrastruktury drogowej [10]. W kontekście ewidencji przejazdów służbowych istotna jest wyłącznie ta druga wielkość, ponieważ to ona odpowiada faktycznie pokonanemu dystansowi. Obliczenia te realizowane są przez Directions API platformy OpenRouteService, które wyznacza trasę na podstawie grafu drogowego i zwraca zarówno odległość, jak i szacowany czas przejazdu [9].
+Niezależnie od trybu rejestrowania, po uzyskaniu współrzędnych obu punktów trasy konieczne jest obliczenie przejechanego dystansu. W literaturze z zakresu systemów informacji geograficznej rozróżnia się odległość euklidesową (w linii prostej) od odległości sieciowej, uwzględniającej rzeczywisty przebieg infrastruktury drogowej [Longley, P. A., Goodchild, M. F., Maguire, D. J., Rhind, D. W., *Geographic Information Systems and Science*, 3rd ed., Wiley, 2010.]. W kontekście ewidencji przejazdów służbowych istotna jest wyłącznie ta druga wielkość, ponieważ to ona odpowiada faktycznie pokonanemu dystansowi. Obliczenia te realizowane są przez Directions API platformy OpenRouteService, które wyznacza trasę na podstawie grafu drogowego i zwraca zarówno odległość, jak i szacowany czas przejazdu [OpenRouteService, „API Documentation — Geocoding, Directions", https://openrouteservice.org/dev/#/api-docs (dostęp: 19.03.2026).].
 
-Zapytanie do Directions API wymaga przesłania współrzędnych w formacie tablicy par `[longitude, latitude]`, zgodnym z konwencją GeoJSON zdefiniowaną w specyfikacji RFC 7946, gdzie długość geograficzna poprzedza szerokość [11]. Kolejność ta jest odwrotna niż w powszechnie stosowanej notacji `(lat, lon)`, co stanowi częste źródło błędów w implementacjach przetwarzających dane geoprzestrzenne i wymaga szczególnej uwagi programisty.
+Zapytanie do Directions API wymaga przesłania współrzędnych w formacie tablicy par `[longitude, latitude]`, zgodnym z konwencją GeoJSON zdefiniowaną w specyfikacji RFC 7946, gdzie długość geograficzna poprzedza szerokość [Butler, H., Daly, M., Doyle, A., Gillies, S., Hagen, S., Schaub, T., „The GeoJSON Format", RFC 7946, Internet Engineering Task Force (IETF), 2016, https://tools.ietf.org/html/rfc7946 (dostęp: 19.03.2026).]. Kolejność ta jest odwrotna niż w powszechnie stosowanej notacji `(lat, lon)`, co stanowi częste źródło błędów w implementacjach przetwarzających dane geoprzestrzenne i wymaga szczególnej uwagi programisty.
 
 ```javascript
 const requestBody = {
@@ -471,7 +496,7 @@ const response = await fetch(url, {
   body: JSON.stringify(requestBody),
 });
 ```
-*Zrzut ekranu 2.15. Zapytanie do Directions API z współrzędnymi w konwencji GeoJSON — kod własny*
+*Listing 2.6. Zapytanie do Directions API z współrzędnymi w konwencji GeoJSON — kod własny*
 <!-- ZRZUT EKRANU: lib/routing.js, linie 26–41 -->
 
 Odpowiedź zawiera obiekt trasy z podsumowaniem (`summary`), z którego aplikacja odczytuje dystans wyrażony w metrach i konwertuje go na kilometry. Wartość ta zapisywana jest w rekordzie trasy i stanowi podstawę do naliczenia zwrotu kosztów przejazdu w raporcie rozliczeniowym.
@@ -481,16 +506,24 @@ const route = data.routes[0];
 const distanceKm = route.summary.distance / 1000;
 const durationMinutes = route.summary.duration / 60;
 ```
-*Zrzut ekranu 2.16. Odczyt dystansu i czasu przejazdu z odpowiedzi Directions API — kod własny*
+*Listing 2.7. Odczyt dystansu i czasu przejazdu z odpowiedzi Directions API — kod własny*
 <!-- ZRZUT EKRANU: lib/routing.js, linie 55–61 -->
 
 Zastosowanie profilu `driving-car` w parametrze zapytania zapewnia, że wyznaczana trasa uwzględnia wyłącznie drogi dostępne dla samochodów osobowych, z pominięciem ścieżek rowerowych, dróg pieszych czy odcinków zamkniętych dla ruchu kołowego.
 
+#### 2.5.4. Źródła
 
+[1] Expo Documentation, „Location — Expo SDK", https://docs.expo.dev/versions/latest/sdk/location/ (dostęp: 19.03.2026).
+
+[2] OpenRouteService, „API Documentation — Geocoding, Directions", https://openrouteservice.org/dev/#/api-docs (dostęp: 19.03.2026).
+
+[3] Longley, P. A., Goodchild, M. F., Maguire, D. J., Rhind, D. W., *Geographic Information Systems and Science*, 3rd ed., Wiley, 2010.
+
+[4] Butler, H., Daly, M., Doyle, A., Gillies, S., Hagen, S., Schaub, T., „The GeoJSON Format", RFC 7946, Internet Engineering Task Force (IETF), 2016, https://tools.ietf.org/html/rfc7946 (dostęp: 19.03.2026).
 
 ### 2.6. Przetwarzanie obrazów i rozpoznawanie tekstu
 
-Funkcjonalność automatycznego odczytywania stanu licznika pojazdu ze zdjęcia opiera się na czterech technologiach: bibliotekach Expo Camera [12] i Expo Image Picker [13] do pozyskiwania obrazów, bibliotece Expo Image Manipulator [14] do ich programowego przetwarzania oraz usłudze OCR.space [15] do rozpoznawania tekstu. Poniższy diagram ilustruje relacje pomiędzy tymi technologiami w kontekście aplikacji.
+Funkcjonalność automatycznego odczytywania stanu licznika pojazdu ze zdjęcia opiera się na czterech technologiach: bibliotekach Expo Camera [Expo Documentation, „Camera — Expo SDK", https://docs.expo.dev/versions/latest/sdk/camera/ (dostęp: 23.03.2026).] i Expo Image Picker [Expo Documentation, „ImagePicker — Expo SDK", https://docs.expo.dev/versions/latest/sdk/imagepicker/ (dostęp: 23.03.2026).] do pozyskiwania obrazów, bibliotece Expo Image Manipulator [Expo Documentation, „ImageManipulator — Expo SDK", https://docs.expo.dev/versions/latest/sdk/imagemanipulator/ (dostęp: 23.03.2026).] do ich programowego przetwarzania oraz usłudze OCR.space [OCR.space, „OCR API Documentation", https://ocr.space/ocrapi (dostęp: 23.03.2026).] do rozpoznawania tekstu. Poniższy diagram ilustruje relacje pomiędzy tymi technologiami w kontekście aplikacji.
 
 ```mermaid
 flowchart LR
@@ -502,9 +535,9 @@ flowchart LR
 
 #### 2.6.1. Expo Camera
 
-Biblioteka Expo Camera w wersji 17.0.9 dostarcza wieloplatformowy interfejs programistyczny do obsługi aparatu fotograficznego urządzenia mobilnego [12]. Centralnym elementem biblioteki jest komponent `CameraView`, który renderuje podgląd z aparatu i udostępnia metody do programowego wykonywania zdjęć. Biblioteka zapewnia również mechanizm zarządzania uprawnieniami za pośrednictwem hooka `useCameraPermissions()`, który zwraca aktualny stan uprawnień oraz funkcję umożliwiającą ich żądanie.
+Biblioteka Expo Camera w wersji 17.0.9 dostarcza wieloplatformowy interfejs programistyczny do obsługi aparatu fotograficznego urządzenia mobilnego [Expo Documentation, „Camera — Expo SDK", https://docs.expo.dev/versions/latest/sdk/camera/ (dostęp: 23.03.2026).]. Centralnym elementem biblioteki jest komponent `CameraView`, który renderuje podgląd z aparatu i udostępnia metody do programowego wykonywania zdjęć. Biblioteka zapewnia również mechanizm zarządzania uprawnieniami za pośrednictwem hooka `useCameraPermissions()`, który zwraca aktualny stan uprawnień oraz funkcję umożliwiającą ich żądanie.
 
-Wykonanie zdjęcia realizowane jest asynchronicznie przez metodę `takePictureAsync()`, przyjmującą obiekt konfiguracyjny określający parametry zapisu. Metoda zwraca obiekt zawierający URI pliku, jego wymiary oraz opcjonalnie metadane EXIF [12].
+Wykonanie zdjęcia realizowane jest asynchronicznie przez metodę `takePictureAsync()`, przyjmującą obiekt konfiguracyjny określający parametry zapisu. Metoda zwraca obiekt zawierający URI pliku, jego wymiary oraz opcjonalnie metadane EXIF [Expo Documentation, „Camera — Expo SDK", https://docs.expo.dev/versions/latest/sdk/camera/ (dostęp: 23.03.2026).].
 
 ```javascript
 const photo = await cameraRef.current.takePictureAsync({
@@ -515,14 +548,14 @@ const photo = await cameraRef.current.takePictureAsync({
 setImageToProcess(photo.uri);
 setImageSize({ width: photo.width, height: photo.height });
 ```
-*Zrzut ekranu 2.17. Wykonanie zdjęcia metodą takePictureAsync z konfiguracją jakości — kod własny*
+*Listing 2.8. Wykonanie zdjęcia metodą takePictureAsync z konfiguracją jakości — kod własny*
 <!-- ZRZUT EKRANU: components/ImagePickerWithCrop.jsx, linie 76–84 -->
 
-Parametr `quality` przyjmuje wartość z zakresu 0–1 i determinuje stopień kompresji JPEG — wartość 1 oznacza najwyższą jakość. Parametr `exif: false` wyłącza dołączanie metadanych EXIF do wyniku, co zmniejsza rozmiar zwracanego obiektu [12].
+Parametr `quality` przyjmuje wartość z zakresu 0–1 i determinuje stopień kompresji JPEG — wartość 1 oznacza najwyższą jakość. Parametr `exif: false` wyłącza dołączanie metadanych EXIF do wyniku, co zmniejsza rozmiar zwracanego obiektu [Expo Documentation, „Camera — Expo SDK", https://docs.expo.dev/versions/latest/sdk/camera/ (dostęp: 23.03.2026).].
 
 #### 2.6.2. Expo Image Picker
 
-Biblioteka Expo Image Picker w wersji 17.0.8 umożliwia dostęp do galerii systemowej urządzenia, pozwalając na wybór wcześniej wykonanych zdjęć [13]. Stanowi alternatywne źródło obrazu względem Expo Camera — z perspektywy dalszego przetwarzania obie biblioteki dostarczają rezultat w tej samej postaci: URI wskazujący na plik obrazu w lokalnym systemie plików.
+Biblioteka Expo Image Picker w wersji 17.0.8 umożliwia dostęp do galerii systemowej urządzenia, pozwalając na wybór wcześniej wykonanych zdjęć [Expo Documentation, „ImagePicker — Expo SDK", https://docs.expo.dev/versions/latest/sdk/imagepicker/ (dostęp: 23.03.2026).]. Stanowi alternatywne źródło obrazu względem Expo Camera — z perspektywy dalszego przetwarzania obie biblioteki dostarczają rezultat w tej samej postaci: URI wskazujący na plik obrazu w lokalnym systemie plików.
 
 Główną metodą biblioteki jest `launchImageLibraryAsync()`, która otwiera systemowy interfejs wyboru zdjęć i zwraca obiekt zawierający tablicę wybranych zasobów.
 
@@ -540,14 +573,14 @@ if (!result.canceled && result.assets[0]) {
   setImageSize({ width: asset.width, height: asset.height });
 }
 ```
-*Zrzut ekranu 2.18. Wybór zdjęcia z galerii za pomocą Expo Image Picker — kod własny*
+*Listing 2.9. Wybór zdjęcia z galerii za pomocą Expo Image Picker — kod własny*
 <!-- ZRZUT EKRANU: components/ImagePickerWithCrop.jsx, linie 98–110 -->
 
-Parametr `mediaTypes: ["images"]` ogranicza wybór do plików graficznych, a `allowsEditing: false` wyłącza wbudowany edytor systemowy. Obiekt odpowiedzi zawiera flagę `canceled` informującą, czy użytkownik anulował wybór, oraz tablicę `assets`, w której każdy element udostępnia URI, wymiary i typ MIME wybranego pliku [13].
+Parametr `mediaTypes: ["images"]` ogranicza wybór do plików graficznych, a `allowsEditing: false` wyłącza wbudowany edytor systemowy. Obiekt odpowiedzi zawiera flagę `canceled` informującą, czy użytkownik anulował wybór, oraz tablicę `assets`, w której każdy element udostępnia URI, wymiary i typ MIME wybranego pliku [Expo Documentation, „ImagePicker — Expo SDK", https://docs.expo.dev/versions/latest/sdk/imagepicker/ (dostęp: 23.03.2026).].
 
 #### 2.6.3. Expo Image Manipulator
 
-Biblioteka Expo Image Manipulator w wersji 14.0.7 dostarcza interfejs programistyczny do programowego przetwarzania obrazów na urządzeniu mobilnym [14]. Biblioteka obsługuje operacje takie jak przycięcie, zmiana rozmiaru, obrót oraz odbicie lustrzane, a także kontrolę formatu i poziomu kompresji pliku wynikowego. Centralną metodą biblioteki jest `manipulateAsync()`, przyjmująca URI źródłowego obrazu, tablicę operacji transformacji oraz opcje zapisu.
+Biblioteka Expo Image Manipulator w wersji 14.0.7 dostarcza interfejs programistyczny do programowego przetwarzania obrazów na urządzeniu mobilnym [Expo Documentation, „ImageManipulator — Expo SDK", https://docs.expo.dev/versions/latest/sdk/imagemanipulator/ (dostęp: 23.03.2026).]. Biblioteka obsługuje operacje takie jak przycięcie, zmiana rozmiaru, obrót oraz odbicie lustrzane, a także kontrolę formatu i poziomu kompresji pliku wynikowego. Centralną metodą biblioteki jest `manipulateAsync()`, przyjmująca URI źródłowego obrazu, tablicę operacji transformacji oraz opcje zapisu.
 
 ```javascript
 const croppedImage = await ImageManipulator.manipulateAsync(
@@ -568,16 +601,16 @@ const croppedImage = await ImageManipulator.manipulateAsync(
   },
 );
 ```
-*Zrzut ekranu 2.19. Przycięcie i kompresja obrazu metodą manipulateAsync — kod własny*
+*Listing 2.10. Przycięcie i kompresja obrazu metodą manipulateAsync — kod własny*
 <!-- ZRZUT EKRANU: components/ImagePickerWithCrop.jsx, linie 126–143 -->
 
-Operacja `crop` definiuje prostokąt przycięcia za pomocą współrzędnych punktu początkowego (`originX`, `originY`) oraz wymiarów docelowego fragmentu. Drugi argument metody — opcje zapisu — pozwala na określenie formatu wynikowego (`SaveFormat.JPEG` lub `SaveFormat.PNG`) oraz poziomu kompresji. Wartość `compress: 0.8` redukuje rozmiar pliku o około 20% w stosunku do oryginału, co jest istotne przy przesyłaniu obrazów przez sieć [14]. Metoda zwraca obiekt z URI przetworzonego obrazu zapisanego w katalogu tymczasowym urządzenia.
+Operacja `crop` definiuje prostokąt przycięcia za pomocą współrzędnych punktu początkowego (`originX`, `originY`) oraz wymiarów docelowego fragmentu. Drugi argument metody — opcje zapisu — pozwala na określenie formatu wynikowego (`SaveFormat.JPEG` lub `SaveFormat.PNG`) oraz poziomu kompresji. Wartość `compress: 0.8` redukuje rozmiar pliku o około 20% w stosunku do oryginału, co jest istotne przy przesyłaniu obrazów przez sieć [Expo Documentation, „ImageManipulator — Expo SDK", https://docs.expo.dev/versions/latest/sdk/imagemanipulator/ (dostęp: 23.03.2026).]. Metoda zwraca obiekt z URI przetworzonego obrazu zapisanego w katalogu tymczasowym urządzenia.
 
 #### 2.6.4. Usługa OCR.space
 
-OCR.space jest usługą chmurową udostępniającą interfejs programistyczny REST do optycznego rozpoznawania znaków (*Optical Character Recognition*) [15]. Technologia OCR umożliwia automatyczną ekstrakcję tekstu z obrazów cyfrowych, stanowiąc przedmiot badań w dziedzinie przetwarzania dokumentów od lat 90. XX wieku [16]. W kontekście projektu usługa ta służy do odczytywania wartości liczbowych ze zdjęć desek rozdzielczych pojazdów.
+OCR.space jest usługą chmurową udostępniającą interfejs programistyczny REST do optycznego rozpoznawania znaków (*Optical Character Recognition*) [OCR.space, „OCR API Documentation", https://ocr.space/ocrapi (dostęp: 23.03.2026).]. Technologia OCR umożliwia automatyczną ekstrakcję tekstu z obrazów cyfrowych, stanowiąc przedmiot badań w dziedzinie przetwarzania dokumentów od lat 90. XX wieku [Mori, S., Nishida, H., Yamada, H., *Optical Character Recognition*, John Wiley & Sons, 1999.]. W kontekście projektu usługa ta służy do odczytywania wartości liczbowych ze zdjęć desek rozdzielczych pojazdów.
 
-Usługa przyjmuje obrazy w formacie Base64 lub jako URL i udostępnia dwa silniki rozpoznawania: silnik domyślny (Engine 1) zoptymalizowany pod kątem dokumentów tekstowych oraz silnik alternatywny (Engine 2) oferujący lepszą skuteczność rozpoznawania cyfr i krótkich fragmentów tekstu [15]. Komunikacja z usługą odbywa się przez endpoint `/parse/image`, do którego obraz przesyłany jest jako obiekt `FormData` wraz z parametrami konfiguracyjnymi.
+Usługa przyjmuje obrazy w formacie Base64 lub jako URL i udostępnia dwa silniki rozpoznawania: silnik domyślny (Engine 1) zoptymalizowany pod kątem dokumentów tekstowych oraz silnik alternatywny (Engine 2) oferujący lepszą skuteczność rozpoznawania cyfr i krótkich fragmentów tekstu [OCR.space, „OCR API Documentation", https://ocr.space/ocrapi (dostęp: 23.03.2026).]. Komunikacja z usługą odbywa się przez endpoint `/parse/image`, do którego obraz przesyłany jest jako obiekt `FormData` wraz z parametrami konfiguracyjnymi.
 
 ```javascript
 const formData = new FormData();
@@ -596,12 +629,25 @@ const response = await fetch("https://api.ocr.space/parse/image", {
   body: formData,
 });
 ```
-*Zrzut ekranu 2.20. Konfiguracja parametrów i wywołanie API OCR.space — kod własny*
+*Listing 2.11. Konfiguracja parametrów i wywołanie API OCR.space — kod własny*
 <!-- ZRZUT EKRANU: context/OcrContext.jsx, linie 19–33 -->
 
-Parametr `language` określa język rozpoznawania, wpływając na słownik i modele lingwistyczne wykorzystywane przez algorytm. Parametr `detectOrientation` włącza automatyczne wykrywanie orientacji tekstu na obrazie, co jest istotne przy zdjęciach wykonanych pod kątem. Parametr `scale` aktywuje wewnętrzne przeskalowanie obrazu poprawiające jakość rozpoznawania małych znaków. Wybór `OCREngine: "2"` przełącza na drugi silnik rozpoznawania, który zgodnie z dokumentacją usługi lepiej radzi sobie z rozpoznawaniem izolowanych ciągów cyfr, takich jak wskazania licznika [15].
+Parametr `language` określa język rozpoznawania, wpływając na słownik i modele lingwistyczne wykorzystywane przez algorytm. Parametr `detectOrientation` włącza automatyczne wykrywanie orientacji tekstu na obrazie, co jest istotne przy zdjęciach wykonanych pod kątem. Parametr `scale` aktywuje wewnętrzne przeskalowanie obrazu poprawiające jakość rozpoznawania małych znaków. Wybór `OCREngine: "2"` przełącza na drugi silnik rozpoznawania, który zgodnie z dokumentacją usługi lepiej radzi sobie z rozpoznawaniem izolowanych ciągów cyfr, takich jak wskazania licznika [OCR.space, „OCR API Documentation", https://ocr.space/ocrapi (dostęp: 23.03.2026).].
 
-Odpowiedź usługi zwracana jest w formacie JSON i zawiera tablicę `ParsedResults`, której każdy element reprezentuje wynik analizy jednej strony dokumentu. Pole `ParsedText` zawiera cały rozpoznany tekst, a pole `IsErroredOnProcessing` sygnalizuje wystąpienie błędu przetwarzania [15].
+Odpowiedź usługi zwracana jest w formacie JSON i zawiera tablicę `ParsedResults`, której każdy element reprezentuje wynik analizy jednej strony dokumentu. Pole `ParsedText` zawiera cały rozpoznany tekst, a pole `IsErroredOnProcessing` sygnalizuje wystąpienie błędu przetwarzania [OCR.space, „OCR API Documentation", https://ocr.space/ocrapi (dostęp: 23.03.2026).].
+
+#### 2.6.5. Źródła
+
+[1] Expo Documentation, „Camera — Expo SDK", https://docs.expo.dev/versions/latest/sdk/camera/ (dostęp: 23.03.2026).
+
+[2] Expo Documentation, „ImagePicker — Expo SDK", https://docs.expo.dev/versions/latest/sdk/imagepicker/ (dostęp: 23.03.2026).
+
+[3] Expo Documentation, „ImageManipulator — Expo SDK", https://docs.expo.dev/versions/latest/sdk/imagemanipulator/ (dostęp: 23.03.2026).
+
+[4] OCR.space, „OCR API Documentation", https://ocr.space/ocrapi (dostęp: 23.03.2026).
+
+[5] Mori, S., Nishida, H., Yamada, H., *Optical Character Recognition*, John Wiley & Sons, 1999.
+
 
 
 ### 2.7. Appwrite Cloud Storage

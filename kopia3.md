@@ -1,4 +1,4 @@
-﻿# Aplikacja mobilna wspomagająca rejestrowanie podróży służbowych
+# Aplikacja mobilna wspomagająca rejestrowanie podróży służbowych
 
 ## PLAN PRACY
 
@@ -151,7 +151,7 @@ import { Stack } from "expo-router";
   <Stack.Screen name="(dashboard)" options={{ headerShown: false }} />
 </Stack>
 ```
-*Zrzut ekranu 2.1. Konfiguracja nawigacji stosowej z wykorzystaniem komponentu Stack — kod własny*
+*Listing 2.1. Konfiguracja nawigacji stosowej z wykorzystaniem komponentu Stack — kod własny*
 <!-- ZRZUT EKRANU: app/_layout.jsx, linie 21–32 -->
 
 Komponent `Stack` definiuje nawigator stosowy, którego bezpośrednie dzieci (`Stack.Screen`) reprezentują ekrany dostępne na danym poziomie hierarchii. Atrybut `name` odpowiada nazwie pliku lub katalogu w strukturze projektu, a `options` pozwala na konfigurację nagłówka i zachowania ekranu [4]. Nazwy w nawiasach okrągłych, jak `(auth)` i `(dashboard)`, oznaczają tzw. grupy tras — katalogi organizacyjne, które nie wpływają na ścieżkę URL, lecz umożliwiają zastosowanie odrębnych layoutów dla różnych sekcji aplikacji.
@@ -163,7 +163,7 @@ import { Tabs } from "expo-router";
 
 <Tabs.Screen name="routes/[id]" options={{ href: null }} />
 ```
-*Zrzut ekranu 2.2. Definicja trasy dynamicznej w nawigatorze zakładkowym — kod własny*
+*Listing 2.2. Definicja trasy dynamicznej w nawigatorze zakładkowym — kod własny*
 <!-- ZRZUT EKRANU: app/(dashboard)/_layout.jsx, linia 72 -->
 
 Opcja `href: null` ukrywa trasę dynamiczną z paska zakładek, zachowując jej dostępność programową — jest to typowy wzorzec dla ekranów szczegółowych, do których nawigacja odbywa się z poziomu listy, a nie bezpośrednio z paska nawigacji [4].
@@ -186,7 +186,7 @@ if (isAvailable) {
   });
 }
 ```
-*Zrzut ekranu 2.3. Generowanie pliku PDF i udostępnianie za pomocą Expo Print i Sharing — kod własny*
+*Listing 2.3. Generowanie pliku PDF i udostępnianie za pomocą Expo Print i Sharing — kod własny*
 <!-- ZRZUT EKRANU: app/(dashboard)/profile.jsx, linie 503–511 -->
 
 Metoda `isAvailableAsync()` sprawdza, czy urządzenie obsługuje funkcję udostępniania — jest to istotne, ponieważ na niektórych emulatorach i konfiguracjach systemowych funkcja ta może być niedostępna. Parametr `mimeType` określa typ MIME udostępnianego pliku, a `UTI` (*Uniform Type Identifier*) jest identyfikatorem typu stosowanym na platformie iOS [3].
@@ -212,7 +212,7 @@ export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
 ```
-*Zrzut ekranu 2.4. Inicjalizacja Firebase Authentication z persystencją sesji w AsyncStorage — kod własny*
+*Listing 2.4. Inicjalizacja Firebase Authentication z persystencją sesji w AsyncStorage — kod własny*
 <!-- ZRZUT EKRANU: lib/firebase.js, linie 1–4 oraz 15–19 -->
 
 Funkcja `initializeAuth()` zastępuje standardową `getAuth()` i przyjmuje drugi argument konfiguracyjny, w którym opcja `persistence` wskazuje mechanizm trwałego przechowywania tokenów sesji. Adapter `getReactNativePersistence()` integruje Firebase z biblioteką AsyncStorage — asynchronicznym magazynem klucz-wartość dostępnym na urządzeniu mobilnym [5]. Dzięki temu token sesji zapisywany jest lokalnie i automatycznie odtwarzany przy kolejnym uruchomieniu aplikacji, eliminując konieczność ponownego logowania.
@@ -240,7 +240,7 @@ async function register(email, password) {
   await login(email, password);
 }
 ```
-*Zrzut ekranu 2.5. Rejestracja i logowanie z wykorzystaniem Firebase Authentication — kod własny*
+*Listing 2.5. Rejestracja i logowanie z wykorzystaniem Firebase Authentication — kod własny*
 <!-- ZRZUT EKRANU: context/UserContext.jsx, linie 17–38 -->
 
 Metoda `signInWithEmailAndPassword()` przyjmuje instancję `auth`, adres email i hasło, a w przypadku powodzenia zwraca obiekt `userCredential.user` zawierający identyfikator użytkownika (`uid`), adres email oraz metadane konta. Walidacja formatu adresu email i siły hasła realizowana jest po stronie Firebase — próba logowania z nieprawidłowymi danymi powoduje wygenerowanie błędu z kodem identyfikującym przyczynę [5].
@@ -261,7 +261,7 @@ useEffect(() => {
   return () => unsubscribe();
 }, []);
 ```
-*Zrzut ekranu 2.6. Nasłuchiwanie zmian stanu uwierzytelnienia w komponencie React — kod własny*
+*Listing 2.6. Nasłuchiwanie zmian stanu uwierzytelnienia w komponencie React — kod własny*
 <!-- ZRZUT EKRANU: context/UserContext.jsx, linie 51–59 -->
 
 Funkcja `onAuthStateChanged()` zwraca funkcję `unsubscribe`, która jest wywoływana w fazie czyszczenia hooka `useEffect`, zapobiegając wyciekom pamięci. Callback otrzymuje obiekt użytkownika (`currentUser`) lub wartość `null`, jeśli użytkownik nie jest zalogowany. Flaga `authChecked` sygnalizuje zakończenie weryfikacji stanu sesji, co pozwala na wyświetlenie ekranu ładowania do momentu ustalenia statusu uwierzytelnienia [5].
@@ -274,7 +274,7 @@ Firebase Cloud Firestore jest nierelacyjną bazą danych typu NoSQL o architektu
 
 #### 2.4.1. Operacje zapisu
 
-Firestore udostępnia funkcje modyfikujące dane w kolekcjach: `addDoc()` do tworzenia nowego dokumentu z automatycznie generowanym identyfikatorem, `updateDoc()` do aktualizacji wybranych pól istniejącego dokumentu oraz `deleteDoc()` do usuwania dokumentu [7]. 
+Firestore udostępnia funkcje modyfikujące dane w kolekcjach: `addDoc()` do tworzenia nowego dokumentu z automatycznie generowanym identyfikatorem, `updateDoc()` do aktualizacji wybranych pól istniejącego dokumentu oraz `deleteDoc()` do usuwania dokumentu [7]. Klasa `Timestamp` zapewnia spójną reprezentację znaczników czasu niezależną od strefy czasowej urządzenia.
 
 ```javascript
 import {
@@ -291,10 +291,19 @@ await addDoc(collection(db, COLLECTION_NAME), {
   status: "completed",
 });
 ```
-*Zrzut ekranu 2.7. Utworzenie dokumentu w kolekcji Firestore metodą addDoc — kod własny*
+*Listing 2.7. Utworzenie dokumentu w kolekcji Firestore metodą addDoc — kod własny*
 <!-- ZRZUT EKRANU: context/RoutesContext.jsx, linie 4–15 oraz 116 -->
 
-Funkcja `addDoc()` przyjmuje referencję do kolekcji i obiekt danych, a zwraca referencję do nowo utworzonego dokumentu z automatycznie wygenerowanym unikalnym identyfikatorem.
+Funkcja `addDoc()` przyjmuje referencję do kolekcji i obiekt danych, a zwraca referencję do nowo utworzonego dokumentu z automatycznie wygenerowanym unikalnym identyfikatorem. Aktualizacja istniejącego dokumentu realizowana jest przez `updateDoc()`, która przyjmuje referencję do konkretnego dokumentu uzyskaną za pomocą funkcji `doc()`.
+
+```javascript
+const routeRef = doc(db, COLLECTION_NAME, routeId);
+await updateDoc(routeRef, updateData);
+```
+*Listing 2.8. Aktualizacja dokumentu Firestore metodą updateDoc — kod własny*
+<!-- ZRZUT EKRANU: context/RoutesContext.jsx, linie 367–368 -->
+
+Metoda `updateDoc()` modyfikuje wyłącznie pola wymienione w przekazanym obiekcie, pozostawiając pozostałe pola dokumentu niezmienione — jest to tzw. częściowa aktualizacja (*partial update*), odróżniająca ją od operacji `setDoc()`, która zastępuje cały dokument [7].
 
 #### 2.4.2. Zapytania i synchronizacja w czasie rzeczywistym
 
@@ -319,7 +328,7 @@ unsubscribe = onSnapshot(q, (querySnapshot) => {
 
 return () => unsubscribe();
 ```
-*Zrzut ekranu 2.9. Nasłuchiwanie zmian w kolekcji Firestore z filtrowaniem po użytkowniku — kod własny*
+*Listing 2.9. Nasłuchiwanie zmian w kolekcji Firestore z filtrowaniem po użytkowniku — kod własny*
 <!-- ZRZUT EKRANU: context/RoutesContext.jsx, linie 413–437 -->
 
 Operator `where("userId", "==", user.uid)` ogranicza wyniki do dokumentów należących do zalogowanego użytkownika. Funkcja `onSnapshot()` zwraca funkcję `unsubscribe`, którą należy wywołać przy odmontowaniu komponentu, aby odrejestrować nasłuchiwacz i uniknąć wycieków pamięci. Obiekt `querySnapshot` udostępnia metodę `forEach()` do iteracji po dokumentach spełniających kryteria zapytania. Każdy dokument udostępnia właściwość `id` (identyfikator) oraz metodę `data()` zwracającą zapisane pola [7]. Mechanizm ten zapewnia automatyczną synchronizację interfejsu użytkownika ze stanem bazy danych bez konieczności ręcznego odświeżania.
@@ -361,7 +370,7 @@ if (existingStatus !== "granted") {
   finalStatus = status;
 }
 ```
-*Zrzut ekranu 2.10. Weryfikacja i żądanie uprawnień lokalizacyjnych — kod własny*
+*Listing 2.1. Weryfikacja i żądanie uprawnień lokalizacyjnych — kod własny*
 <!-- ZRZUT EKRANU: lib/location.js, linie 7–16 -->
 
 Metoda `getForegroundPermissionsAsync()` zwraca obiekt zawierający pole `status`, które przyjmuje wartość `"granted"` w przypadku wcześniejszego przyznania uprawnień. Jeśli uprawnienia nie zostały jeszcze przyznane, wywoływana jest metoda `requestForegroundPermissionsAsync()`, która prezentuje użytkownikowi systemowy dialog uprawnień zgodny z wytycznymi danej platformy [8]. Zastosowanie uprawnień typu *foreground* oznacza, że aplikacja może pobierać lokalizację wyłącznie gdy jest aktywna na pierwszym planie, co jest wystarczające dla scenariusza rejestrowania tras i jednocześnie respektuje prywatność użytkownika.
@@ -387,7 +396,7 @@ const result = {
   timestamp: location.timestamp,
 };
 ```
-*Zrzut ekranu 2.11. Konfiguracja parametrów odczytu i pobranie bieżącej pozycji GPS — kod własny*
+*Listing 2.2. Konfiguracja parametrów odczytu i pobranie bieżącej pozycji GPS — kod własny*
 <!-- ZRZUT EKRANU: lib/location.js, linie 42–46 oraz 63–73 -->
 
 Obiekt `defaultOptions` definiuje trzy parametry odczytu: `accuracy` określa żądaną dokładność pomiaru, `timeout` ogranicza czas oczekiwania na odczyt do 15 sekund, a `maximumAge` pozwala na wykorzystanie pozycji buforowanej przez system operacyjny, jeśli została pobrana w ciągu ostatnich 10 sekund. Metoda `getCurrentPositionAsync()` zwraca obiekt lokalizacji, z którego aplikacja buduje strukturę wynikową zawierającą współrzędne geograficzne, dokładność odczytu, wysokość nad poziomem morza, prędkość, kierunek przemieszczania oraz znacznik czasu. Choć w procesie rejestrowania tras wykorzystywane są przede wszystkim współrzędne i dokładność, pozostałe pola zachowano z myślą o potencjalnym rozszerzeniu funkcjonalności aplikacji. Uzyskane współrzędne stanowią dane wejściowe dla kolejnego etapu przetwarzania, jakim jest konwersja na adres tekstowy za pośrednictwem usługi geokodowania.
@@ -409,7 +418,7 @@ const response = await fetch(url, {
   headers: { Accept: "application/json" },
 });
 ```
-*Zrzut ekranu 2.12. Wywołanie endpointu reverse geocoding — kod własny*
+*Listing 2.3. Wywołanie endpointu reverse geocoding — kod własny*
 <!-- ZRZUT EKRANU: lib/geocoding.js, linie 79–86 -->
 
 W odpowiedzi usługa zwraca kolekcję obiektów GeoJSON `features`, z których aplikacja wykorzystuje pierwszy (najlepiej dopasowany) wynik. Z właściwości obiektu ekstrahowane są dane adresowe, na podstawie których budowany jest czytelny adres zawierający ulicę, numer, miejscowość i kod pocztowy.
@@ -433,7 +442,7 @@ const result = {
   postalCode: properties.postalcode,
 };
 ```
-*Zrzut ekranu 2.13. Parsowanie odpowiedzi reverse geocoding i budowanie struktury adresowej — kod własny*
+*Listing 2.4. Parsowanie odpowiedzi reverse geocoding i budowanie struktury adresowej — kod własny*
 <!-- ZRZUT EKRANU: lib/geocoding.js, linie 99–118 -->
 
 W trybie manualnym, gdy użytkownik wprowadza adresy tekstowo, aplikacja korzysta z endpointu `/search` realizującego geokodowanie w przeciwnym kierunku — konwersję adresu tekstowego na współrzędne geograficzne. Oba adresy (startowy i docelowy) geokodowane są równolegle z wykorzystaniem mechanizmu `Promise.all`, co minimalizuje łączny czas oczekiwania na odpowiedź usługi.
@@ -444,7 +453,7 @@ const [startCoords, endCoords] = await Promise.all([
   geocodeAddress(endAddress),
 ]);
 ```
-*Zrzut ekranu 2.14. Równoległe geokodowanie adresu początkowego i końcowego — kod własny*
+*Listing 2.5. Równoległe geokodowanie adresu początkowego i końcowego — kod własny*
 <!-- ZRZUT EKRANU: lib/geocoding.js, linie 58–61 -->
 
 #### 2.5.3. OpenRouteService Directions API
@@ -471,7 +480,7 @@ const response = await fetch(url, {
   body: JSON.stringify(requestBody),
 });
 ```
-*Zrzut ekranu 2.15. Zapytanie do Directions API z współrzędnymi w konwencji GeoJSON — kod własny*
+*Listing 2.6. Zapytanie do Directions API z współrzędnymi w konwencji GeoJSON — kod własny*
 <!-- ZRZUT EKRANU: lib/routing.js, linie 26–41 -->
 
 Odpowiedź zawiera obiekt trasy z podsumowaniem (`summary`), z którego aplikacja odczytuje dystans wyrażony w metrach i konwertuje go na kilometry. Wartość ta zapisywana jest w rekordzie trasy i stanowi podstawę do naliczenia zwrotu kosztów przejazdu w raporcie rozliczeniowym.
@@ -481,7 +490,7 @@ const route = data.routes[0];
 const distanceKm = route.summary.distance / 1000;
 const durationMinutes = route.summary.duration / 60;
 ```
-*Zrzut ekranu 2.16. Odczyt dystansu i czasu przejazdu z odpowiedzi Directions API — kod własny*
+*Listing 2.7. Odczyt dystansu i czasu przejazdu z odpowiedzi Directions API — kod własny*
 <!-- ZRZUT EKRANU: lib/routing.js, linie 55–61 -->
 
 Zastosowanie profilu `driving-car` w parametrze zapytania zapewnia, że wyznaczana trasa uwzględnia wyłącznie drogi dostępne dla samochodów osobowych, z pominięciem ścieżek rowerowych, dróg pieszych czy odcinków zamkniętych dla ruchu kołowego.
@@ -515,7 +524,7 @@ const photo = await cameraRef.current.takePictureAsync({
 setImageToProcess(photo.uri);
 setImageSize({ width: photo.width, height: photo.height });
 ```
-*Zrzut ekranu 2.17. Wykonanie zdjęcia metodą takePictureAsync z konfiguracją jakości — kod własny*
+*Listing 2.8. Wykonanie zdjęcia metodą takePictureAsync z konfiguracją jakości — kod własny*
 <!-- ZRZUT EKRANU: components/ImagePickerWithCrop.jsx, linie 76–84 -->
 
 Parametr `quality` przyjmuje wartość z zakresu 0–1 i determinuje stopień kompresji JPEG — wartość 1 oznacza najwyższą jakość. Parametr `exif: false` wyłącza dołączanie metadanych EXIF do wyniku, co zmniejsza rozmiar zwracanego obiektu [12].
@@ -540,7 +549,7 @@ if (!result.canceled && result.assets[0]) {
   setImageSize({ width: asset.width, height: asset.height });
 }
 ```
-*Zrzut ekranu 2.18. Wybór zdjęcia z galerii za pomocą Expo Image Picker — kod własny*
+*Listing 2.9. Wybór zdjęcia z galerii za pomocą Expo Image Picker — kod własny*
 <!-- ZRZUT EKRANU: components/ImagePickerWithCrop.jsx, linie 98–110 -->
 
 Parametr `mediaTypes: ["images"]` ogranicza wybór do plików graficznych, a `allowsEditing: false` wyłącza wbudowany edytor systemowy. Obiekt odpowiedzi zawiera flagę `canceled` informującą, czy użytkownik anulował wybór, oraz tablicę `assets`, w której każdy element udostępnia URI, wymiary i typ MIME wybranego pliku [13].
@@ -568,7 +577,7 @@ const croppedImage = await ImageManipulator.manipulateAsync(
   },
 );
 ```
-*Zrzut ekranu 2.19. Przycięcie i kompresja obrazu metodą manipulateAsync — kod własny*
+*Listing 2.10. Przycięcie i kompresja obrazu metodą manipulateAsync — kod własny*
 <!-- ZRZUT EKRANU: components/ImagePickerWithCrop.jsx, linie 126–143 -->
 
 Operacja `crop` definiuje prostokąt przycięcia za pomocą współrzędnych punktu początkowego (`originX`, `originY`) oraz wymiarów docelowego fragmentu. Drugi argument metody — opcje zapisu — pozwala na określenie formatu wynikowego (`SaveFormat.JPEG` lub `SaveFormat.PNG`) oraz poziomu kompresji. Wartość `compress: 0.8` redukuje rozmiar pliku o około 20% w stosunku do oryginału, co jest istotne przy przesyłaniu obrazów przez sieć [14]. Metoda zwraca obiekt z URI przetworzonego obrazu zapisanego w katalogu tymczasowym urządzenia.
@@ -596,7 +605,7 @@ const response = await fetch("https://api.ocr.space/parse/image", {
   body: formData,
 });
 ```
-*Zrzut ekranu 2.20. Konfiguracja parametrów i wywołanie API OCR.space — kod własny*
+*Listing 2.11. Konfiguracja parametrów i wywołanie API OCR.space — kod własny*
 <!-- ZRZUT EKRANU: context/OcrContext.jsx, linie 19–33 -->
 
 Parametr `language` określa język rozpoznawania, wpływając na słownik i modele lingwistyczne wykorzystywane przez algorytm. Parametr `detectOrientation` włącza automatyczne wykrywanie orientacji tekstu na obrazie, co jest istotne przy zdjęciach wykonanych pod kątem. Parametr `scale` aktywuje wewnętrzne przeskalowanie obrazu poprawiające jakość rozpoznawania małych znaków. Wybór `OCREngine: "2"` przełącza na drugi silnik rozpoznawania, który zgodnie z dokumentacją usługi lepiej radzi sobie z rozpoznawaniem izolowanych ciągów cyfr, takich jak wskazania licznika [15].

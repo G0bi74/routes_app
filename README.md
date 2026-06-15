@@ -1,337 +1,259 @@
-# Routes App - Aplikacja do zarządzania trasami
+# Routes App 🚗
 
-Prosta aplikacja mobilna do zarządzania trasami zbudowana z **React Native**, **Expo Router** i **Firebase**.
+**Mobilna aplikacja do ewidencji podróży służbowych** — automatyczne i ręczne rejestrowanie tras, odczyt przebiegu licznika ze zdjęcia (OCR), raporty PDF z kosztem paliwa oraz synchronizacja w czasie rzeczywistym.
 
-## 📚 Dokumentacja
+Zbudowana w **React Native + Expo Router**, z backendem opartym o **Firebase** (uwierzytelnianie i baza danych) oraz **Appwrite** (przechowywanie zdjęć).
 
-- **[QUICKSTART.md](QUICKSTART.md)** - 🚀 Szybki start (5 minut)
-- **[ARCHITEKTURA.md](ARCHITEKTURA.md)** - 🏗️ Jak działa aplikacja (dla początkujących)
-- **[POROWNANIE.md](POROWNANIE.md)** - 🔄 Firebase vs Appwrite
-- **[CHECKLIST.md](CHECKLIST.md)** - ✅ Lista kontrolna
-- **[DOKUMENTACJA_PEŁNA.md](DOKUMENTACJA_PEŁNA.md)** - 📦 Pełne podsumowanie
+> Projekt zrealizowany jako aplikacja towarzysząca pracy licencjackiej. Pełna dokumentacja teoretyczna oraz źródła pracy znajdują się w katalogu `LateX_template/`.
 
-## 📱 O aplikacji
+---
 
-Aplikacja pozwala użytkownikom na:
-- ✅ Rejestrację i logowanie (Firebase Authentication)
-- ✅ Tworzenie nowych tras z szczegółowymi informacjami
-- ✅ Przeglądanie historii swoich tras
-- ✅ Wyświetlanie szczegółów każdej trasy
-- ✅ Usuwanie tras
-- ✅ Automatyczną synchronizację danych w czasie rzeczywistym
+## 📑 Spis treści
 
-## 🏗️ Struktura projektu
+- [Funkcje](#-funkcje)
+- [Zrzuty ekranu](#-zrzuty-ekranu)
+- [Stos technologiczny](#-stos-technologiczny)
+- [Architektura](#-architektura)
+- [Struktura projektu](#-struktura-projektu)
+- [Instalacja](#-instalacja)
+- [Konfiguracja (zmienne środowiskowe)](#-konfiguracja-zmienne-środowiskowe)
+- [Uruchomienie](#-uruchomienie)
+- [Build (EAS)](#-build-eas)
+- [Model danych (Firestore)](#-model-danych-firestore)
+- [Reguły bezpieczeństwa](#-reguły-bezpieczeństwa)
+- [Jak to działa](#-jak-to-działa)
+- [Rozwiązywanie problemów](#-rozwiązywanie-problemów)
+
+---
+
+## ✨ Funkcje
+
+- 🔐 **Uwierzytelnianie** — rejestracja i logowanie e-mail/hasło (Firebase Auth), trwała sesja (AsyncStorage).
+- ✍️ **Trasa ręczna** — wpisujesz adres początkowy i końcowy; aplikacja geokoduje adresy i liczy dystans drogowy oraz czas przejazdu.
+- 📍 **Trasa GPS na żywo** — start i koniec pobierają aktualną pozycję z GPS, zamieniają ją na adres (reverse geocoding) i zapisują trasę ze statusem `in-progress` → `completed`.
+- 🔢 **Odczyt licznika (OCR)** — robisz zdjęcie licznika, a OCR rozpoznaje przebieg; dystans trasy może być wyliczony z **różnicy przebiegu** (start/koniec), a w razie braku danych — z trasy drogowej.
+- 📷 **Zdjęcia tras** — robienie/wybór zdjęcia z kadrowaniem; pliki trafiają do **Appwrite Storage** i są dołączane do raportów.
+- 🔔 **Powiadomienie o aktywnej trasie** — trwałe (sticky) powiadomienie przypominające o zakończeniu rozpoczętej trasy.
+- 🗂️ **Historia i szczegóły tras** — lista tras z synchronizacją w czasie rzeczywistym, podgląd szczegółów, usuwanie (wraz ze zdjęciami).
+- 📄 **Raporty PDF** — raport tygodniowy (7 dni) i miesięczny (30 dni) ze zdjęciami i podsumowaniem; udostępnianie systemowym arkuszem.
+- ⛽ **Koszty paliwa** — ustawienia spalania (l/100 km) i ceny (zł/l); automatyczne wyliczenie zużycia i kosztu w profilu oraz raportach.
+- 🌓 **Motyw jasny/ciemny** — automatyczne dopasowanie do ustawień systemu.
+
+## 📱 Zrzuty ekranu
+
+### Motyw jasny i ciemny
+
+| Jasny | Ciemny |
+|:---:|:---:|
+| <img src="docs/screenshots/logowanie_light.jpg" width="240"/> | <img src="docs/screenshots/logowanie_dark.jpg" width="240"/> |
+
+### Przepływ aplikacji
+
+| Rejestracja | Start trasy | Trasa ręczna |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/rejestracja.jpg" width="220"/> | <img src="docs/screenshots/start_trasy.jpg" width="220"/> | <img src="docs/screenshots/formularz_trasy.jpg" width="220"/> |
+
+| Trasa w trakcie | Powiadomienie | Kadrowanie zdjęcia |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/trasa_w_trakcie.jpg" width="220"/> | <img src="docs/screenshots/powiadomienie.jpg" width="220"/> | <img src="docs/screenshots/kadrowanie_zdjecia.jpg" width="220"/> |
+
+| Korekta odczytu OCR | Podsumowanie trasy | Historia tras |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/ocr_licznik.jpg" width="220"/> | <img src="docs/screenshots/podsumowanie_trasy.jpg" width="220"/> | <img src="docs/screenshots/historia.jpg" width="220"/> |
+
+| Szczegóły trasy | Szczegóły trasy (cd.) | Profil i raporty |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/szczegoly_trasy_1.jpg" width="220"/> | <img src="docs/screenshots/szczegoly_trasy_2.jpg" width="220"/> | <img src="docs/screenshots/profil.jpg" width="220"/> |
+
+### Przykładowy raport PDF
+
+<img src="docs/screenshots/raport_podsumowanie.png" width="520"/>
+
+## 🛠 Stos technologiczny
+
+| Warstwa | Technologia |
+|---|---|
+| Framework | React Native 0.81, React 19 |
+| Platforma / nawigacja | Expo SDK 54, **Expo Router 6** (routing oparty na plikach) |
+| Uwierzytelnianie | **Firebase Authentication** (e-mail/hasło) |
+| Baza danych | **Cloud Firestore** (synchronizacja real-time przez `onSnapshot`) |
+| Przechowywanie zdjęć | **Appwrite Storage** |
+| Geokodowanie i trasy | **OpenRouteService API** (geocode + directions) |
+| OCR (odczyt licznika) | **OCR.space API** |
+| Lokalizacja | `expo-location` |
+| Aparat / zdjęcia | `expo-camera`, `expo-image-picker`, `expo-image-manipulator` |
+| Powiadomienia | `expo-notifications`, `expo-device` |
+| Raporty PDF | `expo-print`, `expo-sharing` |
+| Pamięć lokalna | `@react-native-async-storage/async-storage` |
+
+## 🏗 Architektura
+
+Aplikacja korzysta z architektury warstwowej, w której ekrany (Expo Router) konsumują globalny stan udostępniany przez **Context API**, a logika integracji z usługami zewnętrznymi jest zamknięta w warstwie serwisów (`lib/`).
+
+| Architektura warstwowa | Hierarchia providerów |
+|:---:|:---:|
+| <img src="docs/diagrams/architektura_warstwowa.png" width="380"/> | <img src="docs/diagrams/hierarchia_providerow.png" width="380"/> |
+
+| Przepływ uwierzytelniania | Przepływ trasy GPS |
+|:---:|:---:|
+| <img src="docs/diagrams/przeplyw_uwierzytelniania.png" width="380"/> | <img src="docs/diagrams/przeplyw_trasy_gps.png" width="380"/> |
+
+**Globalny stan (Context):**
+
+- `UserContext` — sesja użytkownika, `login()`, `register()`, `logout()` (hook `useUser`).
+- `RoutesContext` — operacje na trasach: `createRoute`, `startLiveRoute`, `endLiveRoute`, `deleteRoute`, `fetchRouteById` oraz nasłuch tras w czasie rzeczywistym (hook `useRoutes`).
+- `OcrContext` — rozpoznawanie tekstu/przebiegu ze zdjęcia (hook `useOcr`).
+- `AlertProvider` — spójne, motywowane okna dialogowe.
+
+Hierarchia: `AlertProvider → UserProvider → RoutesProvider → OcrProvider → aplikacja`.
+
+## 📂 Struktura projektu
 
 ```
 routes_app/
-├── app/                          # Ekrany aplikacji (Expo Router)
-│   ├── (auth)/                   # Grupa tras dla niezalogowanych
-│   │   ├── _layout.jsx          # Layout z ochroną GuestsOnly
-│   │   ├── login.jsx            # Ekran logowania
-│   │   └── register.jsx         # Ekran rejestracji
-│   ├── (dashboard)/             # Grupa tras dla zalogowanych
-│   │   ├── _layout.jsx          # Layout z nawigacją tabs i ochroną UserOnly
-│   │   ├── profile.jsx          # Profil użytkownika
-│   │   ├── create.jsx           # Tworzenie nowej trasy
-│   │   ├── history.jsx          # Lista wszystkich tras
-│   │   └── routes/
-│   │       └── [id].jsx         # Szczegóły pojedynczej trasy
-│   ├── _layout.jsx              # Główny layout aplikacji
-│   └── index.jsx                # Strona główna
-├── components/                   # Komponenty wielokrotnego użytku
-│   ├── auth/                    # Komponenty ochrony tras
-│   │   ├── GuestsOnly.jsx      # Ochrona dla niezalogowanych
-│   │   └── UserOnly.jsx        # Ochrona dla zalogowanych
-│   ├── Spacer.jsx              # Komponent odstępu
-│   ├── ThemedButton.jsx        # Przycisk z motywem
-│   ├── ThemedCard.jsx          # Karta z motywem
-│   ├── ThemedLoader.jsx        # Spinner ładowania
-│   ├── ThemedLogo.jsx          # Logo aplikacji
-│   ├── ThemedText.jsx          # Tekst z motywem
-│   ├── ThemedTextInput.jsx     # Pole tekstowe z motywem
-│   └── ThemedView.jsx          # Kontener z motywem
-├── context/                     # Konteksty React (stan globalny)
-│   ├── UserContext.jsx         # Kontekst użytkownika (auth)
-│   └── RoutesContext.jsx       # Kontekst tras (CRUD)
-├── hooks/                       # Custom hooks
-│   ├── useUser.js              # Hook do kontekstu użytkownika
-│   └── useRoutes.js            # Hook do kontekstu tras
-├── lib/                         # Biblioteki i konfiguracja
-│   └── firebase.js             # Konfiguracja Firebase
-├── constants/                   # Stałe aplikacji
-│   └── Colors.js               # Paleta kolorów
-├── assets/                      # Zasoby (obrazy, czcionki)
-│   └── img/                    # Obrazy
-├── package.json                # Zależności projektu
-└── app.json                    # Konfiguracja Expo
+├── app/                          # Ekrany (Expo Router – routing oparty na plikach)
+│   ├── (auth)/                   # Tylko dla niezalogowanych (GuestsOnly)
+│   │   ├── _layout.jsx
+│   │   ├── login.jsx
+│   │   └── register.jsx
+│   ├── (dashboard)/              # Tylko dla zalogowanych (UserOnly + zakładki)
+│   │   ├── _layout.jsx
+│   │   ├── create.jsx            # Tworzenie trasy (ręczna / GPS / OCR / zdjęcia)
+│   │   ├── history.jsx           # Lista tras
+│   │   ├── profile.jsx           # Profil, paliwo, raporty PDF, wylogowanie
+│   │   └── routes/[id].jsx       # Szczegóły trasy
+│   ├── _layout.jsx               # Root layout + providery
+│   └── index.jsx                 # Ekran startowy / przekierowanie
+├── components/                   # Komponenty UI (Themed*, auth guards, ImagePickerWithCrop…)
+├── context/                      # UserContext, RoutesContext, OcrContext
+├── hooks/                        # useUser, useRoutes, useOcr, useActiveRouteNotification
+├── lib/                          # Serwisy: firebase, appwrite, geocoding, routing, location, notifications
+├── constants/                    # Colors.js (motyw jasny/ciemny)
+├── assets/                       # Ikony, logo, splash
+├── docs/                         # Diagramy i zrzuty ekranu do README
+├── firestore.rules               # Reguły bezpieczeństwa Firestore
+├── app.json                      # Konfiguracja Expo (uprawnienia, pluginy)
+├── eas.json                      # Konfiguracja buildów EAS
+└── package.json
 ```
 
-## 🔥 Firebase - Struktura danych
+## 🚀 Instalacja
 
-### Kolekcja: `routes`
-
-Każda trasa zawiera następujące pola:
-
-```javascript
-{
-  id: "auto-generated-id",           // Automatyczne ID dokumentu
-  userId: "user-uid",                // ID użytkownika (właściciela)
-  startAdress: "ul. Przykładowa 1",  // Adres początku trasy
-  startTime: "08:00",                // Godzina rozpoczęcia
-  date: "2024-01-15",                // Data
-  endAdress: "ul. Końcowa 10",       // Adres końca trasy
-  endTime: "10:30",                  // Godzina zakończenia
-  description: "Opis trasy...",      // Opis trasy
-  createdAt: Timestamp               // Data utworzenia
-}
-```
-
-## 🚀 Instalacja i uruchomienie
-
-### 1. Wymagania wstępne
-
-- Node.js (v16 lub nowszy)
-- npm lub yarn
-- Expo CLI: `npm install -g expo-cli`
-- Konto Firebase
-
-### 2. Instalacja zależności
+**Wymagania:** Node.js 18+, npm, aplikacja **Expo Go** lub *development build* na urządzeniu (część funkcji — powiadomienia, GPS, OCR — najlepiej testować na fizycznym urządzeniu).
 
 ```bash
+git clone <repo-url>
 cd routes_app
 npm install
 ```
 
-### 3. Konfiguracja Firebase
+## 🔑 Konfiguracja (zmienne środowiskowe)
 
-#### Krok 1: Utwórz projekt Firebase
-
-1. Przejdź do [Firebase Console](https://console.firebase.google.com)
-2. Kliknij "Add project" (Dodaj projekt)
-3. Podaj nazwę projektu i zakończ konfigurację
-
-#### Krok 2: Włącz Authentication
-
-1. W Firebase Console przejdź do **Authentication**
-2. Kliknij "Get started"
-3. Włącz metodę **Email/Password**
-
-#### Krok 3: Utwórz bazę Firestore
-
-1. W Firebase Console przejdź do **Firestore Database**
-2. Kliknij "Create database"
-3. Wybierz tryb "Start in test mode" (dla rozwoju)
-4. Wybierz lokalizację serwera
-
-#### Krok 4: Dodaj aplikację Web
-
-1. W Firebase Console przejdź do **Project settings**
-2. Przewiń do "Your apps" i kliknij ikonę Web (</>)
-3. Zarejestruj aplikację
-4. Skopiuj konfigurację Firebase
-
-#### Krok 5: Zaktualizuj konfigurację
-
-Otwórz plik `lib/firebase.js` i zastąp wartości konfiguracji swoimi:
-
-```javascript
-const firebaseConfig = {
-  apiKey: "TWOJ_API_KEY",
-  authDomain: "TWOJ_PROJECT.firebaseapp.com",
-  projectId: "TWOJ_PROJECT_ID",
-  storageBucket: "TWOJ_PROJECT.appspot.com",
-  messagingSenderId: "TWOJ_SENDER_ID",
-  appId: "TWOJA_APP_ID"
-};
-```
-
-### 4. Uruchomienie aplikacji
+Skopiuj `.env.example` do `.env` i uzupełnij własnymi kluczami:
 
 ```bash
-# Uruchomienie serwera deweloperskiego
-npm start
-
-# Uruchomienie na Androidzie
-npm run android
-
-# Uruchomienie na iOS
-npm run ios
-
-# Uruchomienie w przeglądarce
-npm run web
+cp .env.example .env
 ```
 
-## 📚 Jak działa aplikacja?
+| Zmienna | Skąd ją wziąć |
+|---|---|
+| `EXPO_PUBLIC_FIREBASE_API_KEY` … `EXPO_PUBLIC_FIREBASE_APP_ID` | Firebase Console → *Project settings → Your apps* |
+| `EXPO_PUBLIC_APPWRITE_ENDPOINT`, `…_PROJECT_ID`, `…_PROJECT_NAME`, `…_BUCKET_ID` | [Appwrite Cloud](https://cloud.appwrite.io) → projekt + bucket na zdjęcia |
+| `EXPO_PUBLIC_ORS_API_KEY` | [OpenRouteService](https://openrouteservice.org/dev/#/signup) (darmowy plan: 2000 req/dzień) |
+| `EXPO_PUBLIC_OCR_SPACE_API_KEY` | [OCR.space](https://ocr.space/ocrapi) |
 
-### 1. Uwierzytelnianie (Authentication)
+**Po stronie usług trzeba dodatkowo:**
 
-- **UserContext** (`context/UserContext.jsx`) zarządza stanem użytkownika
-- Funkcje: `login()`, `register()`, `logout()`
-- Automatyczne sprawdzanie stanu przy starcie aplikacji
-- Hook `useUser()` udostępnia funkcje w całej aplikacji
+1. **Firebase** — włączyć *Authentication → Email/Password* oraz utworzyć bazę *Firestore* (reguły poniżej).
+2. **Appwrite** — utworzyć projekt i *Storage Bucket* na zdjęcia tras; wpisać jego ID do `.env`.
 
-### 2. Zarządzanie trasami (Routes Management)
+> Wszystkie zmienne mają prefiks `EXPO_PUBLIC_`, więc są wstrzykiwane do bundla po stronie klienta. Plik `.env` jest w `.gitignore` i nie powinien trafić do repozytorium.
 
-- **RoutesContext** (`context/RoutesContext.jsx`) zarządza trasami
-- Funkcje: `createRoute()`, `deleteRoute()`, `fetchRouteById()`
-- Automatyczna synchronizacja w czasie rzeczywistym (onSnapshot)
-- Hook `useRoutes()` udostępnia funkcje w całej aplikacji
+## ▶️ Uruchomienie
 
-### 3. Ochrona tras (Route Guards)
+```bash
+npm start          # serwer deweloperski Expo
+npm run android    # Android
+npm run ios        # iOS
+npm run web        # przeglądarka
+```
 
-- **GuestsOnly**: Przepuszcza tylko niezalogowanych (login, register)
-- **UserOnly**: Przepuszcza tylko zalogowanych (dashboard)
-- Automatyczne przekierowania
+## 📦 Build (EAS)
 
-### 4. Motywy (Theming)
+Profile buildów są zdefiniowane w `eas.json`:
 
-- Wszystkie komponenty UI automatycznie dostosowują się do motywu systemowego
-- Paleta kolorów w `constants/Colors.js`
-- Wsparcie dla jasnego i ciemnego motywu
+```bash
+npm install -g eas-cli
+eas login
+eas build --profile preview --platform android   # APK do testów
+eas build --profile production --platform android # build produkcyjny
+```
 
-## 🎨 Komponenty UI
+## 🗄 Model danych (Firestore)
 
-### Themed Components
+Kolekcja **`routes`** — każdy dokument to jedna trasa:
 
-Wszystkie komponenty automatycznie dostosowują się do motywu:
+```jsonc
+{
+  "userId": "uid",                  // właściciel trasy
+  "status": "in-progress | completed",
 
-- `<ThemedView>` - Kontener z tłem
-- `<ThemedText>` - Tekst z kolorem
-- `<ThemedButton>` - Przycisk
-- `<ThemedTextInput>` - Pole tekstowe
-- `<ThemedCard>` - Karta do wyświetlania danych
-- `<ThemedLoader>` - Spinner ładowania
-- `<ThemedLogo>` - Logo (automatyczny wybór jasne/ciemne)
+  "startAddress": "…",              // adres / opis startu
+  "endAddress": "…",
+  "startAddressFormatted": "…",     // adres po geokodowaniu
+  "endAddressFormatted": "…",
+  "startCoordinates": { "lat": 0, "lon": 0 },
+  "endCoordinates":   { "lat": 0, "lon": 0 },
 
-### Pomocnicze
+  "distance": 12.34,                // km
+  "distanceMeters": 12340,
+  "duration": 18,                   // minuty
 
-- `<Spacer>` - Odstęp między elementami
+  "startMileage": 120000,           // przebieg z OCR (opcjonalnie)
+  "endMileage": 120012,
+  "mileageDistance": 12,            // dystans z różnicy przebiegu
+  "usedMileageForDistance": true,
 
-## 🔐 Zasady bezpieczeństwa Firebase
+  "startImageUrl": "…",             // zdjęcia w Appwrite Storage
+  "endImageUrl": "…",
+  "startImageFileId": "…",
+  "endImageFileId": "…",
 
-### Firestore Rules (dla produkcji)
-
-Zastąp reguły testowe tymi zasadami w Firebase Console:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Użytkownik może czytać, tworzyć, aktualizować i usuwać tylko swoje trasy
-    match /routes/{routeId} {
-      allow read, write: if request.auth != null 
-                         && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
-                    && request.auth.uid == request.resource.data.userId;
-    }
-  }
+  "createdAt": "<Timestamp>",
+  "startedAt": "<Timestamp>",
+  "completedAt": "<Timestamp>"
 }
 ```
 
-## 📖 Przykładowe użycie
+Ustawienia paliwa (`fuelConsumption`, `fuelPrice`) przechowywane są lokalnie w **AsyncStorage**.
 
-### Tworzenie nowej trasy
+## 🔒 Reguły bezpieczeństwa
 
-```javascript
-import { useRoutes } from '../hooks/useRoutes';
+Reguły Firestore znajdują się w pliku [`firestore.rules`](firestore.rules) — użytkownik ma dostęp wyłącznie do własnych tras (`request.auth.uid == resource.data.userId`). Wgraj je w Firebase Console (*Firestore → Rules*) lub przez Firebase CLI:
 
-function CreateRoute() {
-  const { createRoute } = useRoutes();
-  
-  const handleSubmit = async () => {
-    await createRoute({
-      startAdress: "ul. Główna 1",
-      startTime: "08:00",
-      date: "2024-01-15",
-      endAdress: "ul. Końcowa 10",
-      endTime: "10:30",
-      description: "Trasa do pracy"
-    });
-  };
-}
+```bash
+firebase deploy --only firestore:rules
 ```
 
-### Pobieranie tras
+## ⚙️ Jak to działa
 
-```javascript
-import { useRoutes } from '../hooks/useRoutes';
-
-function RoutesList() {
-  const { routes } = useRoutes();
-  
-  return (
-    <FlatList
-      data={routes}
-      renderItem={({item}) => (
-        <View>
-          <Text>{item.startAdress} → {item.endAdress}</Text>
-        </View>
-      )}
-    />
-  );
-}
-```
-
-## 🛠️ Rozszerzanie aplikacji
-
-### Dodawanie nowych pól do trasy
-
-1. Dodaj pole w formularzu (`app/(dashboard)/create.jsx`)
-2. Zaktualizuj funkcję `createRoute()` w `RoutesContext.jsx`
-3. Zaktualizuj wyświetlanie w `history.jsx` i `routes/[id].jsx`
-
-### Dodawanie nowego ekranu
-
-1. Utwórz plik w folderze `app/`
-2. Dodaj layout jeśli potrzebny
-3. Użyj `useUser()` lub `useRoutes()` do dostępu do danych
-
-### Dodawanie nowej funkcjonalności
-
-1. Dodaj funkcję do odpowiedniego Context (`UserContext` lub `RoutesContext`)
-2. Funkcja automatycznie będzie dostępna przez hook (`useUser` lub `useRoutes`)
+- **Trasa ręczna** (`createRoute`) — adresy → geokodowanie (ORS) → obliczenie dystansu i czasu (ORS directions) → zapis jako `completed`.
+- **Trasa GPS** (`startLiveRoute` / `endLiveRoute`) — start: GPS + reverse geocoding + (opcjonalnie) zdjęcie i przebieg → zapis `in-progress` + powiadomienie sticky; koniec: GPS końcowy, wyliczenie dystansu (z przebiegu OCR lub z trasy drogowej), aktualizacja na `completed`, usunięcie powiadomienia.
+- **OCR** (`recognizeText`) — zdjęcie wysyłane do OCR.space (język polski, `OCREngine 2`); z tekstu wyłuskiwane są liczby i wykrywany jest przebieg licznika.
+- **Powiadomienia** (`lib/notifications.js`) — kanał Android `active-route`, jedno trwałe powiadomienie na aktywną trasę; jego ID jest pamiętane w AsyncStorage.
+- **Raporty** (`profile.jsx`) — filtr tras z ostatnich 7/30 dni → generowanie HTML → `expo-print` (PDF) → `expo-sharing` (udostępnienie). Jeśli ustawiono spalanie i cenę paliwa, raport zawiera zużycie i koszt.
 
 ## 🐛 Rozwiązywanie problemów
 
-### Błąd połączenia z Firebase
-
-- Sprawdź czy konfiguracja Firebase jest poprawna
-- Upewnij się że włączyłeś Authentication i Firestore
-- Sprawdź połączenie internetowe
-
-### Błędy podczas instalacji
-
-```bash
-# Wyczyść cache
-npm cache clean --force
-
-# Usuń node_modules i zainstaluj ponownie
-rm -rf node_modules
-npm install
-```
-
-### Aplikacja się nie uruchamia
-
-```bash
-# Zresetuj projekt Expo
-expo start -c
-```
-
-## 📝 Licencja
-
-Projekt open-source, możesz go modyfikować i używać zgodnie z potrzebami.
-
-## 👨‍💻 Autorzy
-
-Aplikacja stworzona jako prosty przykład użycia React Native, Expo Router i Firebase.
-
-## 🤝 Wsparcie
-
-W razie pytań lub problemów:
-1. Sprawdź dokumentację Firebase: https://firebase.google.com/docs
-2. Sprawdź dokumentację Expo: https://docs.expo.dev
-3. Sprawdź dokumentację React Native: https://reactnative.dev
+| Problem | Co sprawdzić |
+|---|---|
+| `permission-denied` z Firestore | Wgrane reguły z `firestore.rules` oraz reguła `allow list` dla `/routes/{routeId}` |
+| Brak lokalizacji / trasy GPS nie startują | Włączony GPS i przyznane uprawnienia lokalizacji; testuj na fizycznym urządzeniu |
+| Powiadomienia nie pojawiają się | Pełna funkcjonalność wymaga *development build* (Expo Go ma ograniczenia) i przyznanych uprawnień |
+| Błędy geokodowania/trasy | Ważny `EXPO_PUBLIC_ORS_API_KEY` i limity API (2000/dzień); połączenie z internetem |
+| Zdjęcia się nie zapisują | Poprawny endpoint/projekt/bucket Appwrite w `.env` |
+| Aplikacja nie startuje po zmianach | `npx expo start -c` (czyszczenie cache) |
 
 ---
 
-**Miłej nauki i kodowania! 🚀**
+<sub>README opisuje aktualny stan kodu aplikacji. Dokumentacja naukowa i diagramy źródłowe — katalog `LateX_template/`.</sub>

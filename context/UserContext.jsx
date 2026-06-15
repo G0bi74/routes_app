@@ -16,11 +16,7 @@ export function UserProvider({ children }) {
 
   async function login(email, password) {
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
       setUser(userCredential.user);
     } catch (error) {
@@ -51,7 +47,6 @@ export function UserProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-
       setAuthChecked(true);
     });
 

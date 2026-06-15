@@ -2,6 +2,8 @@
 node_modules/
 LateX_template/
 archiwum/
+# Kosz - przeniesione smieci/dokumentacja (nie sledzone w repo)
+kosz/
 # Expo
 .expo/
 dist/

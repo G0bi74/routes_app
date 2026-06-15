@@ -67,7 +67,19 @@ Zbudowana w **React Native + Expo Router**, z backendem opartym o **Firebase** (
 
 ### Przykładowy raport PDF
 
-<img src="docs/screenshots/raport_podsumowanie.png" width="520"/>
+Generowany raport składa się z nagłówka (tytuł i okres), wierszy poszczególnych tras (data, adresy, dystans, godziny i zdjęcia) oraz podsumowania z łącznym dystansem i kosztem paliwa.
+
+**Nagłówek**
+
+<img src="docs/screenshots/raport_naglowek.png" width="600"/>
+
+**Wiersz pojedynczej trasy**
+
+<img src="docs/screenshots/raport_kafelek.png" width="600"/>
+
+**Podsumowanie**
+
+<img src="docs/screenshots/raport_podsumowanie.png" width="600"/>
 
 ## 🛠 Stos technologiczny
 
